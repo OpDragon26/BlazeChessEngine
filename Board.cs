@@ -17,24 +17,53 @@ public class Board
     7 3 3 3 3 3 3 3 3
     */
     
-    
+    // basic values
     private readonly ulong[] board;
-    private byte side = 0;
+    private int side;
     private (int file, int rank) enPassant = (8, 8);
+    
+    // bitboards
+    private static ulong Square = 0x8000000000000000;
+
+    public static ulong GetSquare(int file, int rank) // overload that takes individual values
+    {
+        return Square >> (rank * 8 + 7 - file);
+    }
+    private static ulong GetSquare((int file, int rank) square) // overload that takes individual values
+    {
+        return Square >> (square.rank * 8 + 7 - square.file);
+    }
+    public ulong[] bitboards = new ulong[2];
 
     public Board(ulong[] board)
     {
         this.board = board;
+        
+        // init bitboards
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                if (GetPiece(file, rank) != Pieces.Empty)
+                    bitboards[GetPiece(file, rank) >> 3] |= GetSquare(file, rank);
+            }
+        }
     }
 
     public void MakeMove(Move move)
     {
+
+        ulong source = GetPiece(move.Source);
         if (move.Promotion == 0b1111)
-            SetPiece(move.Destination, GetPiece(move.Source));
+            SetPiece(move.Destination, source);
         else
             SetPiece(move.Destination, move.Promotion);
         Clear(move.Source);
         enPassant = (8, 8);
+        
+        // update bitboards
+        bitboards[source >> 3] ^= GetSquare(move.Source);
+        bitboards[source >> 3] ^= GetSquare(move.Destination);
 
         switch (move.Type)
         {
@@ -51,31 +80,43 @@ public class Board
             case 0b0010: // white short castle
                 Clear(7, 0);
                 SetPiece(5,0, Pieces.WhiteRook);
+                bitboards[side] ^= GetSquare(7,0);
+                bitboards[side] ^= GetSquare(5,0);
             break;
             
             case 0b0011: // white long castle
                 Clear(0, 0);
                 SetPiece(3,0, Pieces.WhiteRook);
+                bitboards[side] ^= GetSquare(0,0);
+                bitboards[side] ^= GetSquare(3,0);
             break;
             
             case 0b1010: // black short castle
                 Clear(7, 7);
                 SetPiece(5,7, Pieces.BlackRook);
+                bitboards[side] ^= GetSquare(7,7);
+                bitboards[side] ^= GetSquare(5,7);
             break;
             
             case 0b1011: // black long castle
                 Clear(0, 7);
                 SetPiece(3,7, Pieces.BlackRook);
+                bitboards[side] ^= GetSquare(0,7);
+                bitboards[side] ^= GetSquare(3,7);
             break;
             
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 5);
+                bitboards[side] ^= GetSquare(move.Destination.file,5);
             break;
             
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
+                bitboards[side] ^= GetSquare(move.Destination.file,3);
             break;
         }
+
+        side = 1 - side;
     }
     
     private readonly ulong PieceMask = 0xF; // covers the last 4 bits
@@ -119,21 +160,21 @@ public static class Pieces
 {
     // 4 bits per piece
     // white and black pieces only differ in the first bit
-    public static readonly ulong WhitePawn = 0b0000; // 0
-    public static readonly ulong WhiteRook = 0b0001; // 1
-    public static readonly ulong WhiteKnight = 0b0010; // 2
-    public static readonly ulong WhiteBishop = 0b0011; // 3
-    public static readonly ulong WhiteQueen = 0b0100; // 4
-    public static readonly ulong WhiteKing = 0b0101; // 5
+    public const ulong WhitePawn = 0b0000; // 0
+    public const ulong WhiteRook = 0b0001; // 1
+    public const ulong WhiteKnight = 0b0010; // 2
+    public const ulong WhiteBishop = 0b0011; // 3
+    public const ulong WhiteQueen = 0b0100; // 4
+    public const ulong WhiteKing = 0b0101; // 5
     
-    public static readonly ulong BlackPawn = 0b1000; // 8
-    public static readonly ulong BlackRook = 0b1001; // 9
-    public static readonly ulong BlackKnight = 0b1010; // 10
-    public static readonly ulong BlackBishop = 0b1011; // 11
-    public static readonly ulong BlackQueen = 0b1100; // 12
-    public static readonly ulong BlackKing = 0b1101; // 13
+    public const ulong BlackPawn = 0b1000; // 8
+    public const ulong BlackRook = 0b1001; // 9
+    public const ulong BlackKnight = 0b1010; // 10
+    public const ulong BlackBishop = 0b1011; // 11
+    public const ulong BlackQueen = 0b1100; // 12
+    public const ulong BlackKing = 0b1101; // 13
     
-    public static readonly ulong Empty = 0b1111; // 15
+    public const ulong Empty = 0b1111; // 15
 }
 
 public static class Presets

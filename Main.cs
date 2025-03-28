@@ -2,6 +2,7 @@
 
 Match match = new Match(new Board(Presets.StartingBoard));
 
-match.board.MakeMove(new Move((4,0),(6,0),type: 0b0010));
+match.board.MakeMove(new Move((4,1),(4,3)));
 
+Console.WriteLine(Convert.ToString(match.board.bitboards[0]));
 match.Print(0);
