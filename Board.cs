@@ -20,6 +20,7 @@ public class Board
     
     private readonly ulong[] board;
     private byte side = 0;
+    private (int file, int rank) enPassant = (8, 8);
 
     public Board(ulong[] board)
     {
@@ -28,30 +29,89 @@ public class Board
 
     public void MakeMove(Move move)
     {
-        if (move.promotion == 0b1111)
-            SetPiece(move.destination, GetPiece(move.source));
+        if (move.Promotion == 0b1111)
+            SetPiece(move.Destination, GetPiece(move.Source));
         else
-            SetPiece(move.destination, move.promotion);
-        Clear(move.source);
+            SetPiece(move.Destination, move.Promotion);
+        Clear(move.Source);
+        enPassant = (8, 8);
+
+        switch (move.Type)
+        {
+            case 0b0000: break;
+            case 0b1000: break;
+            case 0b0001: // white double move
+                enPassant = (move.Source.file, 2);
+            break;
+            
+            case 0b1001: // black double move
+                enPassant = (move.Source.file, 5);
+            break;
+            
+            case 0b0010: // white short castle
+                Clear(7, 0);
+                SetPiece(5,0, Pieces.WhiteRook);
+            break;
+            
+            case 0b0011: // white long castle
+                Clear(0, 0);
+                SetPiece(3,0, Pieces.WhiteRook);
+            break;
+            
+            case 0b1010: // black short castle
+                Clear(7, 7);
+                SetPiece(5,7, Pieces.BlackRook);
+            break;
+            
+            case 0b1011: // black long castle
+                Clear(0, 7);
+                SetPiece(3,7, Pieces.BlackRook);
+            break;
+            
+            case 0b0100: // white en passant
+                Clear(move.Destination.file, 5);
+            break;
+            
+            case 0b1100: // black en passant
+                Clear(move.Destination.file, 3);
+            break;
+        }
     }
     
     private readonly ulong PieceMask = 0xF; // covers the last 4 bits
-    public ulong GetPiece((int file, int rank) square)
+    public ulong GetPiece((int file, int rank) square) // overload that takes a tuple
     {
         // divide rank by two to get the right ulong, push by 32 for first row, push by file for the piece
         return (board[square.rank / 2] >> ((1 - (square.rank % 2)) * 32 + square.file * 4)) & PieceMask;
     }
+    
+    public ulong GetPiece(int file, int rank) // overload that takes individual values
+    {
+        // divide rank by two to get the right ulong, push by 32 for first row, push by file for the piece
+        return (board[rank / 2] >> ((1 - (rank % 2)) * 32 + file * 4)) & PieceMask;
+    }
 
-    public void Clear((int file, int rank) square)
+    private void Clear((int file, int rank) square) // overload that takes a tuple
     {
         // divide rank by two to get the right ulong, push left by 32 if first row, push by file for piece
         board[square.rank / 2] |= (PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 1111
     }
+    private void Clear(int file, int rank) // overload that takes individual values
+    {
+        // divide rank by two to get the right ulong, push left by 32 if first row, push by file for piece
+        board[rank / 2] |= (PieceMask << (1 - (rank % 2)) * 32 + file * 4); // set the given square to 1111
+    }
 
-    public void SetPiece((int file, int rank) square, ulong piece)
+    private void SetPiece((int file, int rank) square, ulong piece) // overload that takes a tuple
     {
         board[square.rank / 2] &= ~(PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 0000
         board[square.rank / 2] |= (piece << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the square to the given piece
+    }
+    
+    private void SetPiece(int file, int rank, ulong piece) // overload that takes individual values
+    {
+        board[rank / 2] &= ~(PieceMask << (1 - (rank % 2)) * 32 + file * 4); // set the given square to 0000
+        board[rank / 2] |= (piece << (1 - (rank % 2)) * 32 + file * 4); // set the square to the given piece
     }
 }
 

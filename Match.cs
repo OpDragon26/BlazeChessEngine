@@ -9,9 +9,9 @@ public class Match
         this.board = board;
     }
 
-    public void Print(bool perspective) // false = white
+    public void Print(int perspective)
     {
-        if (perspective)
+        if (perspective == 1)
         {
             // black's perspective
             Console.WriteLine("# h g f e d c b a");
@@ -20,9 +20,9 @@ public class Match
             {
                 string rankStr = $"{rank + 1} ";
                 
-                for (int file = 0; file < 8; file++)
+                for (int file = 7; file >= 0; file--)
                 {
-                    rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
+                    rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
                 }
                 
                 Console.WriteLine(rankStr);
@@ -31,13 +31,13 @@ public class Match
         else
         {
             // white's perspective
-            Console.WriteLine("# h g f e d c b a");
+            Console.WriteLine("# a b c d e f g h");
             
             for (int rank = 7; rank >= 0; rank--)
             {
                 string rankStr = $"{rank + 1} ";
                 
-                for (int file = 7; file >= 0; file--)
+                for (int file = 0; file < 8; file++)
                 {
                     rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
                 }

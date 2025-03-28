@@ -2,6 +2,6 @@
 
 Match match = new Match(new Board(Presets.StartingBoard));
 
-match.board.MakeMove(new Move {source = (4,1), destination = (4, 3)});
+match.board.MakeMove(new Move((4,0),(6,0),type: 0b0010));
 
-match.Print(false);
+match.Print(0);
