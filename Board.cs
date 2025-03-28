@@ -18,31 +18,40 @@ public class Board
     */
     
     
-    public readonly ulong[] board = new ulong[4];
+    private readonly ulong[] board;
+    private byte side = 0;
 
     public Board(ulong[] board)
     {
         this.board = board;
     }
+
+    public void MakeMove(Move move)
+    {
+        if (move.promotion == 0b1111)
+            SetPiece(move.destination, GetPiece(move.source));
+        else
+            SetPiece(move.destination, move.promotion);
+        Clear(move.source);
+    }
     
     private readonly ulong PieceMask = 0xF; // covers the last 4 bits
-    public ulong GetPiece(int file, int rank)
+    public ulong GetPiece((int file, int rank) square)
     {
         // divide rank by two to get the right ulong, push by 32 for first row, push by file for the piece
-        return (board[rank / 2] >> ((1 - (rank % 2)) * 32 + file * 4)) & PieceMask;
+        return (board[square.rank / 2] >> ((1 - (square.rank % 2)) * 32 + square.file * 4)) & PieceMask;
     }
 
-    private void Clear(int file, int rank)
+    public void Clear((int file, int rank) square)
     {
         // divide rank by two to get the right ulong, push left by 32 if first row, push by file for piece
-        board[rank / 2] |= (PieceMask << (1 - (rank % 2)) * 32 + file * 4); // set the given square to 1111
+        board[square.rank / 2] |= (PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 1111
     }
 
-    private void SetPiece(int file, int rank, ulong piece)
+    public void SetPiece((int file, int rank) square, ulong piece)
     {
-        // set the square to 1111 then set it to the piece
-        Clear(file, rank);
-        board[rank / 2] &= (piece << (1 - (rank % 2)) * 32 + file * 4); 
+        board[square.rank / 2] &= ~(PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 0000
+        board[square.rank / 2] |= (piece << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the square to the given piece
     }
 }
 

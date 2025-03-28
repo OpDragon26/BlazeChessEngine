@@ -2,7 +2,7 @@ namespace Blaze;
 
 public class Match
 {
-    readonly Board board;
+    public readonly Board board;
 
     public Match(Board board)
     {
@@ -22,7 +22,7 @@ public class Match
                 
                 for (int file = 0; file < 8; file++)
                 {
-                    rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
+                    rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
                 }
                 
                 Console.WriteLine(rankStr);
@@ -39,7 +39,7 @@ public class Match
                 
                 for (int file = 7; file >= 0; file--)
                 {
-                    rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
+                    rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
                 }
                 
                 Console.WriteLine(rankStr);
