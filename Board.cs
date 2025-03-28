@@ -50,6 +50,14 @@ public class Board
         }
     }
 
+    public Board(Board board)
+    {
+        this.board = (ulong[])board.board.Clone();
+        side = board.side;
+        bitboards = new[] { board.bitboards[0], board.bitboards[1] };
+        enPassant = board.enPassant;
+    }
+
     public void MakeMove(Move move)
     {
 
