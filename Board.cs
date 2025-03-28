@@ -19,13 +19,13 @@ public class Board
     
     // basic values
     private readonly ulong[] board;
-    private int side;
-    private (int file, int rank) enPassant = (8, 8);
+    public int side;
+    public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    private static ulong Square = 0x8000000000000000;
+    private const ulong Square = 0x8000000000000000;
 
-    public static ulong GetSquare(int file, int rank) // overload that takes individual values
+    private static ulong GetSquare(int file, int rank) // overload that takes individual values
     {
         return Square >> (rank * 8 + 7 - file);
     }
@@ -60,18 +60,16 @@ public class Board
 
     public void MakeMove(Move move)
     {
-
-        ulong source = GetPiece(move.Source);
-        if (move.Promotion == 0b1111)
-            SetPiece(move.Destination, source);
+        if (move.Promotion == 0b111)
+            SetPiece(move.Destination, GetPiece(move.Source));
         else
-            SetPiece(move.Destination, move.Promotion);
+            SetPiece(move.Destination, (ulong)(side << 3) | move.Promotion);
         Clear(move.Source);
         enPassant = (8, 8);
         
         // update bitboards
-        bitboards[source >> 3] ^= GetSquare(move.Source);
-        bitboards[source >> 3] ^= GetSquare(move.Destination);
+        bitboards[side] ^= GetSquare(move.Source);
+        bitboards[side] ^= GetSquare(move.Destination);
 
         switch (move.Type)
         {
@@ -183,6 +181,8 @@ public static class Pieces
     public const ulong BlackKing = 0b1101; // 13
     
     public const ulong Empty = 0b1111; // 15
+    
+    public const ulong TypeMask = 0b111;
 }
 
 public static class Presets

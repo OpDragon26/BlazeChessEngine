@@ -3,10 +3,17 @@ namespace Blaze;
 public class Match
 {
     public readonly Board board;
-
-    public Match(Board board)
+    private bool analysis;
+    
+    public Match(Board board, bool analysis)
     {
         this.board = board;
+        this.analysis = analysis;
+    }
+
+    public void turn()
+    {
+        
     }
 
     public void Print(int perspective)
