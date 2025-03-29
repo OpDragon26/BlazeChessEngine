@@ -60,10 +60,12 @@ public class Match
 
         if (perspective == 1)
         {
+            Console.Write("# h g f e d c b a");
+            
             for (int i = 63; i >= 0; i--)
             {
                 if ((i + 1) % 8 == 0)
-                    bitboardStr += "\n";
+                    bitboardStr += $"\n{9 - ((i + 1) / 8)} ";
             
                 if (((bitboard << 63 - i) >> 63) != 0)
                     bitboardStr += on + " ";
@@ -73,10 +75,12 @@ public class Match
         }
         else
         {
+            Console.Write("# a b c d e f g h");
+            
             for (int i = 0; i < 64; i++)
             {
                 if (i % 8 == 0)
-                    bitboardStr += "\n";
+                    bitboardStr += $"\n{8 - (i / 8)} ";
             
                 if (((bitboard << 63 - i) >> 63) != 0)
                     bitboardStr += on + " ";
