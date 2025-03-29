@@ -18,6 +18,12 @@ public static class Bitboards
     public static Move[,][] RookCaptures = new Move[8,8][]; // for each square, the captures from all blockers combinations of the square
     public static Move[,][] BishopCaptures = new Move[8,8][];
     
+    public static (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
+    public static (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
+    
+    public static (ulong magicNumber, int push, int highest)[,] RookMagicNumbers = new (ulong magicNumber, int push, int highest)[8,8];
+    public static (ulong magicNumber, int push, int highest)[,] BishopMagicNumbers = new (ulong magicNumber, int push, int highest)[8,8];
+    
     private const ulong File = 0x8080808080808080;
     private const ulong Rank = 0xFF00000000000000;
     
@@ -25,6 +31,25 @@ public static class Bitboards
     private const ulong DownDiagonal = 0x8040201008040201;
 
     private static bool init;
+
+    public static (Move[] moves, ulong captures) RookLookupMoves((int file, int rank) pos, ulong friendly, ulong enemy)
+    {
+        return RookLookup[pos.file, pos.rank]
+        [
+            (((friendly | enemy) & RookMasks[pos.file, pos.rank]) // blocker combination
+             * RookMagicNumbers[pos.file, pos.rank].magicNumber) >> RookMagicNumbers[pos.file, pos.rank].push
+        ];
+    }
+    
+    public static (Move[] moves, ulong captures) BishopLookupMoves((int file, int rank) pos, ulong friendly, ulong enemy)
+    {
+        return BishopLookup[pos.file, pos.rank]
+        [
+            (((friendly | enemy) & BishopMasks[pos.file, pos.rank]) // blocker combination
+            * BishopMagicNumbers[pos.file, pos.rank].magicNumber) >> BishopMagicNumbers[pos.file, pos.rank].push
+        ];
+    }
+    
     public static void Init()
     {
         if (init) return;
@@ -89,6 +114,33 @@ public static class Bitboards
                 }
                 
                 BishopCaptures[file, rank] = bishopCaptures.ToArray();
+            }
+        }
+
+        //int done = 0;
+        // create magic numbers and add to lookup
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                RookMagicNumbers[file, rank] = MagicNumbers.RookNumbers[file, rank];
+                RookLookup[file, rank] = new (Move[] moves, ulong captures)[RookMagicNumbers[file, rank].highest + 1];
+
+                for (int i = 0; i < RookBlockers[file, rank].Length; i++) // for each blocker
+                {
+                    RookLookup[file, rank][(RookBlockers[file, rank][i] * RookMagicNumbers[file, rank].magicNumber) >> RookMagicNumbers[file, rank].push] = RookMoves[file, rank][i];
+                }
+
+                BishopMagicNumbers[file, rank] = MagicNumbers.BishopNumbers[file, rank];
+                BishopLookup[file, rank] = new (Move[] moves, ulong captures)[BishopMagicNumbers[file, rank].highest + 1];
+                
+                for (int i = 0; i < BishopBlockers[file, rank].Length; i++) // for each blocker
+                {
+                    BishopLookup[file, rank][(BishopBlockers[file, rank][i] * BishopMagicNumbers[file, rank].magicNumber) >> BishopMagicNumbers[file, rank].push] = BishopMoves[file, rank][i];
+                }
+
+                //done++;
+                //Console.WriteLine($"Square done {done}/64");
             }
         }
     }
