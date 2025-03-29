@@ -54,6 +54,40 @@ public class Match
         }
     }
 
+    public void PrintBitboard(ulong bitboard, int perspective, string on = "#", string off = " ")
+    {
+        string bitboardStr = "";
+
+        if (perspective == 1)
+        {
+            for (int i = 63; i >= 0; i--)
+            {
+                if ((i + 1) % 8 == 0)
+                    bitboardStr += "\n";
+            
+                if (((bitboard << 63 - i) >> 63) != 0)
+                    bitboardStr += on + " ";
+                else
+                    bitboardStr += off + " ";
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 64; i++)
+            {
+                if (i % 8 == 0)
+                    bitboardStr += "\n";
+            
+                if (((bitboard << 63 - i) >> 63) != 0)
+                    bitboardStr += on + " ";
+                else
+                    bitboardStr += off + " ";
+            }
+        }
+        
+        Console.WriteLine(bitboardStr);
+    }
+
     private static readonly string[] PieceStrings = new[]
     {
         "\u265f",

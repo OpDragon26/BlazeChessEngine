@@ -23,16 +23,6 @@ public class Board
     public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    private const ulong Square = 0x8000000000000000;
-
-    private static ulong GetSquare(int file, int rank) // overload that takes individual values
-    {
-        return Square >> (rank * 8 + 7 - file);
-    }
-    private static ulong GetSquare((int file, int rank) square) // overload that takes individual values
-    {
-        return Square >> (square.rank * 8 + 7 - square.file);
-    }
     public ulong[] bitboards = new ulong[2];
 
     public Board(ulong[] board)
@@ -45,12 +35,12 @@ public class Board
             for (int file = 7; file >= 0; file--)
             {
                 if (GetPiece(file, rank) != Pieces.Empty)
-                    bitboards[GetPiece(file, rank) >> 3] |= GetSquare(file, rank);
+                    bitboards[GetPiece(file, rank) >> 3] |= Bitboards.GetSquare(file, rank);
             }
         }
     }
 
-    public Board(Board board)
+    public Board(Board board) // clone board
     {
         this.board = (ulong[])board.board.Clone();
         side = board.side;
@@ -68,8 +58,8 @@ public class Board
         enPassant = (8, 8);
         
         // update bitboards
-        bitboards[side] ^= GetSquare(move.Source);
-        bitboards[side] ^= GetSquare(move.Destination);
+        bitboards[side] ^= Bitboards.GetSquare(move.Source);
+        bitboards[side] ^= Bitboards.GetSquare(move.Destination);
 
         switch (move.Type)
         {
@@ -86,39 +76,39 @@ public class Board
             case 0b0010: // white short castle
                 Clear(7, 0);
                 SetPiece(5,0, Pieces.WhiteRook);
-                bitboards[side] ^= GetSquare(7,0);
-                bitboards[side] ^= GetSquare(5,0);
+                bitboards[side] ^= Bitboards.GetSquare(7,0);
+                bitboards[side] ^= Bitboards.GetSquare(5,0);
             break;
             
             case 0b0011: // white long castle
                 Clear(0, 0);
                 SetPiece(3,0, Pieces.WhiteRook);
-                bitboards[side] ^= GetSquare(0,0);
-                bitboards[side] ^= GetSquare(3,0);
+                bitboards[side] ^= Bitboards.GetSquare(0,0);
+                bitboards[side] ^= Bitboards.GetSquare(3,0);
             break;
             
             case 0b1010: // black short castle
                 Clear(7, 7);
                 SetPiece(5,7, Pieces.BlackRook);
-                bitboards[side] ^= GetSquare(7,7);
-                bitboards[side] ^= GetSquare(5,7);
+                bitboards[side] ^= Bitboards.GetSquare(7,7);
+                bitboards[side] ^= Bitboards.GetSquare(5,7);
             break;
             
             case 0b1011: // black long castle
                 Clear(0, 7);
                 SetPiece(3,7, Pieces.BlackRook);
-                bitboards[side] ^= GetSquare(0,7);
-                bitboards[side] ^= GetSquare(3,7);
+                bitboards[side] ^= Bitboards.GetSquare(0,7);
+                bitboards[side] ^= Bitboards.GetSquare(3,7);
             break;
             
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 5);
-                bitboards[side] ^= GetSquare(move.Destination.file,5);
+                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,5);
             break;
             
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
-                bitboards[side] ^= GetSquare(move.Destination.file,3);
+                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,3);
             break;
         }
 

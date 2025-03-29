@@ -6,6 +6,7 @@ public struct Move
     public (int file, int rank) Destination;
     public ulong Promotion;
     public int Type;
+    public int Priority = 0;
     
     /*
     Special moves
@@ -21,12 +22,13 @@ public struct Move
     1100 - black en passant
     */
 
-    public Move((int file, int rank) source, (int file, int rank) destination, ulong promotion = 0b111, int type = 0b0000)
+    public Move((int file, int rank) source, (int file, int rank) destination, ulong promotion = 0b111, int type = 0b0000, int priority = 0)
     {
         Source = source;
         Destination = destination;
         Promotion = promotion;
         Type = type;
+        Priority = priority;
     }
 
     private static readonly Dictionary<char, int> Indices = new()
