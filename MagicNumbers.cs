@@ -19,7 +19,7 @@ public static class MagicNumbers
             // multiply every combination with the magic number and push them right by 48, only leaving the leftmost 16 bits
             for (int i = 0; i < combinations.Length; i++)
             {
-                results[i] = (combinations[i] * candidateNumber) >> 46;
+                results[i] = (combinations[i] * candidateNumber) >> 48;
             }
 
             // if the result array contains duplicates, the number isn't magic, so don't bother checking it for further pushes
@@ -56,7 +56,7 @@ public static class MagicNumbers
             }
         }
 
-        return (magicNumber, push + 46, (int)results.Max());
+        return (magicNumber, push + 48, (int)results.Max());
     }
 
     public static (ulong magicNumber, int push, int highest)[,] Presets(string type)
@@ -90,7 +90,7 @@ public static class MagicNumbers
         }
     }
     
-    public static (ulong magicNumber, int push, int highest)[,] RookNumbers =
+    public static readonly (ulong magicNumber, int push, int highest)[,] RookNumbers =
     {
         {
             (9923146022150792333, 47, 131063), (7668639886525986227, 47, 131063), (3629133785401589564, 47, 131068),
@@ -134,7 +134,7 @@ public static class MagicNumbers
         }
     };
 
-    public static (ulong magicNumber, int push, int highest)[,] BishopNumbers =
+    public static readonly (ulong magicNumber, int push, int highest)[,] BishopNumbers =
     {
         {
             (10984437588327355704, 51, 8188), (7006058535829348525, 52, 4044), (14906122406994150172, 49, 32619),
@@ -181,7 +181,7 @@ public static class MagicNumbers
         }
     };
 
-    public static (ulong magicNumber, int push, int highest)[,] RookCaptureNumbers =
+    public static readonly (ulong magicNumber, int push, int highest)[,] RookCaptureNumbers =
     {
         {
             (14604456967665027503, 56, 255), (15030855612444089828, 54, 981), (6688047831116666665, 53, 2007),
@@ -225,7 +225,7 @@ public static class MagicNumbers
         },
     };
 
-    public static (ulong magicNumber, int push, int highest)[,] BishopCaptureNumbers =
+    public static readonly (ulong magicNumber, int push, int highest)[,] BishopCaptureNumbers =
     {
         {
             (9010333806965627226, 60, 12), (5811303244256242621, 59, 29), (12058155319510274934, 58, 58),
@@ -268,4 +268,49 @@ public static class MagicNumbers
             (12410256091080296116, 58, 51), (6747664203482260689, 60, 12),
         },
     };
+
+    public static readonly (ulong magicNumber, int push, int highest)[,] KnightNumbers =
+    {
+        {
+            (4213676592776040603, 61, 6), (808408947955507185, 60, 14), (16963565108934586562, 59, 30),
+            (573115046082495782, 59, 30), (12156813312854239751, 59, 30), (14074099221382392032, 59, 30),
+            (2888185195808407391, 60, 14), (10475772087203011374, 61, 6),
+        },
+        {
+            (2469661812558223614, 60, 14), (8239392681613658638, 59, 30), (6286539138790868484, 56, 200),
+            (15556548148750665240, 56, 246), (7404718928578338643, 56, 236), (6762987143332244783, 56, 248),
+            (16730202879017778776, 59, 30), (39230985230081057, 60, 14),
+        },
+        {
+            (6952325437502511, 59, 30), (3920170366468096180, 56, 246), (1271271514612533967, 53, 2019),
+            (9602032458780865690, 53, 2031), (4070371430365924078, 53, 2032), (4771335980013109165, 53, 2031),
+            (13774237551004564925, 56, 245), (9553278973925469675, 59, 30),
+        },
+        {
+            (15166462884268499094, 59, 30), (6175404168450639348, 56, 243), (8513515329442144280, 54, 1021),
+            (7002917578961288694, 53, 2017), (2376946087991284407, 53, 2032), (4534647674833750750, 53, 2021),
+            (9954597193904699111, 56, 248), (14590000767461115766, 59, 30),
+        },
+        {
+            (8055173476809312782, 59, 30), (11090869709082870435, 57, 126), (7499630584370057330, 54, 981),
+            (3296989605669134658, 53, 2023), (16500173358649078557, 53, 2032), (13344864798714543066, 53, 2021),
+            (5463632756021360379, 56, 250), (7054049079284663758, 59, 30),
+        },
+        {
+            (3551619717381884548, 59, 30), (4221346403705405205, 56, 236), (16288262982767754982, 54, 1017),
+            (1324099807659685995, 53, 2028), (6930368457193127972, 53, 2028), (1008094912519895388, 53, 2025),
+            (16321906157804397369, 56, 242), (6354650574294438347, 59, 30),
+        },
+        {
+            (10558821836590494625, 60, 14), (8793859125239129640, 59, 30), (9755983088764294933, 57, 126),
+            (4589120049736448047, 56, 245), (8787661853325006163, 56, 239), (6577023664294630843, 56, 247),
+            (4404569093463347202, 59, 30), (14023104255707510421, 60, 14),
+        },
+        {
+            (10676862309737651292, 61, 6), (5616990624400221206, 60, 14), (17791272422881628553, 59, 30),
+            (14036046260490357260, 59, 30), (11762140548173728179, 59, 30), (7303994849371872528, 59, 30),
+            (4797273506439055731, 60, 14), (5646966869293985530, 61, 6),
+        },
+    };
+
 }

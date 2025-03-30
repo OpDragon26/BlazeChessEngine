@@ -38,7 +38,6 @@ public static class Search
                 // no captures
                 moves = Bitboards.RookLookupMoves(pos, board.AllPieces());
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
-
                 index += moves.moves.Length;
 
                 // magic lookup of only captures
@@ -51,7 +50,6 @@ public static class Search
             case Pieces.WhiteBishop:
                 moves = Bitboards.BishopLookupMoves(pos, board.AllPieces());
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
-
                 index += moves.moves.Length;
                 
                 captures = new Span<Move>(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
@@ -63,7 +61,6 @@ public static class Search
                 // find rook moves
                 moves = Bitboards.RookLookupMoves(pos, board.AllPieces());
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
-
                 index += moves.moves.Length;
                 
                 captures = new Span<Move>(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
@@ -73,14 +70,24 @@ public static class Search
                 // find bishop moves
                 moves = Bitboards.BishopLookupMoves(pos, board.AllPieces());
                 new Span<Move>(moves.moves).CopyTo(moveSpan.Slice(index));
-
                 index += moves.moves.Length;
                 
                 captures = new Span<Move>(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
+            
+            case Pieces.WhiteKnight:
+                // find moves, no captures
+                Span<Move> knightMoves = new Span<Move>(Bitboards.KnightLookupMoves(pos, board.AllPieces()));
+                knightMoves.CopyTo(moveSpan);
+                index += knightMoves.Length;
                 
+                // find only captures
+                captures = new Span<Move>(Bitboards.KnightLookupCaptures(pos, board.bitboards[1 - side]));
+                captures.CopyTo(moveSpan.Slice(index));
+                index += captures.Length;
+            break;
         }
 
         return index;
