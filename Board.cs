@@ -119,6 +119,11 @@ public class Board
 
         side = 1 - side;
     }
+
+    public ulong AllPieces()
+    {
+        return bitboards[0] | bitboards[1];
+    }
     
     private readonly ulong PieceMask = 0xF; // covers the last 4 bits
     public ulong GetPiece((int file, int rank) square) // overload that takes a tuple

@@ -11,7 +11,6 @@ public struct Move
     /*
     Special moves
     0000 - regular move
-    1000 - also regular move
     0001 - white double move
     1001 - black double move
     0010 - white short castle
