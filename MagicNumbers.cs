@@ -19,7 +19,7 @@ public static class MagicNumbers
             // multiply every combination with the magic number and push them right by 48, only leaving the leftmost 16 bits
             for (int i = 0; i < combinations.Length; i++)
             {
-                results[i] = (combinations[i] * candidateNumber) >> 47;
+                results[i] = (combinations[i] * candidateNumber) >> 46;
             }
 
             // if the result array contains duplicates, the number isn't magic, so don't bother checking it for further pushes
@@ -56,7 +56,7 @@ public static class MagicNumbers
             }
         }
 
-        return (magicNumber, push + 47, (int)results.Max());
+        return (magicNumber, push + 46, (int)results.Max());
     }
 
     public static (ulong magicNumber, int push, int highest)[,] Presets(string type)
@@ -90,7 +90,7 @@ public static class MagicNumbers
         }
     }
     
-        public static (ulong magicNumber, int push, int highest)[,] RookNumbers =
+    public static (ulong magicNumber, int push, int highest)[,] RookNumbers =
     {
         {
             (9923146022150792333, 47, 131063), (7668639886525986227, 47, 131063), (3629133785401589564, 47, 131068),
