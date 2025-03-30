@@ -7,47 +7,67 @@ public static class Bitboards
     The returned moves all land on empty squares, while the bitboard shows moves that land on occupied squares. 
     Select the enemy pieces from those captured using the AND operation and a second magic lookup is initiated using that bitboard, which returns another span of moves
     */
+
+    private static readonly ulong[,] RookMasks = new ulong[8,8];
+    private static readonly ulong[,] BishopMasks = new ulong[8,8];
+
+    private static readonly ulong[,][] RookBlockers = new ulong[8,8][];
+    private static readonly ulong[,][] BishopBlockers = new ulong[8,8][];
+    private static readonly (Move[] moves, ulong captures)[,][] RookMoves = new (Move[] moves, ulong captures)[8,8][];
+    private static readonly (Move[] moves, ulong captures)[,][] BishopMoves = new (Move[] moves, ulong captures)[8,8][];
+    private static readonly ulong[,][] RookCaptureCombinations = new ulong[8,8][]; // for each square, for all blockers each combination
+    private static readonly ulong[,][] BishopCaptureCombinations = new ulong[8,8][];
+
+    public static class MagicLookup
+    {
+        public static readonly (ulong magicNumber, int push, int highest)[,] RookMove = new (ulong magicNumber, int push, int highest)[8,8];
+        public static readonly (ulong magicNumber, int push, int highest)[,] BishopMove = new (ulong magicNumber, int push, int highest)[8,8];
+        public static readonly (ulong magicNumber, int push, int highest)[,] RookCapture = new (ulong magicNumber, int push, int highest)[8,8];
+        public static readonly (ulong magicNumber, int push, int highest)[,] BishopCapture = new (ulong magicNumber, int push, int highest)[8,8];
+        
+        public static readonly (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
+        public static readonly (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
+        public static readonly Move[,][][] RookCaptureLookup = new Move[8,8][][];
+        public static readonly Move[,][][] BishopCaptureLookup = new Move[8,8][][];
+    }
     
-    public static ulong[,] RookMasks = new ulong[8,8];
-    public static ulong[,] BishopMasks = new ulong[8,8];
-    
-    public static ulong[,][] RookBlockers = new ulong[8,8][];
-    public static ulong[,][] BishopBlockers = new ulong[8,8][];
-    public static (Move[] moves, ulong captures)[,][] RookMoves = new (Move[] moves, ulong captures)[8,8][];
-    public static (Move[] moves, ulong captures)[,][] BishopMoves = new (Move[] moves, ulong captures)[8,8][];
-    public static ulong[,][] RookCaptureCombinations = new ulong[8,8][]; // for each square, for all blockers each combination
-    public static ulong[,][] BishopCaptureCombinations = new ulong[8,8][];
-    
-    public static (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
-    public static (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
-    
-    public static (ulong magicNumber, int push, int highest)[,] RookMagicNumbers = new (ulong magicNumber, int push, int highest)[8,8];
-    public static (ulong magicNumber, int push, int highest)[,] BishopMagicNumbers = new (ulong magicNumber, int push, int highest)[8,8];
-    
+
     private const ulong File = 0x8080808080808080;
     private const ulong Rank = 0xFF00000000000000;
-    
+
     private const ulong UpDiagonal = 0x102040810204080;
     private const ulong DownDiagonal = 0x8040201008040201;
 
     private static bool init;
 
-    public static (Move[] moves, ulong captures) RookLookupMoves((int file, int rank) pos, ulong blockers)
+    public static ref (Move[] moves, ulong captures) RookLookupMoves((int file, int rank) pos, ulong blockers)
     {
-        return RookLookup[pos.file, pos.rank]
+        return ref MagicLookup.RookLookup[pos.file, pos.rank]
         [
             ((blockers & RookMasks[pos.file, pos.rank]) // blocker combination
-             * RookMagicNumbers[pos.file, pos.rank].magicNumber) >> RookMagicNumbers[pos.file, pos.rank].push
+             * MagicLookup.RookMove[pos.file, pos.rank].magicNumber) >> MagicLookup.RookMove[pos.file, pos.rank].push
         ];
     }
-    
-    public static (Move[] moves, ulong captures) BishopLookupMoves((int file, int rank) pos, ulong blockers)
+
+    public static ref (Move[] moves, ulong captures) BishopLookupMoves((int file, int rank) pos, ulong blockers)
     {
-        return BishopLookup[pos.file, pos.rank]
+        return ref MagicLookup.BishopLookup[pos.file, pos.rank]
         [
             ((blockers & BishopMasks[pos.file, pos.rank]) // blocker combination
-            * BishopMagicNumbers[pos.file, pos.rank].magicNumber) >> BishopMagicNumbers[pos.file, pos.rank].push
+            * MagicLookup.BishopMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopMove[pos.file, pos.rank].push
         ];
+    }
+
+    public static ref Move[] RookLookupCaptures((int file, int rank) pos, ulong captures)
+    {
+        return ref MagicLookup.RookCaptureLookup[pos.file, pos.rank]
+            [(captures * MagicLookup.RookCapture[pos.file, pos.rank].magicNumber) >> MagicLookup.RookCapture[pos.file, pos.rank].push];
+    }
+
+    public static ref Move[] BishopLookupCaptures((int file, int rank) pos, ulong captures)
+    {
+        return ref MagicLookup.BishopCaptureLookup[pos.file, pos.rank]
+            [(captures * MagicLookup.BishopCapture[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopCapture[pos.file, pos.rank].push];
     }
 
     public static void Init()
@@ -114,21 +134,39 @@ public static class Bitboards
             for (int file = 7; file >= 0; file--)
             {
                 // rook numbers
-                RookMagicNumbers[file, rank] = MagicNumbers.RookNumbers[file, rank];
-                RookLookup[file, rank] = new (Move[] moves, ulong captures)[RookMagicNumbers[file, rank].highest + 1];
+                MagicLookup.RookMove[file, rank] = MagicNumbers.RookNumbers[file, rank];
+                MagicLookup.RookLookup[file, rank] = new (Move[] moves, ulong captures)[MagicLookup.RookMove[file, rank].highest + 1];
 
                 for (int i = 0; i < RookBlockers[file, rank].Length; i++) // for each blocker
                 {
-                    RookLookup[file, rank][(RookBlockers[file, rank][i] * RookMagicNumbers[file, rank].magicNumber) >> RookMagicNumbers[file, rank].push] = RookMoves[file, rank][i];
+                    MagicLookup.RookLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = RookMoves[file, rank][i];
                 }
 
                 // bishop numbers
-                //BishopMagicNumbers[file, rank] = MagicNumbers.BishopNumbers[file, rank];
-                BishopLookup[file, rank] = new (Move[] moves, ulong captures)[BishopMagicNumbers[file, rank].highest + 1];
+                MagicLookup.BishopMove[file, rank] = MagicNumbers.BishopNumbers[file, rank];
+                MagicLookup.BishopLookup[file, rank] = new (Move[] moves, ulong captures)[MagicLookup.BishopMove[file, rank].highest + 1];
 
                 for (int i = 0; i < BishopBlockers[file, rank].Length; i++) // for each blocker
                 {
-                    BishopLookup[file, rank][(BishopBlockers[file, rank][i] * BishopMagicNumbers[file, rank].magicNumber) >> BishopMagicNumbers[file, rank].push] = BishopMoves[file, rank][i];
+                    MagicLookup.BishopLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = BishopMoves[file, rank][i];
+                }
+
+                // rook captures
+                MagicLookup.RookCapture[file, rank] = MagicNumbers.RookCaptureNumbers[file, rank]; // MagicNumbers.GenerateRepeat(RookCaptureCombinations[file, rank], 1000);
+                MagicLookup.RookCaptureLookup[file, rank] = new Move[MagicLookup.RookCapture[file, rank].highest + 1][];
+
+                for (int i = 0; i < RookCaptureCombinations[file, rank].Length; i++) // for each blocker
+                {
+                    MagicLookup.RookCaptureLookup[file, rank][(RookCaptureCombinations[file, rank][i] * MagicLookup.RookCapture[file, rank].magicNumber) >> MagicLookup.RookCapture[file, rank].push] = GetCaptures(RookCaptureCombinations[file, rank][i], (file, rank));
+                }
+                
+                // bishop captures
+                MagicLookup.BishopCapture[file, rank] = MagicNumbers.BishopCaptureNumbers[file, rank]; // MagicNumbers.GenerateRepeat(BishopCaptureCombinations[file, rank], 1000);
+                MagicLookup.BishopCaptureLookup[file, rank] = new Move[MagicLookup.BishopCapture[file, rank].highest + 1][];
+
+                for (int i = 0; i < BishopCaptureCombinations[file, rank].Length; i++) // for each blocker
+                {
+                    MagicLookup.BishopCaptureLookup[file, rank][(BishopCaptureCombinations[file, rank][i] * MagicLookup.BishopCapture[file, rank].magicNumber) >> MagicLookup.BishopCapture[file, rank].push] = GetCaptures(BishopCaptureCombinations[file, rank][i], (file, rank));
                 }
 
                 //done++;
