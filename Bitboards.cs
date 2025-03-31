@@ -23,10 +23,14 @@ public static class Bitboards
     private static readonly ulong[,] KingMasks = new ulong[8,8];
     private static readonly ulong[,][] KingCombinations = new ulong[8,8][];
     
-    public static readonly ulong[,] WhitePawnMasks = new ulong[8,8];
-    private static readonly ulong[,][] WhitePawnCombinations = new ulong[8,8][];
-    public static readonly ulong[,] BlackPawnMasks = new ulong[8,8];
-    private static readonly ulong[,][] BlackPawnCombinations = new ulong[8,8][];
+    public static readonly ulong[,] WhitePawnMoveMasks = new ulong[8,8];
+    private static readonly ulong[,][] WhitePawnMoveCombinations = new ulong[8,8][];
+    public static readonly ulong[,] BlackPawnMoveMasks = new ulong[8,8];
+    private static readonly ulong[,][] BlackPawnMoveCombinations = new ulong[8,8][];
+    public static readonly ulong[,] WhitePawnCaptureMasks = new ulong[8,8];
+    private static readonly ulong[,][] WhitePawnCaptureCombinations = new ulong[8,8][];
+    public static readonly ulong[,] BlackPawnCaptureMasks = new ulong[8,8];
+    private static readonly ulong[,][] BlackPawnCaptureCombinations = new ulong[8,8][];
 
     public static class MagicLookup
     {
@@ -198,25 +202,31 @@ public static class Bitboards
                 
                 // white pawns
                 ulong wpmMask = 0;
+                ulong wpcMask = 0;
                 wpmMask |= GetSquare(file, rank + 1);
-                wpmMask |= GetSquare(file + 1, rank + 1);
-                wpmMask |= GetSquare(file - 1, rank + 1);
+                wpcMask |= GetSquare(file + 1, rank + 1);
+                wpcMask |= GetSquare(file - 1, rank + 1);
                 
                 if (rank == 1) wpmMask |= GetSquare(file, rank + 2);
                 
-                WhitePawnMasks[file, rank] = wpmMask;
-                WhitePawnCombinations[file, rank] = Combinations(wpmMask);
+                WhitePawnMoveMasks[file, rank] = wpmMask;
+                WhitePawnMoveCombinations[file, rank] = Combinations(wpmMask);
+                WhitePawnCaptureMasks[file, rank] = wpcMask;
+                WhitePawnCaptureCombinations[file, rank] = Combinations(wpcMask);
                 
                 // black pawns
                 ulong bpmMask = 0;
+                ulong bpcMask = 0;
                 bpmMask |= GetSquare(file, rank - 1);
-                bpmMask |= GetSquare(file + 1, rank - 1);
-                bpmMask |= GetSquare(file - 1, rank - 1);
+                bpcMask |= GetSquare(file + 1, rank - 1);
+                bpcMask |= GetSquare(file - 1, rank - 1);
                 
                 if (rank == 6) bpmMask |= GetSquare(file, rank - 2);
                 
-                BlackPawnMasks[file, rank] = bpmMask;
-                BlackPawnCombinations[file, rank] = Combinations(bpmMask);
+                BlackPawnMoveMasks[file, rank] = bpmMask;
+                BlackPawnMoveCombinations[file, rank] = Combinations(bpmMask);
+                BlackPawnCaptureMasks[file, rank] = bpcMask;
+                BlackPawnCaptureCombinations[file, rank] = Combinations(bpcMask);
             }
         }
         
@@ -294,20 +304,7 @@ public static class Bitboards
                     continue;
                 
                 // white pawns
-                MagicLookup.WhitePawnMove[file, rank] = MagicNumbers.WhitePawnNumbers[file, rank]; // MagicNumbers.GenerateRepeat(WhitePawnCombinations[file, rank], 10000);
-                MagicLookup.WhitePawnLookup[file, rank] = new Move[MagicLookup.WhitePawnMove[file, rank].highest + 1][];
-                for (int i = 0; i < WhitePawnCombinations[file, rank].Length; i++) // for each combination
-                {
-                    MagicLookup.WhitePawnLookup[file, rank][(WhitePawnCombinations[file, rank][i] * MagicLookup.WhitePawnMove[file, rank].magicNumber) >> MagicLookup.WhitePawnMove[file, rank].push] = GetPawnMoves(WhitePawnCombinations[file, rank][i], (file, rank), 0);
-                }
                 
-                // black pawns
-                MagicLookup.BlackPawnMove[file, rank] = MagicNumbers.BlackPawnNumbers[file, rank]; // MagicNumbers.GenerateRepeat(BlackPawnCombinations[file, rank], 10000);
-                MagicLookup.BlackPawnLookup[file, rank] = new Move[MagicLookup.BlackPawnMove[file, rank].highest + 1][];
-                for (int i = 0; i < BlackPawnCombinations[file, rank].Length; i++) // for each combination
-                {
-                    MagicLookup.BlackPawnLookup[file, rank][(BlackPawnCombinations[file, rank][i] * MagicLookup.BlackPawnMove[file, rank].magicNumber) >> MagicLookup.BlackPawnMove[file, rank].push] = GetPawnMoves(BlackPawnCombinations[file, rank][i], (file, rank), 1);
-                }
             }
         }
     }
@@ -432,7 +429,53 @@ public static class Bitboards
                     moves.Add(new Move(pos, (pos.file, 7), Pieces.WhiteBishop, priority: 2));
                     moves.Add(new Move(pos, (pos.file, 7), Pieces.WhiteKnight, priority: 2));
                 }
-                
+            }
+            else // not a promotion
+            {
+                if ((combination & GetSquare(pos.file, pos.rank + 1)) == 0) // if the square in front is empty
+                {
+                    moves.Add(new Move(pos, (pos.file, pos.rank + 1), priority: 4));
+                    
+                    if ((combination & GetSquare(pos.file, pos.rank + 2)) == 0) // check if the double move square is empty
+                        moves.Add(new Move(pos, (pos.file, pos.rank + 2), priority: 4, type: 0b0001));
+                }
+            }
+        }
+        else
+        {
+            if (pos.rank == 1) // black promotion rank
+            {
+                if ((combination & GetSquare(pos.file, 0)) == 0) // if the square behind is empty
+                {
+                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackQueen, priority: 30));
+                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackRook, priority: 2));
+                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackBishop, priority: 2));
+                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackKnight, priority: 2));
+                }
+            }
+            else // not a promotion
+            {
+                if ((combination & GetSquare(pos.file, pos.rank - 1)) == 0) // if the square behind is empty
+                {
+                    moves.Add(new Move(pos, (pos.file, pos.rank - 1), priority: 4));
+                    
+                    if ((combination & GetSquare(pos.file, pos.rank - 2)) == 0) // check if the double move square is empty
+                        moves.Add(new Move(pos, (pos.file, pos.rank - 2), priority: 4, type: 0b1001));
+                }
+            }
+        }
+        
+        return moves.ToArray();
+    }
+
+    private static Move[] GetPawnCaptures(ulong combination, (int file, int rank) pos, int color)
+    {
+        List<Move> moves = new List<Move>();
+        
+        if (color == 0)
+        {
+            if (pos.rank == 6) // white promotion rank
+            {
                 // check if the capture squares are occupied
                 if ((combination & GetSquare(pos.file + 1, 7)) != 0)
                 {
@@ -451,14 +494,6 @@ public static class Bitboards
             }
             else // not a promotion
             {
-                if ((combination & GetSquare(pos.file, pos.rank + 1)) == 0) // if the square in front is empty
-                {
-                    moves.Add(new Move(pos, (pos.file, pos.rank + 1), priority: 4));
-                    
-                    if ((combination & GetSquare(pos.file, pos.rank + 2)) == 0) // check if the double move square is empty
-                        moves.Add(new Move(pos, (pos.file, pos.rank + 2), priority: 4, type: 0b0001));
-                }
-                
                 // check if the capture squares are occupied
                 if ((combination & GetSquare(pos.file + 1, pos.rank + 1)) != 0)
                     moves.Add(new Move(pos, (pos.file + 1, pos.rank + 1), priority: 60));
@@ -470,14 +505,6 @@ public static class Bitboards
         {
             if (pos.rank == 1) // black promotion rank
             {
-                if ((combination & GetSquare(pos.file, 0)) == 0) // if the square behind is empty
-                {
-                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackQueen, priority: 30));
-                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackRook, priority: 2));
-                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackBishop, priority: 2));
-                    moves.Add(new Move(pos, (pos.file, 0), Pieces.BlackKnight, priority: 2));
-                }
-                
                 // check if the capture squares are occupied
                 if ((combination & GetSquare(pos.file + 1, 0)) != 0)
                 {
@@ -496,14 +523,6 @@ public static class Bitboards
             }
             else // not a promotion
             {
-                if ((combination & GetSquare(pos.file, pos.rank - 1)) == 0) // if the square behind is empty
-                {
-                    moves.Add(new Move(pos, (pos.file, pos.rank - 1), priority: 4));
-                    
-                    if ((combination & GetSquare(pos.file, pos.rank - 2)) == 0) // check if the double move square is empty
-                        moves.Add(new Move(pos, (pos.file, pos.rank - 2), priority: 4, type: 0b1001));
-                }
-                
                 // check if the capture squares are occupied
                 if ((combination & GetSquare(pos.file + 1, pos.rank - 1)) != 0)
                     moves.Add(new Move(pos, (pos.file + 1, pos.rank - 1), priority: 60));
