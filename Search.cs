@@ -88,6 +88,16 @@ public static class Search
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
+            
+            case Pieces.WhiteKing:
+                Span<Move> kingMoves = new Span<Move>(Bitboards.KingLookupMoves(pos, board.AllPieces()));
+                kingMoves.CopyTo(moveSpan);
+                index += kingMoves.Length;
+
+                captures = new Span<Move>(Bitboards.KingLookupCaptures(pos, board.bitboards[1 - side]));
+                captures.CopyTo(moveSpan.Slice(index));
+                index += captures.Length;
+            break;
         }
 
         return index;

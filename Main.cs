@@ -10,8 +10,7 @@ match.board.MakeMove(new Move("e1g1", match.board));
 //match.Print(0);
 
 //match.Print(0);
-//match.PrintBitboard(Bitboards.KnightMasks[1,0], 0);
-//match.PrintBitboard(Bitboards.BishopMoves[1,1][81].captures, 0);
+////match.PrintBitboard(Bitboards.BishopMoves[1,1][81].captures, 0);
 //match.PrintBitboard(Bitboards.BishopLookupMoves((1,1),Bitboards.BishopBlockers[1,1][81]).captures, 0);
 //PrintBitboard(Bitboards.GetSquare(1,1), 1);
 
