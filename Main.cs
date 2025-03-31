@@ -15,27 +15,26 @@ match.board.MakeMove(new Move("e1g1", match.board));
 //PrintBitboard(Bitboards.GetSquare(1,1), 1);
 
 /*
-Console.WriteLine("Rooks");
+Console.WriteLine("White pawns");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
 {
     Console.Write("{");
     for (int j = 0; j < 8; j++) // for every item in row
     {
-        Console.Write(Bitboards.MagicLookup.RookCapture[i, j] + ",");
+        Console.Write(Bitboards.MagicLookup.WhitePawnMove[i, j] + ",");
     }
     Console.Write("},\n");
 }
 Console.WriteLine("}");
-
-Console.WriteLine("Knights");
+Console.WriteLine("Black pawns");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
 {
     Console.Write("{");
     for (int j = 0; j < 8; j++) // for every item in row
     {
-        Console.Write(Bitboards.MagicLookup.KnightMove[i, j] + ",");
+        Console.Write(Bitboards.MagicLookup.BlackPawnMove[i, j] + ",");
     }
     Console.Write("},\n");
 }

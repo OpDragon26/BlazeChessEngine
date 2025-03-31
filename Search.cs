@@ -33,6 +33,17 @@ public static class Search
         
         switch (piece & Pieces.TypeMask)
         {
+            case Pieces.WhitePawn:
+                if (board.side == 0) // white
+                {
+                    
+                }
+                else // black
+                {
+                    
+                }
+            break;
+            
             case Pieces.WhiteRook:
                 // magic lookup moves
                 // no captures
