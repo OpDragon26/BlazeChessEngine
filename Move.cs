@@ -37,6 +37,8 @@ public struct Move
         if (destination == (0,0) || source == (0,0)) CastlingBan &= 0b1011; // if a move is made from or to a1, remove white's long castle rights
         if (destination == (7,7) || source == (7,7)) CastlingBan &= 0b1101; // if a move is made from or to h8, remove black's short castle rights
         if (destination == (0,7) || source == (0,7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
+        if (source == (4, 0)) CastlingBan = 0b0011; // if the origin of the move is the white king's starting position, remove white's castling rights
+        if (source == (4, 7)) CastlingBan = 0b1100; // if the origin of the move is the black king's starting position, remove black's castling rights
     }
 
     private static readonly Dictionary<char, int> Indices = new()

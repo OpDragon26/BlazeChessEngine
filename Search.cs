@@ -117,26 +117,13 @@ public static class Search
             break;
             
             case Pieces.WhiteKing:
-                if (side == 0)
-                {
-                    Span<Move> kingMoves = new Span<Move>(Bitboards.WhiteKingLookupMoves(pos, board.AllPieces()));
-                    kingMoves.CopyTo(moveSpan);
-                    index += kingMoves.Length;
+                Span<Move> kingMoves = new Span<Move>(Bitboards.KingLookupMoves(pos, board.AllPieces()));
+                kingMoves.CopyTo(moveSpan);
+                index += kingMoves.Length;
 
-                    captures = new Span<Move>(Bitboards.WhiteKingLookupCaptures(pos, board.bitboards[1]));
-                    captures.CopyTo(moveSpan.Slice(index));
-                    index += captures.Length;
-                }
-                else
-                {
-                    Span<Move> kingMoves = new Span<Move>(Bitboards.BlackKingLookupMoves(pos, board.AllPieces()));
-                    kingMoves.CopyTo(moveSpan);
-                    index += kingMoves.Length;
-
-                    captures = new Span<Move>(Bitboards.BlackKingLookupCaptures(pos, board.bitboards[0]));
-                    captures.CopyTo(moveSpan.Slice(index));
-                    index += captures.Length;
-                }
+                captures = new Span<Move>(Bitboards.KingLookupCaptures(pos, board.bitboards[1]));
+                captures.CopyTo(moveSpan.Slice(index));
+                index += captures.Length;
             break;
         }
 
