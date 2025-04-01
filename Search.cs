@@ -22,6 +22,11 @@ public static class Search
             }
         }
 
+        if (board.enPassant.file != 8) // if there is an en passant square at all
+        {
+            
+        }
+
         if (ordering)
         {
             Move[] pseudoMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
