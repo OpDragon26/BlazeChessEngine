@@ -24,6 +24,9 @@ public class Board
     
     // bitboards
     public ulong[] bitboards = new ulong[2];
+    
+    // castling
+    public byte castling = 0b1111; // white short, white long, black short, black long
 
     public Board(ulong[] board)
     {
@@ -57,10 +60,11 @@ public class Board
             SetPiece(move.Destination, GetPiece(move.Source));
         }
         else
-            SetPiece(move.Destination, (ulong)(side << 3) | move.Promotion);
+            SetPiece(move.Destination, ((ulong)side << 3) | move.Promotion);
         
         Clear(move.Source);
         enPassant = (8, 8);
+        castling &= move.CastlingBan;
         
         // update bitboards
         bitboards[side] ^= Bitboards.GetSquare(move.Source);
@@ -183,6 +187,7 @@ public static class Pieces
     public const ulong Empty = 0b1111; // 15
     
     public const ulong TypeMask = 0b111;
+    public const ulong ColorMask = 0b1000;
 }
 
 public static class Presets

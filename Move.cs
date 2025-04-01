@@ -7,6 +7,7 @@ public struct Move
     public ulong Promotion;
     public int Type;
     public int Priority = 0;
+    public byte CastlingBan;
     
     /*
     Special moves
@@ -21,13 +22,21 @@ public struct Move
     1100 - black en passant
     */
 
-    public Move((int file, int rank) source, (int file, int rank) destination, ulong promotion = 0b111, int type = 0b0000, int priority = 0)
+    // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
+    
+    public Move((int file, int rank) source, (int file, int rank) destination, ulong promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111)
     {
         Source = source;
         Destination = destination;
         Promotion = promotion;
         Type = type;
         Priority = priority;
+        CastlingBan = castlingBan;
+
+        if (destination == (7,0) || source == (7,0)) CastlingBan &= 0b0111; // if a move is made from or to h1, remove white's short castle rights
+        if (destination == (0,0) || source == (0,0)) CastlingBan &= 0b1011; // if a move is made from or to a1, remove white's long castle rights
+        if (destination == (7,7) || source == (7,7)) CastlingBan &= 0b1101; // if a move is made from or to h8, remove black's short castle rights
+        if (destination == (0,7) || source == (0,7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
     }
 
     private static readonly Dictionary<char, int> Indices = new()
@@ -74,5 +83,10 @@ public struct Move
                     Type = 0b0010 | (board.side << 3);
             }
         }
+        
+        if (Destination == (7,0) || Source == (7,0)) CastlingBan &= 0b0111; // if a move is made from or to h1, remove white's short castle rights
+        if (Destination == (0,0) || Source == (0,0)) CastlingBan &= 0b1011; // if a move is made from or to a1, remove white's long castle rights
+        if (Destination == (7,7) || Source == (7,7)) CastlingBan &= 0b1101; // if a move is made from or to h8, remove black's short castle rights
+        if (Destination == (0,7) || Source == (0,7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
     }
 }

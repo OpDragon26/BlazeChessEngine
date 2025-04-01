@@ -3,7 +3,7 @@ namespace Blaze;
 public static class Search
 {
     // returns pseudo legal moves: abides by the rules of piece movement, but does not account for checks
-    public static Move[] SearchBoard(Board board)
+    public static Move[] SearchBoard(Board board, bool ordering = true)
     {
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
 
@@ -20,6 +20,13 @@ public static class Search
                     index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan);
                 }
             }
+        }
+
+        if (ordering)
+        {
+            Move[] pseudoMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
+            Array.Sort(pseudoMoveArray, (x,y) => x.Priority.CompareTo(y.Priority));
+            return pseudoMoveArray;
         }
 
         return new Span<Move>(moveArray, 0, index).ToArray();
@@ -110,13 +117,26 @@ public static class Search
             break;
             
             case Pieces.WhiteKing:
-                Span<Move> kingMoves = new Span<Move>(Bitboards.KingLookupMoves(pos, board.AllPieces()));
-                kingMoves.CopyTo(moveSpan);
-                index += kingMoves.Length;
+                if (side == 0)
+                {
+                    Span<Move> kingMoves = new Span<Move>(Bitboards.WhiteKingLookupMoves(pos, board.AllPieces()));
+                    kingMoves.CopyTo(moveSpan);
+                    index += kingMoves.Length;
 
-                captures = new Span<Move>(Bitboards.KingLookupCaptures(pos, board.bitboards[1 - side]));
-                captures.CopyTo(moveSpan.Slice(index));
-                index += captures.Length;
+                    captures = new Span<Move>(Bitboards.WhiteKingLookupCaptures(pos, board.bitboards[1]));
+                    captures.CopyTo(moveSpan.Slice(index));
+                    index += captures.Length;
+                }
+                else
+                {
+                    Span<Move> kingMoves = new Span<Move>(Bitboards.BlackKingLookupMoves(pos, board.AllPieces()));
+                    kingMoves.CopyTo(moveSpan);
+                    index += kingMoves.Length;
+
+                    captures = new Span<Move>(Bitboards.BlackKingLookupCaptures(pos, board.bitboards[0]));
+                    captures.CopyTo(moveSpan.Slice(index));
+                    index += captures.Length;
+                }
             break;
         }
 
