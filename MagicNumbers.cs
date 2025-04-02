@@ -4,7 +4,7 @@ public static class MagicNumbers
 {
     // generate a magic number with a push of at least 48
     // reused code from my previous attempt
-    public static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations)
+    private static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations)
     {
         ulong magicNumber;
         int push = 0;
@@ -78,7 +78,7 @@ public static class MagicNumbers
         return magicNumber;
     }
     
-    private static Random RandGen = new();
+    private static readonly Random RandGen = new();
     
     private static ulong RandomUlong()
     {

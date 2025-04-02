@@ -92,8 +92,8 @@ public class Match
         Console.WriteLine(bitboardStr);
     }
 
-    private static readonly string[] PieceStrings = new[]
-    {
+    private static readonly string[] PieceStrings =
+    [
         "\u265f",
         "\u265c",
         "\u265e",
@@ -110,5 +110,5 @@ public class Match
         "\u2654", // 13
         "?",
         " "
-    };
+    ];
 }

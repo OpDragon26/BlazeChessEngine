@@ -5,10 +5,13 @@ Match match = new Match(new Board(Presets.StartingBoard), true);
 
 Bitboards.Init();
 
-//match.board.MakeMove(new Move("e1g1", match.board));
+match.board.MakeMove(new Move("e2e4", match.board));
+match.board.MakeMove(new Move("d7d5", match.board));
+match.board.MakeMove(new Move("d1h5", match.board));
+match.board.MakeMove(new Move("d5e4", match.board));
 
 Move[] moves = Search.SearchBoard(match.board);
-match.board.MakeMove(moves[14]);
+match.board.MakeMove(moves[1]);
 
 match.Print(0);
 /*

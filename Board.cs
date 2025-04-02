@@ -23,7 +23,7 @@ public class Board
     public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    public ulong[] bitboards = new ulong[2];
+    public readonly ulong[] bitboards = new ulong[2];
     
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
@@ -47,7 +47,7 @@ public class Board
     {
         this.board = (ulong[])board.board.Clone();
         side = board.side;
-        bitboards = new[] { board.bitboards[0], board.bitboards[1] };
+        bitboards = [ board.bitboards[0], board.bitboards[1] ];
         enPassant = board.enPassant;
     }
 
@@ -192,11 +192,11 @@ public static class Pieces
 
 public static class Presets
 {
-    public static readonly ulong[] StartingBoard = new ulong[]
-    {
+    public static readonly ulong[] StartingBoard =
+    [
         0b0001_0010_0011_0101_0100_0011_0010_0001_0000_0000_0000_0000_0000_0000_0000_0000, // white pieces
         ulong.MaxValue, // full empty row
         ulong.MaxValue,
         0b1000_1000_1000_1000_1000_1000_1000_1000_1001_1010_1011_1101_1100_1011_1010_1001 // black pieces
-    };
+    ];
 }

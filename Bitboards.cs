@@ -23,16 +23,28 @@ public static class Bitboards
     private static readonly ulong[,] KingMasks = new ulong[8,8];
     private static readonly ulong[,][] KingCombinations = new ulong[8,8][];
     
-    public static readonly ulong[,] WhitePawnMoveMasks = new ulong[8,8];
+    private static readonly ulong[,] WhitePawnMoveMasks = new ulong[8,8];
     private static readonly ulong[,][] WhitePawnMoveCombinations = new ulong[8,8][];
-    public static readonly ulong[,] BlackPawnMoveMasks = new ulong[8,8];
+    private static readonly ulong[,] BlackPawnMoveMasks = new ulong[8,8];
     private static readonly ulong[,][] BlackPawnMoveCombinations = new ulong[8,8][];
-    public static readonly ulong[,] WhitePawnCaptureMasks = new ulong[8,8];
+    private static readonly ulong[,] WhitePawnCaptureMasks = new ulong[8,8];
     private static readonly ulong[,][] WhitePawnCaptureCombinations = new ulong[8,8][];
-    public static readonly ulong[,] BlackPawnCaptureMasks = new ulong[8,8];
+    private static readonly ulong[,] BlackPawnCaptureMasks = new ulong[8,8];
     private static readonly ulong[,][] BlackPawnCaptureCombinations = new ulong[8,8][];
+    
+    private static readonly int[,] PriorityWeights = new[,]
+    {
+        {0,1,2,3,3,2,1,0},
+        {1,2,3,4,4,3,2,1},
+        {2,3,4,5,5,4,3,2},
+        {3,4,5,6,6,5,4,3},
+        {3,4,5,6,6,5,4,3},
+        {2,3,4,5,5,4,3,2},
+        {1,2,3,4,4,3,2,1},
+        {0,1,2,3,3,2,1,0},
+    };
 
-    public static class MagicLookup
+    private static class MagicLookup
     {
         public static readonly (ulong magicNumber, int push, int highest)[,] RookMove = new (ulong magicNumber, int push, int highest)[8,8];
         public static readonly (ulong magicNumber, int push, int highest)[,] BishopMove = new (ulong magicNumber, int push, int highest)[8,8];
@@ -124,13 +136,13 @@ public static class Bitboards
     public static ref Move[] WhitePawnLookupMoves((int file, int rank) pos, ulong blockers)
     {
         return ref MagicLookup.WhitePawnLookup[pos.file, pos.rank]
-            [((blockers & WhitePawnCaptureMasks[pos.file, pos.rank]) * MagicLookup.WhitePawnMove[pos.file, pos.rank].magicNumber) >> MagicLookup.WhitePawnMove[pos.file, pos.rank].push];
+            [((blockers & WhitePawnMoveMasks[pos.file, pos.rank]) * MagicLookup.WhitePawnMove[pos.file, pos.rank].magicNumber) >> MagicLookup.WhitePawnMove[pos.file, pos.rank].push];
     }
 
     public static ref Move[] BlackPawnLookupMoves((int file, int rank) pos, ulong blockers)
     {
         return ref MagicLookup.BlackPawnLookup[pos.file, pos.rank]
-            [((blockers & BlackPawnCaptureMasks[pos.file, pos.rank]) * MagicLookup.BlackPawnMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BlackPawnMove[pos.file, pos.rank].push];
+            [((blockers & BlackPawnMoveMasks[pos.file, pos.rank]) * MagicLookup.BlackPawnMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BlackPawnMove[pos.file, pos.rank].push];
     }
 
     public static ref Move[] WhitePawnLookupCaptures((int file, int rank) pos, ulong enemy)
@@ -404,23 +416,23 @@ public static class Bitboards
         return combinations;
     }
 
-    private static readonly (int file, int rank)[] RookPattern = new[]
-    {
+    private static readonly (int file, int rank)[] RookPattern =
+    [
         (0, 1),
         (0, -1),
         (1, 0),
         (-1, 0),
-    };
-    private static readonly (int file, int rank)[] BishopPattern = new[]
-    {
+    ];
+    private static readonly (int file, int rank)[] BishopPattern =
+    [
         (1, 1),
         (1, -1),
         (-1, 1),
         (-1, -1),
-    };
+    ];
 
-    private static readonly (int file, int rank)[] KnightPattern = new[]
-    {
+    private static readonly (int file, int rank)[] KnightPattern =
+    [
         (2, 1),
         (2, -1),
         (-2, 1),
@@ -429,7 +441,7 @@ public static class Bitboards
         (1, -2),
         (-1, 2),
         (-1, -2),
-    };
+    ];
 
     private static (Move[] moves, ulong captures) GetMoves(ulong blockers, (int file, int rank) pos, ulong piece)
     {
@@ -447,7 +459,7 @@ public static class Bitboards
                 if (!ValidSquare(target.file, target.rank)) // if the square is outside the bounds of the board
                     break;
                 if ((blockers & GetSquare(target)) == 0) // if the targeted square is empty
-                    moves.Add(new Move(pos, target, priority: 5));
+                    moves.Add(new Move(pos, target, priority: 5 + PriorityWeights[target.file, target.rank]));
                 else
                 {
                     captures |= GetSquare(target);
@@ -468,7 +480,7 @@ public static class Bitboards
             for (int file = 7; file >= 0; file--)
             {
                 if ((bitboard & GetSquare(file, rank)) != 0) // if the given square is on
-                    moves.Add(new Move(pos, (file,rank), priority: priority, castlingBan: castlingBan));
+                    moves.Add(new Move(pos, (file,rank), priority: priority + PriorityWeights[file, rank], castlingBan: castlingBan));
             }
         }
         
@@ -495,10 +507,10 @@ public static class Bitboards
             {
                 if ((combination & GetSquare(pos.file, pos.rank + 1)) == 0) // if the square in front is empty
                 {
-                    moves.Add(new Move(pos, (pos.file, pos.rank + 1), priority: 4));
+                    moves.Add(new Move(pos, (pos.file, pos.rank + 1), priority: 5 + PriorityWeights[pos.file, pos.rank + 2] + pos.rank));
                     
                     if ((combination & GetSquare(pos.file, pos.rank + 2)) == 0) // check if the double move square is empty
-                        moves.Add(new Move(pos, (pos.file, pos.rank + 2), priority: 4, type: 0b0001));
+                        moves.Add(new Move(pos, (pos.file, pos.rank + 2), priority: 6 + PriorityWeights[pos.file, pos.rank + 2] + pos.rank, type: 0b0001));
                 }
             }
         }
@@ -518,10 +530,10 @@ public static class Bitboards
             {
                 if ((combination & GetSquare(pos.file, pos.rank - 1)) == 0) // if the square behind is empty
                 {
-                    moves.Add(new Move(pos, (pos.file, pos.rank - 1), priority: 4));
+                    moves.Add(new Move(pos, (pos.file, pos.rank - 1), priority: 12 + PriorityWeights[pos.file, pos.rank - 1] - pos.rank));
                     
                     if ((combination & GetSquare(pos.file, pos.rank - 2)) == 0) // check if the double move square is empty
-                        moves.Add(new Move(pos, (pos.file, pos.rank - 2), priority: 4, type: 0b1001));
+                        moves.Add(new Move(pos, (pos.file, pos.rank - 2), priority: 13 + PriorityWeights[pos.file, pos.rank - 2] - pos.rank, type: 0b1001));
                 }
             }
         }
@@ -622,6 +634,6 @@ public static class Bitboards
 
     private static bool ValidSquare(int file, int rank)
     {
-        return file >= 0 && file < 8 && rank >= 0 && rank < 8;
+        return file is >= 0 and < 8 && rank is >= 0 and < 8;
     }
 }

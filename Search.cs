@@ -30,7 +30,7 @@ public static class Search
         if (ordering)
         {
             Move[] pseudoMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
-            Array.Sort(pseudoMoveArray, (x,y) => x.Priority.CompareTo(y.Priority));
+            Array.Sort(pseudoMoveArray, (x,y) => y.Priority.CompareTo(x.Priority));
             return pseudoMoveArray;
         }
 
@@ -116,7 +116,7 @@ public static class Search
                 index += knightMoves.Length;
                 
                 // find only captures
-                captures = new Span<Move>(Bitboards.KnightLookupCaptures(pos, board.bitboards[1 - side]));
+                captures = new Span<Move>(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;

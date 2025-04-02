@@ -4,10 +4,10 @@ public struct Move
 {
     public (int file, int rank) Source;
     public (int file, int rank) Destination;
-    public ulong Promotion;
-    public int Type;
-    public int Priority = 0;
-    public byte CastlingBan;
+    public readonly ulong Promotion;
+    public readonly int Type;
+    public readonly int Priority = 0;
+    public readonly byte CastlingBan;
     
     /*
     Special moves
@@ -90,5 +90,7 @@ public struct Move
         if (Destination == (0,0) || Source == (0,0)) CastlingBan &= 0b1011; // if a move is made from or to a1, remove white's long castle rights
         if (Destination == (7,7) || Source == (7,7)) CastlingBan &= 0b1101; // if a move is made from or to h8, remove black's short castle rights
         if (Destination == (0,7) || Source == (0,7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
+        if (Source == (4, 0)) CastlingBan = 0b0011; // if the origin of the move is the white king's starting position, remove white's castling rights
+        if (Source == (4, 7)) CastlingBan = 0b1100; // if the origin of the move is the black king's starting position, remove black's castling rights
     }
 }
