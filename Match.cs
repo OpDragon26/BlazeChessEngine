@@ -18,7 +18,7 @@ public class Match
 
     public void SpeedTest(int repetition = 1000000)
     {
-        TimeSpan t = DateTime.UtcNow - new DateTime(1970, 1, 1);
+        TimeSpan t1 = DateTime.UtcNow - new DateTime(1970, 1, 1);
         for (int i = 0; i < repetition; i++)
         {
             Board board = new  Board(this.board);
@@ -26,7 +26,7 @@ public class Match
         }
         
         TimeSpan t2 = DateTime.UtcNow - new DateTime(1970, 1, 1);
-        Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t.TotalMilliseconds)} milliseconds");
+        Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
     public void Print(int perspective)

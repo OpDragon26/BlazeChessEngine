@@ -1,18 +1,18 @@
 ﻿using Blaze;
 
 Match match = new Match(new Board(Presets.StartingBoard), true);
-
+//match.SpeedTest();
 
 Bitboards.Init();
-//match.SpeedTest();
 /*
 match.board.MakeMove(new Move("d2d4", match.board));
 
 Move[] moves = Search.SearchBoard(match.board);
 match.board.MakeMove(moves[0]);
+match.Print(0);
 //Console.WriteLine(moves[0].Type);
 
-match.Print(0);
+
 //Match.PrintBitboard(Bitboards.EnPassantMasks[2], 0);
 
 /*

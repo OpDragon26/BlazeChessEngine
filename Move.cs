@@ -4,7 +4,7 @@ public struct Move
 {
     public (int file, int rank) Source;
     public (int file, int rank) Destination;
-    public readonly ulong Promotion;
+    public readonly uint Promotion;
     public readonly int Type;
     public readonly int Priority = 0;
     public readonly byte CastlingBan;
@@ -24,7 +24,7 @@ public struct Move
 
     // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
     
-    public Move((int file, int rank) source, (int file, int rank) destination, ulong promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111)
+    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111)
     {
         Source = source;
         Destination = destination;
@@ -53,7 +53,7 @@ public struct Move
         { "h".ToCharArray()[0], 7 },
     };
 
-    private static readonly Dictionary<char, ulong> Promotions = new()
+    private static readonly Dictionary<char, uint> Promotions = new()
     {
         { "q".ToCharArray()[0], 0b100 },
         { "r".ToCharArray()[0], 0b001 },

@@ -3,22 +3,22 @@ namespace Blaze;
 public class Board
 {
     /*
-    13 pieces -> 4 bits per piece -> 4 ulongs, each corresponding to two rows
+    13 pieces -> 4 bits per piece -> 8 uints, each corresponding to one row
     
     Black's perspective
       7 6 5 4 3 2 1 0
     0 0 0 0 0 0 0 0 0
-    1 0 0 0 0 0 0 0 0
-    2 1 1 1 1 1 1 1 1
-    3 1 1 1 1 1 1 1 1
-    4 2 2 2 2 2 2 2 2
-    5 2 2 2 2 2 2 2 2
-    6 3 3 3 3 3 3 3 3
-    7 3 3 3 3 3 3 3 3
+    1 1 1 1 1 1 1 1 1
+    2 2 2 2 2 2 2 2 2 
+    3 3 3 3 3 3 3 3 3 
+    4 4 4 4 4 4 4 4 4 
+    5 5 5 5 5 5 5 5 5 
+    6 6 6 6 6 6 6 6 6 
+    7 7 7 7 7 7 7 7 7 
     */
     
     // basic values
-    private readonly ulong[] board;
+    private readonly uint[] board;
     public int side;
     public (int file, int rank) enPassant = (8, 8);
     
@@ -28,7 +28,7 @@ public class Board
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
     
-    public Board(ulong[] board)
+    public Board(uint[] board)
     {
         this.board = board;
         
@@ -45,7 +45,7 @@ public class Board
     
     public Board(Board board) // clone board
     {
-        this.board = (ulong[])board.board.Clone();
+        this.board = (uint[])board.board.Clone();
         side = board.side;
         bitboards = [ board.bitboards[0], board.bitboards[1] ];
         enPassant = board.enPassant;
@@ -60,7 +60,7 @@ public class Board
             SetPiece(move.Destination, GetPiece(move.Source));
         }
         else
-            SetPiece(move.Destination, ((ulong)side << 3) | move.Promotion);
+            SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);
         
         Clear(move.Source);
         enPassant = (8, 8);
@@ -73,7 +73,6 @@ public class Board
         switch (move.Type)
         {
             case 0b0000: break;
-            case 0b1000: break;
             case 0b0001: // white double move
                 enPassant = (move.Source.file, 2);
             break;
@@ -129,40 +128,40 @@ public class Board
         return bitboards[0] | bitboards[1];
     }
     
-    private readonly ulong PieceMask = 0xF; // covers the last 4 bits
-    public ulong GetPiece((int file, int rank) square) // overload that takes a tuple
+    private readonly uint PieceMask = 0xF; // covers the last 4 bits
+    public uint GetPiece((int file, int rank) square) // overload that takes a tuple
     {
-        // divide rank by two to get the right ulong, push by 32 for first row, push by file for the piece
-        return (board[square.rank / 2] >> ((1 - (square.rank % 2)) * 32 + square.file * 4)) & PieceMask;
+        // divide rank by two to get the right uint, push by 32 for first row, push by file for the piece
+        return (board[square.rank] >> (square.file * 4)) & PieceMask;
     }
     
-    public ulong GetPiece(int file, int rank) // overload that takes individual values
+    public uint GetPiece(int file, int rank) // overload that takes individual values
     {
-        // divide rank by two to get the right ulong, push by 32 for first row, push by file for the piece
-        return (board[rank / 2] >> ((1 - (rank % 2)) * 32 + file * 4)) & PieceMask;
+        // divide rank by two to get the right uint, push by 32 for first row, push by file for the piece
+        return (board[rank] >> (file * 4)) & PieceMask;
     }
 
     private void Clear((int file, int rank) square) // overload that takes a tuple
     {
-        // divide rank by two to get the right ulong, push left by 32 if first row, push by file for piece
-        board[square.rank / 2] |= (PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 1111
+        // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
+        board[square.rank] |= (PieceMask << (square.file * 4)); // set the given square to 1111
     }
     private void Clear(int file, int rank) // overload that takes individual values
     {
-        // divide rank by two to get the right ulong, push left by 32 if first row, push by file for piece
-        board[rank / 2] |= (PieceMask << (1 - (rank % 2)) * 32 + file * 4); // set the given square to 1111
+        // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
+        board[rank] |= (PieceMask << (file * 4)); // set the given square to 1111
     }
 
-    private void SetPiece((int file, int rank) square, ulong piece) // overload that takes a tuple
+    private void SetPiece((int file, int rank) square, uint piece) // overload that takes a tuple
     {
-        board[square.rank / 2] &= ~(PieceMask << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the given square to 0000
-        board[square.rank / 2] |= (piece << (1 - (square.rank % 2)) * 32 + square.file * 4); // set the square to the given piece
+        board[square.rank] &= ~(PieceMask << (square.file * 4)); // set the given square to 0000
+        board[square.rank] |= (piece << (square.file * 4)); // set the square to the given piece
     }
     
-    private void SetPiece(int file, int rank, ulong piece) // overload that takes individual values
+    private void SetPiece(int file, int rank, uint piece) // overload that takes individual values
     {
-        board[rank / 2] &= ~(PieceMask << (1 - (rank % 2)) * 32 + file * 4); // set the given square to 0000
-        board[rank / 2] |= (piece << (1 - (rank % 2)) * 32 + file * 4); // set the square to the given piece
+        board[rank] &= ~(PieceMask << (file * 4)); // set the given square to 0000
+        board[rank] |= (piece << (file * 4)); // set the square to the given piece
     }
 }
 
@@ -170,33 +169,37 @@ public static class Pieces
 {
     // 4 bits per piece
     // white and black pieces only differ in the first bit
-    public const ulong WhitePawn = 0b0000; // 0
-    public const ulong WhiteRook = 0b0001; // 1
-    public const ulong WhiteKnight = 0b0010; // 2
-    public const ulong WhiteBishop = 0b0011; // 3
-    public const ulong WhiteQueen = 0b0100; // 4
-    public const ulong WhiteKing = 0b0101; // 5
+    public const uint WhitePawn = 0b0000; // 0
+    public const uint WhiteRook = 0b0001; // 1
+    public const uint WhiteKnight = 0b0010; // 2
+    public const uint WhiteBishop = 0b0011; // 3
+    public const uint WhiteQueen = 0b0100; // 4
+    public const uint WhiteKing = 0b0101; // 5
     
-    public const ulong BlackPawn = 0b1000; // 8
-    public const ulong BlackRook = 0b1001; // 9
-    public const ulong BlackKnight = 0b1010; // 10
-    public const ulong BlackBishop = 0b1011; // 11
-    public const ulong BlackQueen = 0b1100; // 12
-    public const ulong BlackKing = 0b1101; // 13
+    public const uint BlackPawn = 0b1000; // 8
+    public const uint BlackRook = 0b1001; // 9
+    public const uint BlackKnight = 0b1010; // 10
+    public const uint BlackBishop = 0b1011; // 11
+    public const uint BlackQueen = 0b1100; // 12
+    public const uint BlackKing = 0b1101; // 13
     
-    public const ulong Empty = 0b1111; // 15
+    public const uint Empty = 0b1111; // 15
     
-    public const ulong TypeMask = 0b111;
-    public const ulong ColorMask = 0b1000;
+    public const uint TypeMask = 0b111;
+    public const uint ColorMask = 0b1000;
 }
 
 public static class Presets
 {
-    public static readonly ulong[] StartingBoard =
+    public static readonly uint[] StartingBoard =
     [
-        0b0001_0010_0011_0101_0100_0011_0010_0001_0000_0000_0000_0000_0000_0000_0000_0000, // white pieces
-        ulong.MaxValue, // full empty row
-        ulong.MaxValue,
-        0b1000_1000_1000_1000_1000_1000_1000_1000_1001_1010_1011_1101_1100_1011_1010_1001 // black pieces
+        0b0001_0010_0011_0101_0100_0011_0010_0001, // white pieces
+        0b0000_0000_0000_0000_0000_0000_0000_0000,
+        uint.MaxValue, // full empty row
+        uint.MaxValue,
+        uint.MaxValue,
+        uint.MaxValue,
+        0b1000_1000_1000_1000_1000_1000_1000_1000, // black pieces
+        0b1001_1010_1011_1101_1100_1011_1010_1001
     ];
 }
