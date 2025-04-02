@@ -5,17 +5,17 @@ Match match = new Match(new Board(Presets.StartingBoard), true);
 
 Bitboards.Init();
 
-match.board.MakeMove(new Move("e2e4", match.board));
-match.board.MakeMove(new Move("d7d5", match.board));
-match.board.MakeMove(new Move("d1h5", match.board));
-match.board.MakeMove(new Move("d5e4", match.board));
+match.board.MakeMove(new Move("d2d4", match.board));
 
 Move[] moves = Search.SearchBoard(match.board);
-match.board.MakeMove(moves[1]);
+match.board.MakeMove(moves[0]);
+//Console.WriteLine(moves[0].Type);
 
 match.Print(0);
+//Match.PrintBitboard(Bitboards.EnPassantMasks[2], 0);
+
 /*
-Console.WriteLine("White pawn captures");
+Console.WriteLine("en passant");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
 {
@@ -27,6 +27,7 @@ for (int i = 0; i < 8; i++) // for every row in the array
     Console.Write("},\n");
 }
 Console.WriteLine("}");
+
 Console.WriteLine("Black pawn captures");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array

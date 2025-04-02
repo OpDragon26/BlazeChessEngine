@@ -6,6 +6,7 @@ public static class Search
     public static Move[] SearchBoard(Board board, bool ordering = true)
     {
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
+        bool enPassant = board.enPassant.file != 8; // if there is an en passant square
 
         int index = 0;
         // loop through every square
@@ -17,27 +18,22 @@ public static class Search
                 if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
                 {
                     Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
-                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan);
+                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant);
                 }
             }
         }
 
-        if (board.enPassant.file != 8) // if there is an en passant square at all
-        {
-            
-        }
-
         if (ordering)
         {
-            Move[] pseudoMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
-            Array.Sort(pseudoMoveArray, (x,y) => y.Priority.CompareTo(x.Priority));
-            return pseudoMoveArray;
+            Move[] sortedMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
+            Array.Sort(sortedMoveArray, (x,y) => y.Priority.CompareTo(x.Priority));
+            return sortedMoveArray;
         }
 
         return new Span<Move>(moveArray, 0, index).ToArray();
     }
 
-    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan)
+    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
     {
         int index = 0;
         Span<Move> captures;
@@ -53,15 +49,27 @@ public static class Search
                     captures = new Span<Move>(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1]));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
+                    
+                    if (enPassant && pos.rank == 4)
+                    {
+                        moveSpan[index] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
+                        index++;
+                    }
                 }
                 else // black
                 {
                     Span<Move> BPawnMoves = new Span<Move>(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces()));
                     BPawnMoves.CopyTo(moveSpan);
-                    index += BPawnMoves.Length;
+                    index += BPawnMoves.Length;                                                                 
                     captures = new Span<Move>(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0]));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
+                    
+                    if (enPassant && pos.rank == 3)
+                    {
+                        moveSpan[index] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
+                        index++;
+                    }
                 }
             break;
             

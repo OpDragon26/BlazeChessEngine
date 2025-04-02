@@ -54,7 +54,7 @@ public class Match
         }
     }
 
-    public void PrintBitboard(ulong bitboard, int perspective, string on = "#", string off = " ")
+    public static void PrintBitboard(ulong bitboard, int perspective, string on = "#", string off = " ")
     {
         string bitboardStr = "";
 

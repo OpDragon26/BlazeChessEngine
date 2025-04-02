@@ -27,7 +27,7 @@ public class Board
     
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
-
+    
     public Board(ulong[] board)
     {
         this.board = board;
@@ -42,7 +42,7 @@ public class Board
             }
         }
     }
-
+    
     public Board(Board board) // clone board
     {
         this.board = (ulong[])board.board.Clone();
@@ -50,7 +50,7 @@ public class Board
         bitboards = [ board.bitboards[0], board.bitboards[1] ];
         enPassant = board.enPassant;
     }
-
+    
     public void MakeMove(Move move)
     {
         if (move.Promotion == 0b111)
@@ -111,8 +111,8 @@ public class Board
             break;
             
             case 0b0100: // white en passant
-                Clear(move.Destination.file, 5);
-                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,5);
+                Clear(move.Destination.file, 4);
+                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,4);
             break;
             
             case 0b1100: // black en passant
