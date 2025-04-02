@@ -4,7 +4,8 @@ Match match = new Match(new Board(Presets.StartingBoard), true);
 
 
 Bitboards.Init();
-
+//match.SpeedTest();
+/*
 match.board.MakeMove(new Move("d2d4", match.board));
 
 Move[] moves = Search.SearchBoard(match.board);

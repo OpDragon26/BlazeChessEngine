@@ -16,6 +16,19 @@ public class Match
         
     }
 
+    public void SpeedTest(int repetition = 1000000)
+    {
+        TimeSpan t = DateTime.UtcNow - new DateTime(1970, 1, 1);
+        for (int i = 0; i < repetition; i++)
+        {
+            Board board = new  Board(this.board);
+            board.MakeMove(new Move((4,1),(4,3), type: 1));
+        }
+        
+        TimeSpan t2 = DateTime.UtcNow - new DateTime(1970, 1, 1);
+        Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t.TotalMilliseconds)} milliseconds");
+    }
+
     public void Print(int perspective)
     {
         if (perspective == 1)
