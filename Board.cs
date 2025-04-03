@@ -45,9 +45,9 @@ public class Board
     
     public Board(Board board) // clone board
     {
-        this.board = (uint[])board.board.Clone();
+        this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
         side = board.side;
-        bitboards = [ board.bitboards[0], board.bitboards[1] ];
+        bitboards = [board.bitboards[0], board.bitboards[1]];
         enPassant = board.enPassant;
         castling = board.castling;
     }
