@@ -85,7 +85,8 @@ public struct Move
                     Type = 0b0010 | (board.side << 3);
             }
         }
-        
+
+        CastlingBan = 0b1111;
         if (Destination == (7,0) || Source == (7,0)) CastlingBan &= 0b0111; // if a move is made from or to h1, remove white's short castle rights
         if (Destination == (0,0) || Source == (0,0)) CastlingBan &= 0b1011; // if a move is made from or to a1, remove white's long castle rights
         if (Destination == (7,7) || Source == (7,7)) CastlingBan &= 0b1101; // if a move is made from or to h8, remove black's short castle rights

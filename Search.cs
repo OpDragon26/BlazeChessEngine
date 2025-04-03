@@ -43,10 +43,10 @@ public static class Search
             case Pieces.WhitePawn:
                 if (side == 0) // white
                 {
-                    Span<Move> WPawnMoves = new Span<Move>(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces()));
+                    Span<Move> WPawnMoves = new(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces()));
                     WPawnMoves.CopyTo(moveSpan);
                     index += WPawnMoves.Length;
-                    captures = new Span<Move>(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1]));
+                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1]));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -58,10 +58,10 @@ public static class Search
                 }
                 else // black
                 {
-                    Span<Move> BPawnMoves = new Span<Move>(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces()));
+                    Span<Move> BPawnMoves = new(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces()));
                     BPawnMoves.CopyTo(moveSpan);
                     index += BPawnMoves.Length;                                                                 
-                    captures = new Span<Move>(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0]));
+                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0]));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -82,7 +82,7 @@ public static class Search
 
                 // magic lookup of only captures
                 // form a slice out of the span to ensure that none of the already added moves are overwritten
-                captures = new Span<Move>(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -92,7 +92,7 @@ public static class Search
                 new Span<Move>(bMoves.moves).CopyTo(moveSpan);
                 index += bMoves.moves.Length;
                 
-                captures = new Span<Move>(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -103,7 +103,7 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
                 index += moves.moves.Length;
                 
-                captures = new Span<Move>(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -112,31 +112,75 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan.Slice(index));
                 index += moves.moves.Length;
                 
-                captures = new Span<Move>(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
             
             case Pieces.WhiteKnight:
                 // find moves, no captures
-                Span<Move> knightMoves = new Span<Move>(Bitboards.KnightLookupMoves(pos, board.AllPieces()));
+                Span<Move> knightMoves = new(Bitboards.KnightLookupMoves(pos, board.AllPieces()));
                 knightMoves.CopyTo(moveSpan);
                 index += knightMoves.Length;
                 
                 // find only captures
-                captures = new Span<Move>(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side]));
+                captures = new(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
             
             case Pieces.WhiteKing:
-                Span<Move> kingMoves = new Span<Move>(Bitboards.KingLookupMoves(pos, board.AllPieces()));
+                Span<Move> kingMoves = new(Bitboards.KingLookupMoves(pos, board.AllPieces()));
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
 
-                captures = new Span<Move>(Bitboards.KingLookupCaptures(pos, board.bitboards[1]));
+                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
+                
+                // castling
+                if (side == 0) // white
+                {
+                    int check = 0; // 0: not checked
+                    
+                    if ((board.castling & 0b1000) != 0 && (board.bitboards[0] & Bitboards.WhiteShortCastleMask) == 0) // white can castle short
+                    {
+                        check = false ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
+
+                        if (check == 2)
+                            moveSpan[index++] = Bitboards.WhiteShortCastle;
+                    }
+
+                    if ((board.castling & 0b0100) != 0 && (board.bitboards[0] & Bitboards.WhiteLongCastleMask) == 0) // white can castle long
+                    {
+                        if (check == 0) // if the king check hasn't been checked before
+                            check = false ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
+                            
+                        if (check == 2)
+                            moveSpan[index++] = Bitboards.WhiteLongCastle;
+                    }
+                }
+                else // black
+                {
+                    int check = 0; // 0: not checked
+
+                    if ((board.castling & 0b1000) != 0 && (board.bitboards[1] & Bitboards.BlackShortCastleMask) == 0) // black can castle short
+                    {
+                        check = false ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
+
+                        if (check == 2)
+                            moveSpan[index++] = Bitboards.BlackShortCastle;
+                    }
+
+                    if ((board.castling & 0b0100) != 0 && (board.bitboards[1] & Bitboards.BlackLongCastleMask) == 0) // black can castle long
+                    {
+                        if (check == 0) // if the king check hasn't been checked before
+                            check = false ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
+                            
+                        if (check == 2)
+                            moveSpan[index++] = Bitboards.BlackLongCastle;
+                    }
+                }
             break;
         }
 

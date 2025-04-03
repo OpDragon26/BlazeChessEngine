@@ -4,16 +4,18 @@ Match match = new Match(new Board(Presets.StartingBoard), true);
 //match.SpeedTest();
 
 Bitboards.Init();
-/*
-match.board.MakeMove(new Move("d2d4", match.board));
+//match.Print(0);
+
+match.board.MakeMove(new Move("f1d3", match.board));
+match.board.MakeMove(new Move("e7e5", match.board));
+match.board.MakeMove(new Move("g1f3", match.board));
+match.board.MakeMove(new Move("d7d5", match.board));
 
 Move[] moves = Search.SearchBoard(match.board);
 match.board.MakeMove(moves[0]);
 match.Print(0);
-//Console.WriteLine(moves[0].Type);
 
-
-//Match.PrintBitboard(Bitboards.EnPassantMasks[2], 0);
+//Match.PrintBitboard(match.board.bitboards[0], 0);
 
 /*
 Console.WriteLine("en passant");
