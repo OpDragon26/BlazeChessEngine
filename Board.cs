@@ -49,6 +49,7 @@ public class Board
         side = board.side;
         bitboards = [ board.bitboards[0], board.bitboards[1] ];
         enPassant = board.enPassant;
+        castling = board.castling;
     }
     
     public void MakeMove(Move move)
@@ -129,6 +130,7 @@ public class Board
     }
     
     private readonly uint PieceMask = 0xF; // covers the last 4 bits
+    
     public uint GetPiece((int file, int rank) square) // overload that takes a tuple
     {
         // divide rank by two to get the right uint, push by 32 for first row, push by file for the piece
@@ -146,12 +148,13 @@ public class Board
         // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
         board[square.rank] |= (PieceMask << (square.file * 4)); // set the given square to 1111
     }
+    
     private void Clear(int file, int rank) // overload that takes individual values
     {
         // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
         board[rank] |= (PieceMask << (file * 4)); // set the given square to 1111
     }
-
+    
     private void SetPiece((int file, int rank) square, uint piece) // overload that takes a tuple
     {
         board[square.rank] &= ~(PieceMask << (square.file * 4)); // set the given square to 0000

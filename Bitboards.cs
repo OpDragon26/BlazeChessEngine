@@ -109,19 +109,19 @@ public static class Bitboards
             * MagicLookup.BishopMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopMove[pos.file, pos.rank].push
         ];
     }
-
+    
     public static ref Move[] RookLookupCaptures((int file, int rank) pos, ulong captures)
     {
         return ref MagicLookup.RookCaptureLookup[pos.file, pos.rank]
             [(captures * MagicLookup.RookCapture[pos.file, pos.rank].magicNumber) >> MagicLookup.RookCapture[pos.file, pos.rank].push];
     }
-
+    
     public static ref Move[] BishopLookupCaptures((int file, int rank) pos, ulong captures)
     {
         return ref MagicLookup.BishopCaptureLookup[pos.file, pos.rank]
             [(captures * MagicLookup.BishopCapture[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopCapture[pos.file, pos.rank].push];
     }
-
+    
     public static ref Move[] KnightLookupMoves((int file, int rank) pos, ulong blockers)
     {
         return ref MagicLookup.KnightLookup[pos.file, pos.rank]
@@ -145,7 +145,7 @@ public static class Bitboards
         return ref MagicLookup.KingCaptureLookup[pos.file, pos.rank]
             [((enemy & KingMasks[pos.file, pos.rank]) * MagicLookup.KingMove[pos.file, pos.rank].magicNumber) >> MagicLookup.KingMove[pos.file, pos.rank].push];
     }
-
+    
     public static ref Move[] WhitePawnLookupMoves((int file, int rank) pos, ulong blockers)
     {
         return ref MagicLookup.WhitePawnLookup[pos.file, pos.rank]
@@ -157,7 +157,7 @@ public static class Bitboards
         return ref MagicLookup.BlackPawnLookup[pos.file, pos.rank]
             [((blockers & BlackPawnMoveMasks[pos.file, pos.rank]) * MagicLookup.BlackPawnMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BlackPawnMove[pos.file, pos.rank].push];
     }
-
+    
     public static ref Move[] WhitePawnLookupCaptures((int file, int rank) pos, ulong enemy)
     {
         return ref MagicLookup.WhitePawnCaptureLookup[pos.file, pos.rank]
@@ -169,7 +169,7 @@ public static class Bitboards
         return ref MagicLookup.BlackPawnCaptureLookup[pos.file, pos.rank]
             [((enemy & BlackPawnCaptureMasks[pos.file, pos.rank]) * MagicLookup.BlackPawnCapture[pos.file, pos.rank].magicNumber) >> MagicLookup.BlackPawnCapture[pos.file, pos.rank].push];
     }
-
+    
     public static ref Move EnPassantLookup(ulong enPassant)
     {
         return ref MagicLookup.EnPassantLookup[(enPassant * MagicLookup.EnPassantNumbers.magicNumber) >> MagicLookup.EnPassantNumbers.push];

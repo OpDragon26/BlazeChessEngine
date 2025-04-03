@@ -1,17 +1,16 @@
 ﻿using Blaze;
 
-Match match = new Match(new Board(Presets.StartingBoard), true);
-//match.SpeedTest();
-
 Bitboards.Init();
+Match match = new Match(new Board(Presets.StartingBoard), true);
+match.SpeedTest();
+
+
+
 //match.Print(0);
 
-match.board.MakeMove(new Move("f1d3", match.board));
-match.board.MakeMove(new Move("e7e5", match.board));
-match.board.MakeMove(new Move("g1f3", match.board));
-match.board.MakeMove(new Move("d7d5", match.board));
-
-Move[] moves = Search.SearchBoard(match.board);
+//match.board.MakeMove(new Move("f1d3", match.board));
+/*
+Move[] moves = Search.SearchBoard(new Board(match.board));
 match.board.MakeMove(moves[0]);
 match.Print(0);
 

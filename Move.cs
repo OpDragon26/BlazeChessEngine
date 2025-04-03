@@ -1,6 +1,6 @@
 namespace Blaze;
 
-public struct Move
+public class Move
 {
     public (int file, int rank) Source;
     public (int file, int rank) Destination;

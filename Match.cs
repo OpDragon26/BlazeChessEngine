@@ -21,8 +21,9 @@ public class Match
         TimeSpan t1 = DateTime.UtcNow - new DateTime(1970, 1, 1);
         for (int i = 0; i < repetition; i++)
         {
-            Board board = new  Board(this.board);
-            board.MakeMove(new Move((4,1),(4,3), type: 1));
+            Board moveBoard = new(board);
+            Move[] moves = Search.SearchBoard(moveBoard);
+            moveBoard.MakeMove(moves[0]);
         }
         
         TimeSpan t2 = DateTime.UtcNow - new DateTime(1970, 1, 1);

@@ -133,7 +133,7 @@ public static class Search
                 Span<Move> kingMoves = new(Bitboards.KingLookupMoves(pos, board.AllPieces()));
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
-
+                
                 captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
@@ -163,7 +163,7 @@ public static class Search
                 else // black
                 {
                     int check = 0; // 0: not checked
-
+                    
                     if ((board.castling & 0b1000) != 0 && (board.bitboards[1] & Bitboards.BlackShortCastleMask) == 0) // black can castle short
                     {
                         check = false ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
