@@ -28,6 +28,8 @@ public class Board
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
     
+    public (int file, int rank)[] KingPositions = [(4,0),(4,7)];
+    
     public Board(uint[] board)
     {
         this.board = board;
@@ -59,6 +61,9 @@ public class Board
             if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
                 bitboards[1 - side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
             SetPiece(move.Destination, GetPiece(move.Source));
+            
+            if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
+                KingPositions[side] = move.Destination;
         }
         else
             SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);

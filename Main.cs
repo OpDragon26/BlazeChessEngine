@@ -2,17 +2,15 @@
 
 Bitboards.Init();
 Match match = new Match(new Board(Presets.StartingBoard), true);
-match.SpeedTest();
 
+match.board.MakeMove(new Move("e2e4", match.board));
+Console.WriteLine(Search.Attacked((7,4), match.board, 0));
 
+match.Print(0);
 
-//match.Print(0);
-
-//match.board.MakeMove(new Move("f1d3", match.board));
 /*
 Move[] moves = Search.SearchBoard(new Board(match.board));
 match.board.MakeMove(moves[0]);
-match.Print(0);
 
 //Match.PrintBitboard(match.board.bitboards[0], 0);
 

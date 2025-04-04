@@ -186,4 +186,35 @@ public static class Search
 
         return index;
     }
+
+    public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
+    {
+        ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
+        ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
+        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.bitboards[side];
+        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[side] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[side];
+        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.bitboards[side];
+        
+        if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
+            return false;
+        
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                if ((Bitboards.GetSquare(file, rank) & rookAttack) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) is Pieces.WhiteRook or Pieces.WhiteQueen)
+                    return true;
+                if ((Bitboards.GetSquare(file, rank) & bishopAttack) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) is Pieces.WhiteBishop or Pieces.WhiteQueen)
+                    return true;
+                if ((Bitboards.GetSquare(file, rank) & knightAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhiteKnight)
+                    return true;
+                if ((Bitboards.GetSquare(file, rank) & pawnAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhitePawn)
+                    return true;
+                if ((Bitboards.GetSquare(file, rank) & kingAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhiteKing)
+                    return true;
+            }
+        }
+        
+        return false;
+    }
 }
