@@ -10,7 +10,7 @@ public enum Type
 
 public class Match
 {
-    private readonly Board board;
+    public readonly Board board;
     private readonly Type type;
     private readonly int side; // side of the player
     private static readonly  Random random = new();
@@ -71,7 +71,8 @@ public class Match
                             // if the move is in the correct notation
                             if (Regex.IsMatch(playerMoveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
                             {
-                                Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                                Move[] moves = Search.SearchBoard(board, false);
+                                Move[] filtered = Search.FilerChecks(moves, board);
                                 Move move = new Move(playerMoveString, board);
 
                                 // if the move is legal

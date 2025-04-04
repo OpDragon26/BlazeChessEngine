@@ -28,7 +28,7 @@ public class Board
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
     
-    public (int file, int rank)[] KingPositions = [(4,0),(4,7)];
+    public readonly (int file, int rank)[] KingPositions = [(4,0),(4,7)];
     
     public Board(uint[] board)
     {
@@ -56,7 +56,6 @@ public class Board
     
     public void MakeMove(Move move)
     {
-        if (move is null) Console.WriteLine("Huh");
         if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
             bitboards[1 - side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
         

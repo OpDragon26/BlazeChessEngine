@@ -33,7 +33,7 @@ public static class Search
         return new Span<Move>(moveArray, 0, index).ToArray();
     }
 
-    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
+    public static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
     {
         int index = 0;
         Span<Move> captures;
@@ -50,11 +50,10 @@ public static class Search
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
-                    if (enPassant && pos.rank == 4)
-                    {
-                        moveSpan[index] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
-                        index++;
-                    }
+                    // if there is an en passant capture available, and it can be made from the current square
+                    if (enPassant && (Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & Bitboards.GetSquare(board.enPassant)) != 0)
+                        moveSpan[index++] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
+                    
                 }
                 else // black
                 {
@@ -65,11 +64,9 @@ public static class Search
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
-                    if (enPassant && pos.rank == 3)
-                    {
-                        moveSpan[index] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
-                        index++;
-                    }
+                    // if there is an en passant capture available, and it can be made from the current square
+                    if (enPassant && (Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & Bitboards.GetSquare(board.enPassant)) != 0)
+                        moveSpan[index++] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
                 }
             break;
             
