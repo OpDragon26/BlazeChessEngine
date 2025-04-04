@@ -1,19 +1,98 @@
+using System.Text.RegularExpressions;
+
 namespace Blaze;
+
+public enum Type
+{
+    Random,
+    Analysis,
+}
 
 public class Match
 {
-    public readonly Board board;
-    private bool analysis;
-    
-    public Match(Board board, bool analysis)
+    private readonly Board board;
+    private readonly Type type;
+    private readonly int side; // side of the player
+    private static readonly  Random random = new();
+
+    public Match(Board board, Type type, int side = 0)
     {
         this.board = board;
-        this.analysis = analysis;
+        this.type = type;
+        this.side = side;
     }
 
-    public void turn()
+    public void Play()
     {
+        bool play = true;
         
+        while (play)
+        {
+            switch (type)
+            {
+                case Type.Analysis:
+                    Print(side);
+                    //Console.Clear();
+                    Console.WriteLine("Enter your move:");
+                    string? moveString = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(moveString))
+                    {
+                        if (moveString == "end") play = false;
+                        
+                        // if the move is in the correct notation
+                        if (Regex.IsMatch(moveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
+                        {
+                            Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                            Move move = new Move(moveString, board);
+
+                            // if the move is legal
+                            if (filtered.Contains(move))
+                                board.MakeMove(move);
+                            else
+                                Console.WriteLine("\nThe move is not legal");
+                        }
+                        else
+                            Console.WriteLine("\nMove not recognized");
+                    }
+                break;
+                
+                case Type.Random:
+                    //Console.Clear();
+                    Print(side);
+                    if (board.side == side)
+                    {
+                        // ask the player for a move
+                        Console.WriteLine("Enter your move:");
+                        string? playerMoveString = Console.ReadLine();
+                        if (!string.IsNullOrEmpty(playerMoveString))
+                        {
+                            if (playerMoveString == "end") play = false;
+                        
+                            // if the move is in the correct notation
+                            if (Regex.IsMatch(playerMoveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
+                            {
+                                Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                                Move move = new Move(playerMoveString, board);
+
+                                // if the move is legal
+                                if (filtered.Contains(move))
+                                    board.MakeMove(move);
+                                else
+                                    Console.WriteLine("\nThe move is not legal");
+                            }
+                            else
+                                Console.WriteLine("\nMove not recognized");
+                        }
+                    }
+                    else
+                    {
+                        // make a random move on the board
+                        Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                        board.MakeMove(filtered[random.Next(0, filtered.Length)]);
+                    }
+                break;
+            }
+        }
     }
 
     public void SpeedTest(int repetition = 1000000)
@@ -30,7 +109,7 @@ public class Match
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    public void Print(int perspective)
+    private void Print(int perspective)
     {
         if (perspective == 1)
         {

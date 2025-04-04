@@ -2,11 +2,11 @@ namespace Blaze;
 
 public class Move
 {
-    public (int file, int rank) Source;
-    public (int file, int rank) Destination;
+    public readonly (int file, int rank) Source;
+    public readonly (int file, int rank) Destination;
     public readonly uint Promotion;
     public readonly int Type;
-    public readonly int Priority = 0;
+    public readonly int Priority;
     public readonly byte CastlingBan;
     
     /*
@@ -39,6 +39,25 @@ public class Move
         if (destination == (0,7) || source == (0,7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
         if (source == (4, 0)) CastlingBan = 0b0011; // if the origin of the move is the white king's starting position, remove white's castling rights
         if (source == (4, 7)) CastlingBan = 0b1100; // if the origin of the move is the black king's starting position, remove black's castling rights
+    }
+
+    public override bool Equals(object? obj)
+    {
+        var item = obj as Move;
+        if (item == null) return false;
+        return Source == item.Source && Destination == item.Destination && Promotion == item.Promotion && Type == item.Type;
+    }
+
+    public override int GetHashCode()
+    {
+        int hash = 0;
+        hash |= Source.file << 29;
+        hash |= Source.rank << 26;
+        hash |= Destination.file << 23;
+        hash |= Destination.rank << 20;
+        hash |= (int)Promotion << 17;
+        hash |= Type << 13;
+        return hash;
     }
 
     private static readonly Dictionary<char, int> Indices = new()

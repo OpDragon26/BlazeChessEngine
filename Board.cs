@@ -56,17 +56,21 @@ public class Board
     
     public void MakeMove(Move move)
     {
+        if (move is null) Console.WriteLine("Huh");
+        if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
+            bitboards[1 - side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
+        
         if (move.Promotion == 0b111)
         {
-            if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
-                bitboards[1 - side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
             SetPiece(move.Destination, GetPiece(move.Source));
             
             if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
                 KingPositions[side] = move.Destination;
         }
         else
+        {
             SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);
+        }
         
         Clear(move.Source);
         enPassant = (8, 8);

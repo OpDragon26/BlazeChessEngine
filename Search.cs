@@ -134,7 +134,7 @@ public static class Search
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
                 
-                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1]));
+                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side]));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -187,7 +187,7 @@ public static class Search
         return index;
     }
 
-    public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
+    private static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
     {
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
@@ -216,5 +216,21 @@ public static class Search
         }
         
         return false;
+    }
+
+    public static Move[] FilerChecks(Move[] moves, Board board)
+    {
+        List<Move> MoveList = moves.ToList();
+
+        for (int i = moves.Length - 1; i >= 0; i--)
+        {
+            Board moveBoard = new(board);
+            moveBoard.MakeMove(MoveList[i]);
+            // if the king of the moving side is in check after the move, the move is illegal
+            if (Attacked(board.KingPositions[board.side], moveBoard, 1-board.side))
+                MoveList.RemoveAt(i);
+        }
+        
+        return MoveList.ToArray();
     }
 }
