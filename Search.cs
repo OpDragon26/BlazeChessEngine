@@ -33,7 +33,7 @@ public static class Search
         return new Span<Move>(moveArray, 0, index).ToArray();
     }
 
-    public static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
+    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
     {
         int index = 0;
         Span<Move> captures;

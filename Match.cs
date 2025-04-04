@@ -10,7 +10,7 @@ public enum Type
 
 public class Match
 {
-    public readonly Board board;
+    private readonly Board board;
     private readonly Type type;
     private readonly int side; // side of the player
     private static readonly  Random random = new();
@@ -32,7 +32,6 @@ public class Match
             {
                 case Type.Analysis:
                     Print(side);
-                    //Console.Clear();
                     Console.WriteLine("Enter your move:");
                     string? moveString = Console.ReadLine();
                     if (!string.IsNullOrEmpty(moveString))
@@ -45,19 +44,23 @@ public class Match
                             Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
                             Move move = new Move(moveString, board);
 
+                            Console.Clear();
+
                             // if the move is legal
                             if (filtered.Contains(move))
                                 board.MakeMove(move);
                             else
-                                Console.WriteLine("\nThe move is not legal");
+                                Console.WriteLine("Illegal move");
                         }
                         else
-                            Console.WriteLine("\nMove not recognized");
+                        {
+                            Console.Clear(); 
+                            Console.WriteLine("Incorrect notation");
+                        }
                     }
                 break;
                 
                 case Type.Random:
-                    //Console.Clear();
                     Print(side);
                     if (board.side == side)
                     {
@@ -75,18 +78,24 @@ public class Match
                                 Move[] filtered = Search.FilerChecks(moves, board);
                                 Move move = new Move(playerMoveString, board);
 
+                                Console.Clear();
+
                                 // if the move is legal
                                 if (filtered.Contains(move))
                                     board.MakeMove(move);
                                 else
-                                    Console.WriteLine("\nThe move is not legal");
+                                    Console.WriteLine("Illegal move");
                             }
                             else
-                                Console.WriteLine("\nMove not recognized");
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Incorrect notation");
+                            }
                         }
                     }
                     else
                     {
+                        Console.Clear();
                         // make a random move on the board
                         Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
