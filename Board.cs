@@ -1,5 +1,13 @@
 namespace Blaze;
 
+public enum Outcome
+{
+    Ongoing,
+    WhiteWin,
+    BlackWin,
+    Draw
+}
+
 public class Board
 {
     /*
@@ -29,6 +37,10 @@ public class Board
     public byte castling = 0b1111; // white short, white long, black short, black long
     
     public readonly (int file, int rank)[] KingPositions = [(4,0),(4,7)];
+
+    private int halfMoveClock;
+    private int pawns = 16;
+    private readonly int[] values = new int[2];
     
     public Board(uint[] board)
     {
@@ -40,7 +52,10 @@ public class Board
             for (int file = 7; file >= 0; file--)
             {
                 if (GetPiece(file, rank) != Pieces.Empty)
+                {
                     bitboards[GetPiece(file, rank) >> 3] |= Bitboards.GetSquare(file, rank);
+                    values[GetPiece(file, rank) >> 3] += Pieces.Value[GetPiece(file, rank)];
+                }
             }
         }
     }
@@ -52,12 +67,24 @@ public class Board
         bitboards = [board.bitboards[0], board.bitboards[1]];
         enPassant = board.enPassant;
         castling = board.castling;
+        KingPositions = [board.KingPositions[0], board.KingPositions[1]];
+        halfMoveClock = board.halfMoveClock;
+        pawns = board.pawns;
+        values = [board.values[0], board.values[1]];
     }
     
     public void MakeMove(Move move)
     {
+        halfMoveClock++;
+
         if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
-            bitboards[1 - side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
+        {
+            values[1-side] -= Pieces.Value[GetPiece(move.Destination)]; // subtract the value of the piece from the opponent
+            bitboards[1-side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
+            halfMoveClock = 0;
+            if ((GetPiece(move.Destination) & PieceMask) == Pieces.WhitePawn) // if the taken piece was a pawn
+                pawns--;
+        }
         
         if (move.Promotion == 0b111)
         {
@@ -65,10 +92,16 @@ public class Board
             
             if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
                 KingPositions[side] = move.Destination;
+            else if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the moved piece is a pawn
+                halfMoveClock = 0;
         }
-        else
+        else // piece is a promotion
         {
             SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);
+            halfMoveClock = 0; // the piece moved is definitely a pawn
+            pawns--;
+            values[side] += Pieces.Value[GetPiece(move.Destination)]; // add the value of the promoted piece to the moving side
+            values[side] -= Pieces.Value[Pieces.WhitePawn | (side << 3)]; // subtract the value of the pawn from the moving side
         }
         
         Clear(move.Source);
@@ -93,43 +126,51 @@ public class Board
             case 0b0010: // white short castle
                 Clear(7, 0);
                 SetPiece(5,0, Pieces.WhiteRook);
-                bitboards[side] ^= Bitboards.GetSquare(7,0);
-                bitboards[side] ^= Bitboards.GetSquare(5,0);
+                bitboards[0] ^= Bitboards.GetSquare(7,0);
+                bitboards[0] ^= Bitboards.GetSquare(5,0);
             break;
             
             case 0b0011: // white long castle
                 Clear(0, 0);
                 SetPiece(3,0, Pieces.WhiteRook);
-                bitboards[side] ^= Bitboards.GetSquare(0,0);
-                bitboards[side] ^= Bitboards.GetSquare(3,0);
+                bitboards[0] ^= Bitboards.GetSquare(0,0);
+                bitboards[0] ^= Bitboards.GetSquare(3,0);
             break;
             
             case 0b1010: // black short castle
                 Clear(7, 7);
                 SetPiece(5,7, Pieces.BlackRook);
-                bitboards[side] ^= Bitboards.GetSquare(7,7);
-                bitboards[side] ^= Bitboards.GetSquare(5,7);
+                bitboards[1] ^= Bitboards.GetSquare(7,7);
+                bitboards[1] ^= Bitboards.GetSquare(5,7);
             break;
             
             case 0b1011: // black long castle
                 Clear(0, 7);
                 SetPiece(3,7, Pieces.BlackRook);
-                bitboards[side] ^= Bitboards.GetSquare(0,7);
-                bitboards[side] ^= Bitboards.GetSquare(3,7);
+                bitboards[1] ^= Bitboards.GetSquare(0,7);
+                bitboards[1] ^= Bitboards.GetSquare(3,7);
             break;
             
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 4);
-                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,4);
+                bitboards[1] ^= Bitboards.GetSquare(move.Destination.file,4);
+                values[1] += 100;
             break;
             
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
-                bitboards[side] ^= Bitboards.GetSquare(move.Destination.file,3);
+                bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
+                values[0] -= 100;
             break;
         }
 
         side = 1 - side;
+    }
+
+    public bool IsDrawn()
+    {
+        // 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
+        return halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
     }
 
     public ulong AllPieces()
@@ -197,7 +238,27 @@ public static class Pieces
     public const uint Empty = 0b1111; // 15
     
     public const uint TypeMask = 0b111;
-    public const uint ColorMask = 0b1000;
+    // public const uint ColorMask = 0b1000;
+
+    public static readonly int[] Value =
+    [
+        100, // 0
+        500,
+        300,
+        300,
+        900,
+        1000, // 5
+        0,
+        0,
+        -100, // 8
+        -500,
+        -300,
+        -300,
+        -900,
+        -1000, // 13
+        0,
+        0
+    ];
 }
 
 public static class Presets
