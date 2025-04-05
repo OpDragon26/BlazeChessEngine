@@ -41,6 +41,7 @@ public class Board
     private int halfMoveClock;
     private int pawns = 16;
     private readonly int[] values = new int[2];
+    private readonly Dictionary<int, int> repeat = new();
     
     public Board(uint[] board)
     {
@@ -71,6 +72,7 @@ public class Board
         halfMoveClock = board.halfMoveClock;
         pawns = board.pawns;
         values = [board.values[0], board.values[1]];
+        repeat = new(board.repeat);
     }
     
     public void MakeMove(Move move)
@@ -82,7 +84,7 @@ public class Board
             values[1-side] -= Pieces.Value[GetPiece(move.Destination)]; // subtract the value of the piece from the opponent
             bitboards[1-side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
             halfMoveClock = 0;
-            if ((GetPiece(move.Destination) & PieceMask) == Pieces.WhitePawn) // if the taken piece was a pawn
+            if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the taken piece was a pawn
                 pawns--;
         }
         
@@ -173,6 +175,11 @@ public class Board
         return halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
     }
 
+    public override int GetHashCode()
+    {
+        return Hasher.ZobristHash(this);
+    }
+
     public ulong AllPieces()
     {
         return bitboards[0] | bitboards[1];
@@ -182,25 +189,21 @@ public class Board
     
     public uint GetPiece((int file, int rank) square) // overload that takes a tuple
     {
-        // divide rank by two to get the right uint, push by 32 for first row, push by file for the piece
         return (board[square.rank] >> (square.file * 4)) & PieceMask;
     }
     
     public uint GetPiece(int file, int rank) // overload that takes individual values
     {
-        // divide rank by two to get the right uint, push by 32 for first row, push by file for the piece
         return (board[rank] >> (file * 4)) & PieceMask;
     }
 
     private void Clear((int file, int rank) square) // overload that takes a tuple
     {
-        // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
         board[square.rank] |= (PieceMask << (square.file * 4)); // set the given square to 1111
     }
     
     private void Clear(int file, int rank) // overload that takes individual values
     {
-        // divide rank by two to get the right uint, push left by 32 if first row, push by file for piece
         board[rank] |= (PieceMask << (file * 4)); // set the given square to 1111
     }
     
