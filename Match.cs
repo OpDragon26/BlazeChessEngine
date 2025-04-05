@@ -39,16 +39,21 @@ public class Match
                         if (moveString == "end") play = false;
                         
                         // if the move is in the correct notation
-                        if (Regex.IsMatch(moveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
+                        else if (Regex.IsMatch(moveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
                         {
-                            Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                            Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                             Move move = new Move(moveString, board);
 
                             Console.Clear();
 
                             // if the move is legal
                             if (filtered.Contains(move))
+                            {
                                 board.MakeMove(move);
+
+                                Console.WriteLine(board.KingPositions[side]);
+                                Console.WriteLine(Search.Attacked(board.KingPositions[side], board, 1-side));
+                            }
                             else
                                 Console.WriteLine("Illegal move");
                         }
@@ -72,10 +77,9 @@ public class Match
                             if (playerMoveString == "end") play = false;
                         
                             // if the move is in the correct notation
-                            if (Regex.IsMatch(playerMoveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
+                            else if (Regex.IsMatch(playerMoveString, @"^[a-h][1-8][a-h][1-8][qrbn]?"))
                             {
-                                Move[] moves = Search.SearchBoard(board, false);
-                                Move[] filtered = Search.FilerChecks(moves, board);
+                                Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                                 Move move = new Move(playerMoveString, board);
 
                                 Console.Clear();
@@ -97,7 +101,7 @@ public class Match
                     {
                         Console.Clear();
                         // make a random move on the board
-                        Move[] filtered = Search.FilerChecks(Search.SearchBoard(board, false), board);
+                        Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
                     }
                 break;

@@ -33,7 +33,7 @@ public static class Search
         return new Span<Move>(moveArray, 0, index).ToArray();
     }
 
-    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
+    public static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
     {
         int index = 0;
         Span<Move> captures;
@@ -184,12 +184,12 @@ public static class Search
         return index;
     }
 
-    private static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
+    public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
     {
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.bitboards[side];
-        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[side] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[side];
+        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[0] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[1];
         ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.bitboards[side];
         
         if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
@@ -215,7 +215,7 @@ public static class Search
         return false;
     }
 
-    public static Move[] FilerChecks(Move[] moves, Board board)
+    public static Move[] FilterChecks(Move[] moves, Board board)
     {
         List<Move> MoveList = moves.ToList();
 
@@ -224,7 +224,7 @@ public static class Search
             Board moveBoard = new(board);
             moveBoard.MakeMove(MoveList[i]);
             // if the king of the moving side is in check after the move, the move is illegal
-            if (Attacked(board.KingPositions[board.side], moveBoard, 1-board.side))
+            if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))
                 MoveList.RemoveAt(i);
         }
         

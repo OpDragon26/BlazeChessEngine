@@ -2,13 +2,11 @@
 using Type = Blaze.Type;
 
 Bitboards.Init();
-Match match = new Match(new Board(Presets.StartingBoard), Type.Random);
+Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis);
 
 match.Play();
 
-/*
-Move[] moves = Search.SearchBoard(new Board(match.board));
-match.board.MakeMove(moves[0]);
+//Move[] moves = Search.SearchBoard(match.board);
 
 //Match.PrintBitboard(match.board.bitboards[0], 0);
 

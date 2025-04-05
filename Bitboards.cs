@@ -387,7 +387,7 @@ public static class Bitboards
                 MagicLookup.KingLookup[file, rank] = new Move[MagicLookup.KingMove[file, rank].highest + 1][];
                 MagicLookup.KingCaptureLookup[file, rank] = new Move[MagicLookup.KingMove[file, rank].highest + 1][];
                 
-                for (int i = 0; i < KnightCombinations[file, rank].Length; i++) // for each combination
+                for (int i = 0; i < KingCombinations[file, rank].Length; i++) // for each combination
                 {
                     MagicLookup.KingLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 5);
                     MagicLookup.KingCaptureLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 3);
