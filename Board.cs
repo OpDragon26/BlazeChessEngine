@@ -47,6 +47,7 @@ public class Board
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
     public int hashKey;
+    private bool threefold;
     
     public Board(uint[] board)
     {
@@ -86,6 +87,8 @@ public class Board
     public void MakeMove(Move move)
     {
         halfMoveClock++;
+        if (side == 1)
+            hashKey ^= Hasher.BlackToMove;
 
         if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
         {
@@ -200,14 +203,45 @@ public class Board
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 3];
             break;
         }
+        
+        Add(); // adds the hash of the board to the dictionary and checks for threefold repetition
 
         side = 1 - side;
     }
 
     public bool IsDrawn()
     {
-        // 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
-        return halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
+        // threefold repetition or 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
+        // stalemate requires searching for legal moves, so it's checked elsewhere
+        return threefold || halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
+    }
+    
+    public Outcome GetOutcome()
+    {
+        // gets the actual outcome of the match
+        // requires searching for legal moves, shouldn't be used during a search
+        if (IsDrawn())
+            return Outcome.Draw;
+        
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(this, false), this);
+        if (moves.Length == 0) // if there are no legal moves
+            // if the king is attacked, the game ended in a checkmate, if it isn't the game is a draw by stalemate
+            return Search.Attacked(KingPositions[side], this, 1-side) ? side == 0 ? Outcome.BlackWin : Outcome.WhiteWin : Outcome.Draw;
+
+        return Outcome.Ongoing;
+    }
+
+    // adds the hash of the board 
+    private void Add()
+    {
+        if (repeat.TryGetValue(hashKey, out int v)) // if the hash of the board is in already in the dictionary
+        {
+            // if it is found, v is at least 1, if it's more, this is the third time the position appears, so the game is a draw by threefold repetition
+            threefold = v < 1;
+            repeat[hashKey] = v + 1;
+        }
+        else // the board position is entirely new
+            repeat.Add(hashKey, 1);
     }
 
     public ulong AllPieces()

@@ -6,7 +6,7 @@ public static class Hasher
     public static readonly int[] CastlingNumbers = new int[16];
     public static readonly int[] EnPassantFiles = new int[9];
     private static readonly Random random = new();
-    private static int BlackToMove;
+    public static int BlackToMove;
     
     public static void Init()
     {
