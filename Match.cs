@@ -6,6 +6,7 @@ public enum Type
 {
     Random,
     Analysis,
+    Standard
 }
 
 public class Match
@@ -16,13 +17,15 @@ public class Match
     private readonly Type type;
     private readonly int side; // side of the player
     private readonly bool debug;
+    private readonly int depth;
 
-    public Match(Board board, Type type, int side = 0, bool debug = false)
+    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false)
     {
         this.board = board;
         this.type = type;
         this.side = side;
         this.debug = debug;
+        this.depth = depth;
     }
 
     public void Play()
@@ -49,6 +52,20 @@ public class Match
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
+                        play = CheckOutcome();
+                    }
+                break;
+                
+                case Type.Standard:
+                    Print(side);
+                    if (board.side == side)
+                        play = PlayerTurn();
+                    else
+                    {
+                        if (!debug) Console.Clear();
+                        // make the top choice of the engine on the board
+                        Move bestMove = Search.BestMove(board, depth);
+                        board.MakeMove(bestMove);
                         play = CheckOutcome();
                     }
                 break;

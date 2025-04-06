@@ -2,6 +2,159 @@ namespace Blaze;
 
 public static class Search
 {
+    public static Move BestMove(Board board, int depth)
+    {
+        Move[] moves = SearchBoard(board);
+        if (moves.Length == 0) throw new MoveNotFoundException();
+        
+        bool found = false;
+        
+        int alpha = int.MinValue;
+        int beta = int.MaxValue;
+        
+        Move best = moves[0];
+        
+        if (board.side == 0)
+        {
+            int eval = Int32.MinValue;
+
+            foreach (Move move in moves)
+            {
+                Board moveBoard = new(board);
+                moveBoard.MakeMove(move);
+                if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
+                    continue;
+                found = true; // if a move is legal, set found to true
+
+                int childEval = Minimax(moveBoard, depth - 1, alpha, beta);
+                if (childEval >= eval)
+                {
+                    eval = childEval;
+                    best = move;
+                }
+                
+                alpha = Math.Max(alpha, eval);
+                if (eval >= beta) break; // beta cutoff
+            }
+        }
+        else
+        {
+            int eval = Int32.MaxValue;
+
+            foreach (Move move in moves)
+            {
+                Board moveBoard = new(board);
+                moveBoard.MakeMove(move);
+                if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
+                    continue;
+                found = true; // if a move is legal, set found to true
+
+                int childEval = Minimax(moveBoard, depth - 1, alpha, beta);
+                if (childEval <= eval)
+                {
+                    eval = childEval;
+                    best = move;
+                }
+                
+                beta = Math.Min(beta, eval);
+                if (eval <= alpha) break; // beta cutoff
+            }
+        }
+        
+        if (found) return best;
+        
+        // if there are no moves, throw an exception
+        throw new MoveNotFoundException();
+    }
+    
+    private static int Minimax(Board board, int depth, int alpha, int beta)
+    {
+        if (board.IsDraw())
+            return 0;
+
+        if (depth == 0) // return heuristic evaluation
+            return StaticEvaluate(board);
+        
+        if (board.side == 0)
+        {
+            // white - maximizing player
+            int eval = int.MinValue;
+            Move[] moves = SearchBoard(board);
+            
+            // denotes whether a legal move has been found - if the king is in check after the move it's not counted, of none are found, the player has no legal moves
+            bool found = false;
+            
+            // for each child
+            foreach (Move move in moves)
+            {
+                Board moveBoard = new(board);
+                moveBoard.MakeMove(move);
+                if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
+                    continue;
+                found = true; // if a move is legal, set found to true
+                
+                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                alpha = Math.Max(alpha, eval);
+                if (eval >= beta) break; // beta cutoff
+            }
+            
+            if (found)
+                return eval;
+            
+            // not found - no legal moves
+            if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check
+                return int.MinValue; // worst outcome for white
+            return 0; // game is a draw by stalemate
+        }
+        else
+        {
+            // black - minimizing player
+            int eval = int.MaxValue;
+            Move[] moves = SearchBoard(board);
+            
+            bool found = false;
+
+            foreach (Move move in moves)
+            {
+                Board moveBoard = new(board);
+                moveBoard.MakeMove(move);
+                if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
+                    continue;
+                found = true;
+                
+                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                beta = Math.Min(beta, eval);
+                if (eval <= alpha) break; // alpha cutoff
+            }
+            
+            if (found)
+                return eval;
+            
+            if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check
+                return int.MaxValue; // worst outcome for black
+            return 0;
+        }
+    }
+
+    private static int StaticEvaluate(Board board)
+    {
+        int eval = 0;
+        
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                // the square is only worth checking if the searched side has a piece there
+                if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                {
+                    eval += Pieces.Value[board.GetPiece(file, rank)];
+                }
+            }
+        }
+
+        return eval;
+    }
+    
     // returns pseudo legal moves: abides by the rules of piece movement, but does not account for checks
     public static Move[] SearchBoard(Board board, bool ordering = true)
     {
@@ -230,4 +383,13 @@ public static class Search
         
         return MoveList.ToArray();
     }
+}
+
+[Serializable]
+public class MoveNotFoundException : Exception
+{
+    // occurs when trying to get the best move in a position with no legal moves
+    public MoveNotFoundException() {}
+    public MoveNotFoundException(string message) : base(message) {}
+    public MoveNotFoundException(string message, Exception inner) : base(message, inner) {}
 }
