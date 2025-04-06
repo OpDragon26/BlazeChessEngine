@@ -6,7 +6,7 @@ Bitboards.Init();
 Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis);
 
 //match.SpeedTest();
-//match.Play();
+match.Play();
 
 //Move[] moves = Search.SearchBoard(match.board);
 

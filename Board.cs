@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+[assembly: SuppressMessage("ReSharper","NonReadonlyMemberInGetHashCode")]
+
 namespace Blaze;
 
 public enum Outcome
@@ -10,6 +13,7 @@ public enum Outcome
 
 public class Board
 {
+
     /*
     13 pieces -> 4 bits per piece -> 8 uints, each corresponding to one row
     
@@ -42,6 +46,7 @@ public class Board
     private int pawns = 16;
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
+    public int hashKey;
     
     public Board(uint[] board)
     {
@@ -59,6 +64,8 @@ public class Board
                 }
             }
         }
+
+        hashKey = Hasher.ZobristHash(this);
     }
     
     public Board(Board board) // clone board
@@ -73,6 +80,7 @@ public class Board
         pawns = board.pawns;
         values = [board.values[0], board.values[1]];
         repeat = new(board.repeat);
+        hashKey = board.hashKey;
     }
     
     public void MakeMove(Move move)
@@ -88,7 +96,7 @@ public class Board
                 pawns--;
         }
         
-        if (move.Promotion == 0b111)
+        if (move.Promotion == 0b111) // move is not a promotion
         {
             SetPiece(move.Destination, GetPiece(move.Source));
             
@@ -97,7 +105,7 @@ public class Board
             else if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the moved piece is a pawn
                 halfMoveClock = 0;
         }
-        else // piece is a promotion
+        else // move is a promotion
         {
             SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);
             halfMoveClock = 0; // the piece moved is definitely a pawn
@@ -106,9 +114,18 @@ public class Board
             values[side] -= Pieces.Value[Pieces.WhitePawn | (side << 3)]; // subtract the value of the pawn from the moving side
         }
         
+        // update the hash key
+        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
+        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Destination), move.Destination.file, move.Destination.rank]; // add the moved piece, including promoted pieces
+        hashKey ^= Hasher.CastlingNumbers[castling]; // remove the castling rights number
+        // remove the en passant file if there was any, if it was 8, no need to change anything
+        hashKey ^= Hasher.EnPassantFiles[enPassant.file];
+        
         Clear(move.Source);
         enPassant = (8, 8);
         castling &= move.CastlingBan;
+        
+        hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
         
         // update bitboards
         bitboards[side] ^= Bitboards.GetSquare(move.Source);
@@ -119,10 +136,12 @@ public class Board
             case 0b0000: break;
             case 0b0001: // white double move
                 enPassant = (move.Source.file, 2);
+                hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
             break;
             
             case 0b1001: // black double move
                 enPassant = (move.Source.file, 5);
+                hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
             break;
             
             case 0b0010: // white short castle
@@ -130,6 +149,9 @@ public class Board
                 SetPiece(5,0, Pieces.WhiteRook);
                 bitboards[0] ^= Bitboards.GetSquare(7,0);
                 bitboards[0] ^= Bitboards.GetSquare(5,0);
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 7, 0];
+                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 5, 0];
             break;
             
             case 0b0011: // white long castle
@@ -137,6 +159,9 @@ public class Board
                 SetPiece(3,0, Pieces.WhiteRook);
                 bitboards[0] ^= Bitboards.GetSquare(0,0);
                 bitboards[0] ^= Bitboards.GetSquare(3,0);
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 0, 0];
+                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 3, 0];
             break;
             
             case 0b1010: // black short castle
@@ -144,6 +169,9 @@ public class Board
                 SetPiece(5,7, Pieces.BlackRook);
                 bitboards[1] ^= Bitboards.GetSquare(7,7);
                 bitboards[1] ^= Bitboards.GetSquare(5,7);
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 7, 7];
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 5, 7];
             break;
             
             case 0b1011: // black long castle
@@ -151,18 +179,25 @@ public class Board
                 SetPiece(3,7, Pieces.BlackRook);
                 bitboards[1] ^= Bitboards.GetSquare(0,7);
                 bitboards[1] ^= Bitboards.GetSquare(3,7);
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 0, 7];
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 3, 7];
             break;
             
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 4);
                 bitboards[1] ^= Bitboards.GetSquare(move.Destination.file,4);
                 values[1] += 100;
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
             break;
             
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
                 bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
                 values[0] -= 100;
+                // update the hash key
+                hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 3];
             break;
         }
 
@@ -173,11 +208,6 @@ public class Board
     {
         // 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
         return halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
-    }
-
-    public override int GetHashCode()
-    {
-        return Hasher.ZobristHash(this);
     }
 
     public ulong AllPieces()

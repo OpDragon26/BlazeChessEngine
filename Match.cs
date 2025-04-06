@@ -14,12 +14,14 @@ public class Match
     private readonly Type type;
     private readonly int side; // side of the player
     private static readonly  Random random = new();
+    private bool debug;
 
-    public Match(Board board, Type type, int side = 0)
+    public Match(Board board, Type type, int side = 0, bool debug = false)
     {
         this.board = board;
         this.type = type;
         this.side = side;
+        this.debug = debug;
     }
 
     public void Play()
@@ -28,75 +30,23 @@ public class Match
         
         while (play)
         {
+            if (debug) Console.WriteLine(board.hashKey);
             switch (type)
             {
                 case Type.Analysis:
                     Print(side);
-                    Console.WriteLine("Enter your move:");
-                    string? moveString = Console.ReadLine();
-                    if (!string.IsNullOrEmpty(moveString))
-                    {
-                        if (moveString == "end") play = false;
-                        
-                        // if the move is in the correct notation
-                        else if (Regex.IsMatch(moveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
-                        {
-                            Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
-                            Move move = new Move(moveString, board);
-
-                            Console.Clear();
-
-                            // if the move is legal
-                            if (filtered.Contains(move))
-                            {
-                                board.MakeMove(move);
-                            }
-                            else
-                                Console.WriteLine("Illegal move");
-                        }
-                        else
-                        {
-                            Console.Clear(); 
-                            Console.WriteLine("Incorrect notation");
-                        }
-                    }
+                    play = PlayerTurn();
                 break;
                 
                 case Type.Random:
                     Print(side);
                     if (board.side == side)
                     {
-                        // ask the player for a move
-                        Console.WriteLine("Enter your move:");
-                        string? playerMoveString = Console.ReadLine();
-                        if (!string.IsNullOrEmpty(playerMoveString))
-                        {
-                            if (playerMoveString == "end") play = false;
-                        
-                            // if the move is in the correct notation
-                            else if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
-                            {
-                                Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
-                                Move move = new Move(playerMoveString, board);
-
-                                Console.Clear();
-
-                                // if the move is legal
-                                if (filtered.Contains(move))
-                                    board.MakeMove(move);
-                                else
-                                    Console.WriteLine("Illegal move");
-                            }
-                            else
-                            {
-                                Console.Clear();
-                                Console.WriteLine("Incorrect notation");
-                            }
-                        }
+                        play = PlayerTurn();
                     }
                     else
                     {
-                        Console.Clear();
+                        if (!debug) Console.Clear();
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
@@ -156,6 +106,39 @@ public class Match
                 Console.WriteLine(rankStr);
             }
         }
+    }
+
+    private bool PlayerTurn()
+    {
+        // ask the player for a move
+        Console.WriteLine("Enter your move:");
+        string? playerMoveString = Console.ReadLine();
+        if (!string.IsNullOrEmpty(playerMoveString))
+        {
+            if (playerMoveString == "quit") return false;
+                        
+            // if the move is in the correct notation
+            else if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
+            {
+                Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
+                Move move = new Move(playerMoveString, board);
+
+                if (!debug) Console.Clear();
+
+                // if the move is legal
+                if (filtered.Contains(move))
+                    board.MakeMove(move);
+                else
+                    Console.WriteLine("Illegal move");
+            }
+            else
+            {
+                if (!debug) Console.Clear();
+                Console.WriteLine("Incorrect notation");
+            }
+        }
+
+        return true;
     }
 
     public static void PrintBitboard(ulong bitboard, int perspective, string on = "#", string off = " ")

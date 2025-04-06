@@ -2,9 +2,9 @@ namespace Blaze;
 
 public static class Hasher
 {
-    private static readonly int[,,] PieceNumbers = new int[14,8,8];
-    private static readonly int[] CastlingNumbers = new int[16];
-    private static readonly int[] EnPassantFiles = new int[9];
+    public static readonly int[,,] PieceNumbers = new int[14,8,8];
+    public static readonly int[] CastlingNumbers = new int[16];
+    public static readonly int[] EnPassantFiles = new int[9];
     private static readonly Random random = new();
     private static int BlackToMove;
     
