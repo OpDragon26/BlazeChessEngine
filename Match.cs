@@ -10,11 +10,12 @@ public enum Type
 
 public class Match
 {
+    private static readonly  Random random = new();
+    
     private readonly Board board;
     private readonly Type type;
     private readonly int side; // side of the player
-    private static readonly  Random random = new();
-    private bool debug;
+    private readonly bool debug;
 
     public Match(Board board, Type type, int side = 0, bool debug = false)
     {
@@ -41,15 +42,14 @@ public class Match
                 case Type.Random:
                     Print(side);
                     if (board.side == side)
-                    {
                         play = PlayerTurn();
-                    }
                     else
                     {
                         if (!debug) Console.Clear();
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
+                        play = CheckOutcome();
                     }
                 break;
             }
@@ -118,7 +118,7 @@ public class Match
             if (playerMoveString == "quit") return false;
                         
             // if the move is in the correct notation
-            else if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
+            if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
             {
                 Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                 Move move = new Move(playerMoveString, board);
@@ -127,7 +127,11 @@ public class Match
 
                 // if the move is legal
                 if (filtered.Contains(move))
+                {
                     board.MakeMove(move);
+                    if (!CheckOutcome())
+                        return false;
+                }
                 else
                     Console.WriteLine("Illegal move");
             }
@@ -136,6 +140,26 @@ public class Match
                 if (!debug) Console.Clear();
                 Console.WriteLine("Incorrect notation");
             }
+        }
+
+        return true;
+    }
+
+    // if the game has ended, return false to break the Play() loop
+    private static readonly string[] Outcomes = 
+    [
+        "", // ongoing (never printed)
+        "Game over. White won",
+        "Game over. Black won",
+        "Game over. Draw",
+    ];
+    private bool CheckOutcome()
+    {
+        Outcome outcome = board.GetOutcome();
+        if (outcome != Outcome.Ongoing)
+        {
+            Console.WriteLine(Outcomes[(int)outcome]);
+            return false;
         }
 
         return true;

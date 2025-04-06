@@ -209,7 +209,7 @@ public class Board
         side = 1 - side;
     }
 
-    public bool IsDrawn()
+    public bool IsDraw()
     {
         // threefold repetition or 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
         // stalemate requires searching for legal moves, so it's checked elsewhere
@@ -220,7 +220,7 @@ public class Board
     {
         // gets the actual outcome of the match
         // requires searching for legal moves, shouldn't be used during a search
-        if (IsDrawn())
+        if (IsDraw())
             return Outcome.Draw;
         
         Move[] moves = Search.FilterChecks(Search.SearchBoard(this, false), this);
@@ -237,8 +237,10 @@ public class Board
         if (repeat.TryGetValue(hashKey, out int v)) // if the hash of the board is in already in the dictionary
         {
             // if it is found, v is at least 1, if it's more, this is the third time the position appears, so the game is a draw by threefold repetition
-            threefold = v < 1;
-            repeat[hashKey] = v + 1;
+            if (v < 1)
+                threefold = true;
+            else
+                repeat[hashKey] = v + 1;
         }
         else // the board position is entirely new
             repeat.Add(hashKey, 1);
