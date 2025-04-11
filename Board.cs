@@ -40,13 +40,13 @@ public class Board
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
     
-    public readonly (int file, int rank)[] KingPositions = [(4,0),(4,7)];
+    public readonly (int file, int rank)[] KingPositions = new (int file, int rank)[2];
 
     private int halfMoveClock;
     private int pawns = 16;
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
-    public int hashKey;
+    private int hashKey;
     private bool threefold;
     
     public Board(uint[] board)
@@ -62,6 +62,11 @@ public class Board
                 {
                     bitboards[GetPiece(file, rank) >> 3] |= Bitboards.GetSquare(file, rank);
                     values[GetPiece(file, rank) >> 3] += Pieces.Value[GetPiece(file, rank)];
+                    
+                    if (GetPiece(file, rank) == Pieces.WhiteKing)
+                        KingPositions[0] = (file, rank);
+                    else if (GetPiece(file, rank) == Pieces.BlackKing)
+                        KingPositions[1] = (file, rank);
                 }
             }
         }

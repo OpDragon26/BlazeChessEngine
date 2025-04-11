@@ -2,69 +2,21 @@ namespace Blaze;
 
 public static class Search
 {
-    public static Move BestMove(Board board, int depth)
+    public static (Move move, int eval) BestMove(Board board, int depth)
     {
-        Move[] moves = SearchBoard(board);
+        Move[] moves = FilterChecks(SearchBoard(board), board);
+        int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new MoveNotFoundException();
-        
-        bool found = false;
-        
-        int alpha = int.MinValue;
-        int beta = int.MaxValue;
-        
-        Move best = moves[0];
-        
+
+        for (int i = 0; i < moves.Length; i++)
+        {
+            Board moveBoard = new(board);
+            moveBoard.MakeMove(moves[i]);
+            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
+        }
         if (board.side == 0)
-        {
-            int eval = Int32.MinValue;
-
-            foreach (Move move in moves)
-            {
-                Board moveBoard = new(board);
-                moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
-                    continue;
-                found = true; // if a move is legal, set found to true
-
-                int childEval = Minimax(moveBoard, depth - 1, alpha, beta);
-                if (childEval >= eval)
-                {
-                    eval = childEval;
-                    best = move;
-                }
-                
-                alpha = Math.Max(alpha, eval);
-                if (eval >= beta) break; // beta cutoff
-            }
-        }
-        else
-        {
-            int eval = Int32.MaxValue;
-
-            foreach (Move move in moves)
-            {
-                Board moveBoard = new(board);
-                moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
-                    continue;
-                found = true; // if a move is legal, set found to true
-
-                int childEval = Minimax(moveBoard, depth - 1, alpha, beta);
-                if (childEval <= eval)
-                {
-                    eval = childEval;
-                    best = move;
-                }
-                
-                beta = Math.Min(beta, eval);
-                if (eval <= alpha) break; // beta cutoff
-            }
-        }
-        
-        if (found) return best;
-        
-        // if there are no moves, throw an exception
-        throw new MoveNotFoundException();
+            return (moves[Array.IndexOf(evals, evals.Max())], evals.Max()); // white
+        return (moves[Array.IndexOf(evals, evals.Min())], evals.Min()); // black
     }
     
     private static int Minimax(Board board, int depth, int alpha, int beta)
@@ -95,7 +47,7 @@ public static class Search
                 
                 eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 alpha = Math.Max(alpha, eval);
-                if (eval >= beta) break; // beta cutoff
+                if (beta <= alpha) break; // beta cutoff
             }
             
             if (found)
@@ -124,7 +76,7 @@ public static class Search
                 
                 eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
-                if (eval <= alpha) break; // alpha cutoff
+                if (beta <= alpha) break; // alpha cutoff
             }
             
             if (found)
@@ -136,7 +88,7 @@ public static class Search
         }
     }
 
-    private static int StaticEvaluate(Board board)
+    public static int StaticEvaluate(Board board)
     {
         int eval = 0;
         
@@ -145,9 +97,9 @@ public static class Search
             for (int file = 7; file >= 0; file--)
             {
                 // the square is only worth checking if the searched side has a piece there
-                if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
                 {
-                    eval += Pieces.Value[board.GetPiece(file, rank)];
+                    eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
                 }
             }
         }

@@ -34,7 +34,7 @@ public class Match
         
         while (play)
         {
-            if (debug) Console.WriteLine(board.hashKey);
+            if (debug) Console.WriteLine(Search.StaticEvaluate(board)); //Console.WriteLine(board.hashKey);
             switch (type)
             {
                 case Type.Analysis:
@@ -64,7 +64,7 @@ public class Match
                     {
                         if (!debug) Console.Clear();
                         // make the top choice of the engine on the board
-                        Move bestMove = Search.BestMove(board, depth);
+                        Move bestMove = Search.BestMove(board, depth).move;
                         board.MakeMove(bestMove);
                         play = CheckOutcome();
                     }
