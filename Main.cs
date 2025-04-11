@@ -3,7 +3,7 @@ using Type = Blaze.Type;
 
 Hasher.Init();
 Bitboards.Init();
-Match match = new Match(new Board(Presets.StartingBoard), Type.Standard, depth: 5, debug: false);
+Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis, depth: 4, debug: false);
 
 //match.SpeedTest();
 match.Play();

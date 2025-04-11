@@ -270,8 +270,6 @@ public static class Bitboards
                 KingCombinations[file, rank] = Combinations(kingMask);
                 
                 // pawn moves
-                if (rank == 0 || rank == 7)
-                    continue; // skip the pawn mask generation if one the first or last rank 
                 
                 // white pawns
                 ulong wpmMask = 0;
