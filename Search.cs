@@ -91,15 +91,32 @@ public static class Search
     public static int StaticEvaluate(Board board)
     {
         int eval = 0;
-        
-        for (int rank = 0; rank < 8; rank++)
+
+        if (!board.IsEndgame())
         {
-            for (int file = 7; file >= 0; file--)
+            for (int rank = 0; rank < 8; rank++)
             {
-                // the square is only worth checking if the searched side has a piece there
-                if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                for (int file = 7; file >= 0; file--)
                 {
-                    eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
+                    // the square is only worth checking if the searched side has a piece there
+                    if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                    {
+                        eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int rank = 0; rank < 8; rank++)
+            {
+                for (int file = 7; file >= 0; file--)
+                {
+                    // the square is only worth checking if the searched side has a piece there
+                    if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                    {
+                        eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
+                    }
                 }
             }
         }

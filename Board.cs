@@ -251,6 +251,11 @@ public class Board
             repeat.Add(hashKey, 1);
     }
 
+    public bool IsEndgame()
+    {
+        return values[0] + int.Abs(values[1]) < 3000;
+    }
+
     public ulong AllPieces()
     {
         return bitboards[0] | bitboards[1];
