@@ -20,6 +20,7 @@ public class Match
     private readonly bool debug;
     private readonly int depth;
     private readonly int moves;
+    private int movesMade;
 
     public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
     {
@@ -33,6 +34,7 @@ public class Match
 
     public void Play()
     {
+        movesMade = 0;
         bool play = true;
         
         while (play)
@@ -77,6 +79,12 @@ public class Match
                     for (int i = 0; i < moves; i++)
                     {
                         if (!debug) Console.Clear();
+
+                        movesMade += 1 - board.side; // if the side is white, add one
+                        
+                        string movingSide = board.side == 0 ? "White" : "Black";
+                        Console.WriteLine($"Move {movesMade} - {movingSide}");
+                        
                         Print(side);
                         // make the top choice of the engine on the board
                         Move botMove = Search.BestMove(board, depth).move;
@@ -85,6 +93,8 @@ public class Match
                         // if the game ended, break the loop
                         if (!CheckOutcome())
                         {
+                            if (!debug) Console.Clear();
+                            CheckOutcome();
                             Print(side);
                             break;
                         }
@@ -198,7 +208,7 @@ public class Match
         Outcome outcome = board.GetOutcome();
         if (outcome != Outcome.Ongoing)
         {
-            Console.WriteLine(Outcomes[(int)outcome]);
+            Console.WriteLine(Outcomes[(int)outcome] + $" on move {movesMade}");
             return false;
         }
 
