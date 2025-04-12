@@ -8,12 +8,13 @@ public static class Search
         int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new MoveNotFoundException();
 
-        for (int i = 0; i < moves.Length; i++)
+        Parallel.For(0, moves.Length, i =>
         {
             Board moveBoard = new(board);
             moveBoard.MakeMove(moves[i]);
             evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
-        }
+        });
+        
         if (board.side == 0)
             return (moves[Array.IndexOf(evals, evals.Max())], evals.Max()); // white
         return (moves[Array.IndexOf(evals, evals.Min())], evals.Min()); // black
@@ -55,7 +56,9 @@ public static class Search
             
             // not found - no legal moves
             if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check
-                return int.MinValue; // worst outcome for white
+                // black won by checkmate
+                // the higher the depth, the closer to the origin, the worse for white
+                return int.MinValue + 100 - depth;
             return 0; // game is a draw by stalemate
         }
         else
@@ -83,7 +86,9 @@ public static class Search
                 return eval;
             
             if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check
-                return int.MaxValue; // worst outcome for black
+                // white won by checkmate
+                // the higher the depth, the closer to the origin, and better for white
+                return int.MaxValue - 100 + depth;
             return 0;
         }
     }

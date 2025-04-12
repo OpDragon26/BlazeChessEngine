@@ -6,7 +6,8 @@ public enum Type
 {
     Random,
     Analysis,
-    Standard
+    Standard,
+    Self
 }
 
 public class Match
@@ -18,14 +19,16 @@ public class Match
     private readonly int side; // side of the player
     private readonly bool debug;
     private readonly int depth;
+    private readonly int moves;
 
-    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false)
+    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
     {
         this.board = board;
         this.type = type;
         this.side = side;
         this.debug = debug;
         this.depth = depth;
+        this.moves = moves;
     }
 
     public void Play()
@@ -69,6 +72,26 @@ public class Match
                         play = CheckOutcome();
                     }
                 break;
+                
+                case Type.Self:
+                    for (int i = 0; i < moves; i++)
+                    {
+                        if (!debug) Console.Clear();
+                        Print(side);
+                        // make the top choice of the engine on the board
+                        Move botMove = Search.BestMove(board, depth).move;
+                        board.MakeMove(botMove);
+                        
+                        // if the game ended, break the loop
+                        if (!CheckOutcome())
+                        {
+                            Print(side);
+                            break;
+                        }
+                    }
+
+                    play = false; // break loop
+                break;
             }
         }
     }
@@ -79,8 +102,8 @@ public class Match
         for (int i = 0; i < repetition; i++)
         {
             Board moveBoard = new(board);
-            Move[] moves = Search.SearchBoard(moveBoard);
-            moveBoard.MakeMove(moves[0]);
+            Move[] moveList = Search.SearchBoard(moveBoard);
+            moveBoard.MakeMove(moveList[0]);
         }
         
         TimeSpan t2 = DateTime.UtcNow - new DateTime(1970, 1, 1);
@@ -132,7 +155,7 @@ public class Match
         string? playerMoveString = Console.ReadLine();
         if (!string.IsNullOrEmpty(playerMoveString))
         {
-            if (playerMoveString == "quit") return false;
+            if (playerMoveString == "exit") return false;
                         
             // if the move is in the correct notation
             if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))

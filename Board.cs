@@ -47,7 +47,6 @@ public class Board
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
     private int hashKey;
-    private bool threefold;
     
     public Board(uint[] board)
     {
@@ -205,7 +204,7 @@ public class Board
                 bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
                 values[0] -= 100;
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 3];
+                hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
             break;
         }
         
@@ -218,7 +217,7 @@ public class Board
     {
         // threefold repetition or 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
         // stalemate requires searching for legal moves, so it's checked elsewhere
-        return threefold || halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
+        return repeat.ContainsValue(3) || halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
     }
     
     public Outcome GetOutcome()
@@ -242,10 +241,7 @@ public class Board
         if (repeat.TryGetValue(hashKey, out int v)) // if the hash of the board is in already in the dictionary
         {
             // if it is found, v is at least 1, if it's more, this is the third time the position appears, so the game is a draw by threefold repetition
-            if (v < 1)
-                threefold = true;
-            else
-                repeat[hashKey] = v + 1;
+            repeat[hashKey] = v + 1;
         }
         else // the board position is entirely new
             repeat.Add(hashKey, 1);
