@@ -7,7 +7,8 @@ public enum Type
     Random,
     Analysis,
     Standard,
-    Self
+    Self,
+    Autoplay,
 }
 
 public class Match
@@ -48,12 +49,12 @@ public class Match
                 break;
                 
                 case Type.Random:
+                    if (!debug) Console.Clear();
                     Print(side);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
                     {
-                        if (!debug) Console.Clear();
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         board.MakeMove(filtered[random.Next(0, filtered.Length)]);
@@ -62,12 +63,12 @@ public class Match
                 break;
                 
                 case Type.Standard:
+                    if (!debug) Console.Clear();
                     Print(side);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
                     {
-                        if (!debug) Console.Clear();
                         // make the top choice of the engine on the board
                         Move bestMove = Search.BestMove(board, depth).move;
                         board.MakeMove(bestMove);
@@ -75,7 +76,7 @@ public class Match
                     }
                 break;
                 
-                case Type.Self:
+                case Type.Autoplay:
                     for (int i = 0; i < moves; i++)
                     {
                         if (!debug) Console.Clear();
@@ -102,8 +103,41 @@ public class Match
 
                     play = false; // break loop
                 break;
+                
+                case Type.Self:
+                    for (int i = 0; i < moves; i++)
+                    {
+                        string? message = Console.ReadLine();
+                        if (message == "exit") break;
+                        
+                        if (!debug) Console.Clear();
+
+                        movesMade += 1 - board.side; // if the side is white, add one
+                        
+                        string movingSide = board.side == 0 ? "White" : "Black";
+                        Console.WriteLine($"Move {movesMade} - {movingSide}");
+                        
+                        Print(side);
+                        // make the top choice of the engine on the board
+                        Move botMove = Search.BestMove(board, depth).move;
+                        board.MakeMove(botMove);
+                        
+                        // if the game ended, break the loop
+                        if (!CheckOutcome())
+                        {
+                            if (!debug) Console.Clear();
+                            CheckOutcome();
+                            Print(side);
+                            break;
+                        }
+                    }
+
+                    play = false; // break loop
+                break;
             }
         }
+        
+        Print(side);
     }
 
     public void SpeedTest(int repetition = 1000000)
