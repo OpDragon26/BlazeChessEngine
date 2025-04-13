@@ -93,6 +93,7 @@ public static class Search
         }
     }
 
+    // returns the heuristic evaluation of the board
     public static int StaticEvaluate(Board board)
     {
         int eval = 0;
@@ -122,6 +123,16 @@ public static class Search
                             if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
                                 eval += 10;
                         }
+                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval += 40;
+                        }
+                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval -= 40;
+                        }
                     }
                 }
             }
@@ -150,6 +161,16 @@ public static class Search
                                 eval += Weights.EndgameBlackPassedPawnBonuses[rank];
                             if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
                                 eval += 30;
+                        }
+                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval += 40;
+                        }
+                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval -= 40;
                         }
                     }
                 }

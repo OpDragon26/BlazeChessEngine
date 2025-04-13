@@ -363,12 +363,17 @@ public class Board
 
     public bool IsEndgame()
     {
-        return values[0] + int.Abs(values[1]) < 3000;
+        return values[0] + int.Abs(values[1]) < 3600;
     }
 
     public ulong AllPieces()
     {
         return bitboards[0] | bitboards[1];
+    }
+
+    public ulong AllPawns()
+    {
+        return bitboards[2] | bitboards[3];
     }
     
     private readonly uint PieceMask = 0xF; // covers the last 4 bits

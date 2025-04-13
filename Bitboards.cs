@@ -741,6 +741,11 @@ public static class Bitboards
         return Square >> (square.rank * 8 + 7 - square.file);
     }
 
+    public static ulong GetFile(int file)
+    {
+        return File >> (7 - file);
+    }
+
     public static ulong GetWhitePassedPawnMask(int file, int rank)
     {
         return PassedPawnMasks[file] >> (rank * 8 + 8);
