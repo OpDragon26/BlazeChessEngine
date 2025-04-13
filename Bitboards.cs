@@ -57,7 +57,7 @@ public static class Bitboards
         {0,1,2,3,3,2,1,0},
     };
     
-    private static class MagicLookup
+    public static class MagicLookup
     {
         public static readonly (ulong magicNumber, int push, int highest)[,] RookMove = new (ulong magicNumber, int push, int highest)[8,8];
         public static readonly (ulong magicNumber, int push, int highest)[,] BishopMove = new (ulong magicNumber, int push, int highest)[8,8];
@@ -526,7 +526,7 @@ public static class Bitboards
 
         for (int i = 0; i < 4; i++) // for each pattern
         {
-            for (int j = 1; j < 7; j++) // in each direction
+            for (int j = 1; j < 8; j++) // in each direction
             {
                 (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
                 
@@ -717,6 +717,18 @@ public static class Bitboards
         }
         
         return mask;
+    }
+
+    public static ulong GetMoveBitboard(Move[] moveList)
+    {
+        ulong bitboard = 0;
+
+        foreach (Move move in moveList)
+        {
+            bitboard |= GetSquare(move.Destination);
+        }
+        
+        return bitboard;
     }
     
     private const ulong Square = 0x8000000000000000;
