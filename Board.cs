@@ -35,7 +35,11 @@ public class Board
     public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    public readonly ulong[] bitboards = new ulong[2];
+    public readonly ulong[] bitboards = new ulong[4];
+    // white pieces
+    // black pieces
+    // white pawns only
+    // black pawns only
     
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
@@ -53,6 +57,80 @@ public class Board
         this.board = board;
         
         // init bitboards
+        AutoFillBitboards();
+
+        hashKey = Hasher.ZobristHash(this);
+    }
+    
+    public Board(Board board) // clone board
+    {
+        this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
+        side = board.side;
+        bitboards = [board.bitboards[0], board.bitboards[1], board.bitboards[2], board.bitboards[3]];
+        enPassant = board.enPassant;
+        castling = board.castling;
+        KingPositions = [board.KingPositions[0], board.KingPositions[1]];
+        halfMoveClock = board.halfMoveClock;
+        pawns = board.pawns;
+        values = [board.values[0], board.values[1]];
+        repeat = new(board.repeat);
+        hashKey = board.hashKey;
+    }
+
+    public Board(string FEN)
+    {
+        string[] fields = FEN.Split(' ');
+        
+        // piece placement data
+        string[] ranks = fields[0].Split('/');
+        board = new uint[8];
+        for (int r = 0; r < 8; r++) // for each rank
+        {
+            // current file
+            int indexer = 0;
+
+            for (int c = 0; c < ranks[r].Length; c++) // for each character
+            {
+                if (Int32.TryParse(ranks[r][c].ToString(), out int v)) // if the character is a number
+                {
+                    // fill that many empty squares
+                    for (int i = 0; i < v; i++)
+                    {
+                        SetPiece(indexer++, 7-r, Pieces.Empty);
+                    }
+                }
+                else
+                {
+                    SetPiece(indexer++, 7-r, Pieces.Parse(ranks[r][c]));
+                }
+            }
+        }
+        
+        AutoFillBitboards();
+        CountPawns();
+
+        // active side
+        if (fields[1] == "w")
+            side = 0;
+        else if (fields[1] == "b")
+            side = 1;
+        else
+            throw new Exception($"'{fields[1]}' is not a valid side");
+        
+        // castling availability
+        castling = ParseCastling(fields[2]);
+        
+        // En passant target square
+        enPassant = fields[3] == "-" ? (8, 8) : Move.ParseSquare(fields[3]);
+        
+        // half move clock
+        halfMoveClock = Int32.Parse(fields[4]);
+
+        hashKey = Hasher.ZobristHash(this);
+    }
+
+    private void AutoFillBitboards()
+    {
         for (int rank = 0; rank < 8; rank++)
         {
             for (int file = 7; file >= 0; file--)
@@ -66,26 +144,27 @@ public class Board
                         KingPositions[0] = (file, rank);
                     else if (GetPiece(file, rank) == Pieces.BlackKing)
                         KingPositions[1] = (file, rank);
+                    else if (GetPiece(file, rank) == Pieces.WhitePawn)
+                        bitboards[2] |= Bitboards.GetSquare(file, rank);
+                    else if (GetPiece(file, rank) == Pieces.BlackPawn)
+                        bitboards[3] |= Bitboards.GetSquare(file, rank);
                 }
             }
         }
-
-        hashKey = Hasher.ZobristHash(this);
     }
-    
-    public Board(Board board) // clone board
+
+    private void CountPawns()
     {
-        this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
-        side = board.side;
-        bitboards = [board.bitboards[0], board.bitboards[1]];
-        enPassant = board.enPassant;
-        castling = board.castling;
-        KingPositions = [board.KingPositions[0], board.KingPositions[1]];
-        halfMoveClock = board.halfMoveClock;
-        pawns = board.pawns;
-        values = [board.values[0], board.values[1]];
-        repeat = new(board.repeat);
-        hashKey = board.hashKey;
+        pawns = 0;
+        
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                if (GetPiece(file, rank) is Pieces.WhitePawn or Pieces.BlackPawn)
+                    pawns++;
+            }
+        }
     }
     
     public void MakeMove(Move move)
@@ -94,13 +173,20 @@ public class Board
         if (side == 1)
             hashKey ^= Hasher.BlackToMove;
 
+        // if the moved piece is a pawn, remove the source from the bitboard
+        if (move.Pawn)
+            bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
+
         if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
         {
             values[1-side] -= Pieces.Value[GetPiece(move.Destination)]; // subtract the value of the piece from the opponent
             bitboards[1-side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
             halfMoveClock = 0;
             if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the taken piece was a pawn
+            {
                 pawns--;
+                bitboards[3 - side] ^= Bitboards.GetSquare(move.Destination); // remove the square from the opponent's pawn bitboard
+            }
         }
         
         if (move.Promotion == 0b111) // move is not a promotion
@@ -110,7 +196,10 @@ public class Board
             if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
                 KingPositions[side] = move.Destination;
             else if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the moved piece is a pawn
+            {
                 halfMoveClock = 0;
+                bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination); // add the destination to the pawn bitboard
+            }
         }
         else // move is a promotion
         {
@@ -194,6 +283,7 @@ public class Board
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 4);
                 bitboards[1] ^= Bitboards.GetSquare(move.Destination.file,4);
+                bitboards[3] ^= Bitboards.GetSquare(move.Destination.file,4);
                 values[1] += 100;
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
@@ -202,13 +292,14 @@ public class Board
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
                 bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
+                bitboards[2] ^= Bitboards.GetSquare(move.Destination.file,3);
                 values[0] -= 100;
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
             break;
         }
         
-        Add(); // adds the hash of the board to the dictionary and checks for threefold repetition
+        Add(); // adds the hash of the board to the dictionary
 
         side = 1 - side;
     }
@@ -245,6 +336,32 @@ public class Board
         }
         else // the board position is entirely new
             repeat.Add(hashKey, 1);
+    }
+
+    private static readonly Dictionary<char, byte> CastlingAvailability = new()
+    {
+        {'K', 0b1000},
+        {'Q', 0b0100},
+        {'k', 0b0010},
+        {'q', 0b0001}
+    };
+    
+    private static byte ParseCastling(string s)
+    {
+        if (s == "-")
+            return 0;
+
+        byte c = 0;
+
+        foreach (char cc in s)
+        {
+            if (CastlingAvailability.TryGetValue(cc, out byte ca))
+                c |= ca;
+            else
+                throw new Exception($"Unable to parse FEN: Unknown castling availability char: {cc}");
+        }
+
+        return c;
     }
 
     public bool IsEndgame()
@@ -302,16 +419,16 @@ public static class Pieces
     public const uint WhiteBishop = 0b0011; // 3
     public const uint WhiteQueen = 0b0100; // 4
     public const uint WhiteKing = 0b0101; // 5
-    
+
     public const uint BlackPawn = 0b1000; // 8
     public const uint BlackRook = 0b1001; // 9
     public const uint BlackKnight = 0b1010; // 10
     public const uint BlackBishop = 0b1011; // 11
     public const uint BlackQueen = 0b1100; // 12
     public const uint BlackKing = 0b1101; // 13
-    
+
     public const uint Empty = 0b1111; // 15
-    
+
     public const uint TypeMask = 0b111;
     // public const uint ColorMask = 0b1000;
 
@@ -334,6 +451,30 @@ public static class Pieces
         0,
         0
     ];
+
+    private static readonly Dictionary<char, uint> PieceStrings = new()
+    {
+        {'P', WhitePawn },
+        {'R', WhiteRook },
+        {'N', WhiteKnight },
+        {'B', WhiteBishop },
+        {'Q', WhiteQueen },
+        {'K', WhiteKing },
+        {'p', BlackPawn},
+        {'r', BlackRook },
+        {'n', BlackKnight },
+        {'b', BlackBishop },
+        {'q', BlackQueen },
+        {'k', BlackKing },
+    };
+
+    public static uint Parse(char s)
+    {
+        if (PieceStrings.TryGetValue(s, out uint piece))
+            return piece;
+        
+        throw new FormatException($"Unable to parse FEN: Unknown piece: '{s}'");
+    }
 }
 
 public static class Presets

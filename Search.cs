@@ -107,6 +107,22 @@ public static class Search
                     if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
+                        
+                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
+                        {
+                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
+                            {
+                                eval += Weights.Pieces[Pieces.WhitePawn, file, rank];
+                            }
+                        }
+                        else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
+                        {
+                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
+                            {
+                                eval += Weights.Pieces[Pieces.BlackPawn, file, rank];
+                                //Console.WriteLine("Black passed pawn found");
+                            }
+                        }
                     }
                 }
             }
@@ -121,6 +137,23 @@ public static class Search
                     if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
+                        
+                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0)
+                        {
+                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
+                            {
+                                eval += Weights.EndgamePieces[Pieces.WhitePawn, file, rank];
+                                //Console.WriteLine("White passed pawn found (endgame)");
+                            }
+                        }
+                        else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
+                        {
+                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
+                            {
+                                eval += Weights.EndgamePieces[Pieces.BlackPawn, file, rank];
+                                //Console.WriteLine("Black passed pawn found (endgame)");
+                            }
+                        }
                     }
                 }
             }
@@ -316,7 +349,7 @@ public static class Search
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.bitboards[side];
-        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[0] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[1];
+        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[2] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[3];
         ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.bitboards[side];
         
         if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
