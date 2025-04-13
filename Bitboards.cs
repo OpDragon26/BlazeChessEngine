@@ -44,6 +44,7 @@ public static class Bitboards
     public static readonly Move BlackLongCastle = new((4,7), (2,7), type: 0b1011, priority: 3);
     
     private static readonly ulong[] PassedPawnMasks = new ulong[8];
+    public static readonly ulong[] NeighbourMasks = new ulong[8];
     
     private static readonly int[,] PriorityWeights =
     {
@@ -86,6 +87,7 @@ public static class Bitboards
         public static readonly Move[,][][] WhitePawnCaptureLookup = new Move[8,8][][];
         public static readonly Move[,][][] BlackPawnCaptureLookup = new Move[8,8][][];
         public static Move[] EnPassantLookupArray = [];
+        public static readonly int[,][] KingSafetyLookup = new int[8,8][];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -189,6 +191,12 @@ public static class Bitboards
     public static ref Move EnPassantLookup(ulong enPassant)
     {
         return ref MagicLookup.EnPassantLookupArray[(enPassant * MagicLookup.EnPassantNumbers.magicNumber) >> MagicLookup.EnPassantNumbers.push];
+    }
+
+    public static int KingSafetyBonusLookup((int file, int rank) pos, ulong blockers)
+    {
+        return MagicLookup.KingSafetyLookup[pos.file, pos.rank]
+            [((~blockers & KingMasks[pos.file, pos.rank]) * MagicLookup.KingMove[pos.file, pos.rank].magicNumber) >> MagicLookup.KingMove[pos.file, pos.rank].push];
     }
 
     public static void Init()
@@ -329,6 +337,18 @@ public static class Bitboards
                 }
                 
                 PassedPawnMasks[file] = passedMask;
+                
+                ulong neighborMask = ulong.MaxValue;
+                
+                for (int k = 0; k < 8; k++)
+                {
+                    if (!(k == file - 1 || k == file + 1))
+                    {
+                        neighborMask &= ~(File >> (7 - k));
+                    }
+                }
+                
+                NeighbourMasks[file] = neighborMask;
             }
         }
         
@@ -404,11 +424,13 @@ public static class Bitboards
                 MagicLookup.KingMove[file, rank] = MagicNumbers.KingNumbers[file, rank]; // MagicNumbers.GenerateRepeat(KingCombinations[file, rank], 5000);
                 MagicLookup.KingLookup[file, rank] = new Move[MagicLookup.KingMove[file, rank].highest + 1][];
                 MagicLookup.KingCaptureLookup[file, rank] = new Move[MagicLookup.KingMove[file, rank].highest + 1][];
+                MagicLookup.KingSafetyLookup[file, rank] = new int[MagicLookup.KingMove[file, rank].highest + 1];
                 
                 for (int i = 0; i < KingCombinations[file, rank].Length; i++) // for each combination
                 {
                     MagicLookup.KingLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 5);
                     MagicLookup.KingCaptureLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 3);
+                    MagicLookup.KingSafetyLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = Weights.KingSafetyBonuses[CountBits(KingCombinations[file, rank][i])];
                 }
                 
                 //done++;
@@ -758,5 +780,18 @@ public static class Bitboards
     private static bool ValidSquare(int file, int rank)
     {
         return file is >= 0 and < 8 && rank is >= 0 and < 8;
+    }
+
+    private static int CountBits(ulong bitboard)
+    {
+        int count = 0;
+
+        for (int i = 0; i < 64; i++)
+        {
+            if ((bitboard & ((ulong)1 << i)) != 0)
+                count++;
+        }
+        
+        return count;
     }
 }

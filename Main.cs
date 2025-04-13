@@ -7,7 +7,6 @@ Match match = new Match(new Board(Presets.StartingBoard), Type.Autoplay, depth: 
 //Match match = new Match(new Board("3r1k2/8/8/8/8/8/8/3RK3 w - - 0 1"), Type.Analysis, depth: 6, debug: false, moves: 400);
 //match.Print(0);
 
-//Match.PrintBitboard(Bitboards.GetMoveBitboard(Bitboards.RookLookupMoves((3,0), match.board.AllPieces()).moves),0);
 
 //match.SpeedTest();
 match.Play();

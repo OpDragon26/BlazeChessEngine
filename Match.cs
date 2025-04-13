@@ -15,7 +15,7 @@ public class Match
 {
     private static readonly  Random random = new();
     
-    public readonly Board board;
+    private readonly Board board;
     private readonly Type type;
     private readonly int side; // side of the player
     private readonly bool debug;
@@ -102,8 +102,6 @@ public class Match
                     }
 
                     play = false; // break loop
-                    
-                    Print(side);
                 break;
                 
                 case Type.Self:
@@ -135,8 +133,6 @@ public class Match
                     }
 
                     play = false; // break loop
-                    
-                    Print(side);
                 break;
             }
         }
@@ -156,7 +152,7 @@ public class Match
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    public void Print(int perspective)
+    private void Print(int perspective)
     {
         if (perspective == 1)
         {

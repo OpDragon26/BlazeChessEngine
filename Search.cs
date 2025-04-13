@@ -115,6 +115,8 @@ public static class Search
                                 eval += Weights.WhitePassedPawnBonuses[rank];
                             if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
                                 eval -= 10;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
+                                eval -= 15;
                         }
                         else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
                         {
@@ -122,6 +124,8 @@ public static class Search
                                 eval += Weights.BlackPassedPawnBonuses[rank];
                             if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
                                 eval += 10;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
+                                eval += 15;
                         }
                         else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
@@ -139,6 +143,16 @@ public static class Search
 
             // add or take eval according to which side has castled
             eval += Weights.CastlingBonuses[board.castled];
+            
+            // add to the eval based on the safety of white's king
+            eval += Bitboards.KingSafetyBonusLookup(board.KingPositions[0], board.bitboards[0]);
+            if ((Bitboards.KingMasks[board.KingPositions[0].file, board.KingPositions[0].rank] & board.bitboards[1]) != 0) // if there is an enemy piece adjacent to the king
+                eval -= 50;
+            
+            // take from the eval based on the safety of white's king
+            eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
+            if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
+                eval += 50;
         }
         else
         {
@@ -157,6 +171,8 @@ public static class Search
                                 eval += Weights.EndgameWhitePassedPawnBonuses[rank];
                             if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
                                 eval -= 30;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
+                                eval -= 35;
                         }
                         else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
                         {
@@ -164,6 +180,8 @@ public static class Search
                                 eval += Weights.EndgameBlackPassedPawnBonuses[rank];
                             if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
                                 eval += 30;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
+                                eval += 35;
                         }
                         else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
