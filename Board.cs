@@ -1,6 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-[assembly: SuppressMessage("ReSharper","NonReadonlyMemberInGetHashCode")]
-
 namespace Blaze;
 
 public enum Outcome

@@ -111,17 +111,16 @@ public static class Search
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
                         {
                             if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
-                            {
-                                eval += Weights.Pieces[Pieces.WhitePawn, file, rank];
-                            }
+                                eval += Weights.WhitePassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
+                                eval -= 10;
                         }
                         else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
                         {
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
-                            {
-                                eval += Weights.Pieces[Pieces.BlackPawn, file, rank];
-                                //Console.WriteLine("Black passed pawn found");
-                            }
+                                eval += Weights.BlackPassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
+                                eval += 10;
                         }
                     }
                 }
@@ -141,18 +140,16 @@ public static class Search
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0)
                         {
                             if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
-                            {
-                                eval += Weights.EndgamePieces[Pieces.WhitePawn, file, rank];
-                                //Console.WriteLine("White passed pawn found (endgame)");
-                            }
+                                eval += Weights.EndgameWhitePassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
+                                eval -= 30;
                         }
                         else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
                         {
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
-                            {
-                                eval += Weights.EndgamePieces[Pieces.BlackPawn, file, rank];
-                                //Console.WriteLine("Black passed pawn found (endgame)");
-                            }
+                                eval += Weights.EndgameBlackPassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
+                                eval += 30;
                         }
                     }
                 }

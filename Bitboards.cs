@@ -43,7 +43,7 @@ public static class Bitboards
     public static readonly Move BlackShortCastle = new((4,7), (6,7), type: 0b1010, priority: 6);
     public static readonly Move BlackLongCastle = new((4,7), (2,7), type: 0b1011, priority: 3);
     
-    public static readonly ulong[] PassedPawnMasks = new ulong[8];
+    private static readonly ulong[] PassedPawnMasks = new ulong[8];
     
     private static readonly int[,] PriorityWeights =
     {
@@ -57,7 +57,7 @@ public static class Bitboards
         {0,1,2,3,3,2,1,0},
     };
     
-    public static class MagicLookup
+    private static class MagicLookup
     {
         public static readonly (ulong magicNumber, int push, int highest)[,] RookMove = new (ulong magicNumber, int push, int highest)[8,8];
         public static readonly (ulong magicNumber, int push, int highest)[,] BishopMove = new (ulong magicNumber, int push, int highest)[8,8];
