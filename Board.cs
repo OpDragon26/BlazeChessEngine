@@ -48,6 +48,11 @@ public class Board
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
     private int hashKey;
+
+    public byte castled;
+    // only the last two bits can be on
+    // 0b10 - white castled
+    // 0b01 - black castled
     
     public Board(uint[] board)
     {
@@ -72,6 +77,7 @@ public class Board
         values = [board.values[0], board.values[1]];
         repeat = new(board.repeat);
         hashKey = board.hashKey;
+        castled = board.castled;
     }
 
     public Board(string FEN)
@@ -245,6 +251,7 @@ public class Board
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 7, 0];
                 hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 5, 0];
+                castled |= 0b10;
             break;
             
             case 0b0011: // white long castle
@@ -255,6 +262,7 @@ public class Board
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 0, 0];
                 hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 3, 0];
+                castled |= 0b10;
             break;
             
             case 0b1010: // black short castle
@@ -265,6 +273,7 @@ public class Board
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 7, 7];
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 5, 7];
+                castled |= 0b01;
             break;
             
             case 0b1011: // black long castle
@@ -275,6 +284,7 @@ public class Board
                 // update the hash key
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 0, 7];
                 hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 3, 7];
+                castled |= 0b01;
             break;
             
             case 0b0100: // white en passant

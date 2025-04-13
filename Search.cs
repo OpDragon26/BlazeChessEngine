@@ -136,6 +136,9 @@ public static class Search
                     }
                 }
             }
+
+            // add or take eval according to which side has castled
+            eval += Weights.CastlingBonuses[board.castled];
         }
         else
         {

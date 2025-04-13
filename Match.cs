@@ -102,6 +102,8 @@ public class Match
                     }
 
                     play = false; // break loop
+                    
+                    Print(side);
                 break;
                 
                 case Type.Self:
@@ -133,11 +135,11 @@ public class Match
                     }
 
                     play = false; // break loop
+                    
+                    Print(side);
                 break;
             }
         }
-        
-        Print(side);
     }
 
     public void SpeedTest(int repetition = 1000000)
