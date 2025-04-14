@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace Blaze;
 
 public static class Search
@@ -230,6 +232,46 @@ public static class Search
         }
 
         return new Span<Move>(moveArray, 0, index).ToArray();
+    }
+
+    public static ulong SearchBitboards(Board board, int side)
+    {
+        ulong bitboard = 0;
+        
+        for (int rank = 0; rank < 8; rank++)
+        {
+            for (int file = 7; file >= 0; file--)
+            {
+                // the square is only worth checking if the searched side has a piece there
+                if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                {
+                    bitboard |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), side);
+                }
+            }
+        }
+
+        return bitboard;
+    }
+
+    private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side)
+    {
+        switch (piece & Pieces.TypeMask)
+        {
+            case Pieces.WhitePawn:
+                return side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank];
+            case Pieces.WhiteRook:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteBishop:
+                return Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteKnight:
+                return Bitboards.KnightMasks[pos.file, pos.rank];
+            case Pieces.WhiteQueen:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces()) | Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteKing:
+                return Bitboards.KingMasks[pos.file, pos.rank];
+            default:
+                throw new Exception($"Unknown piece: {piece & Pieces.TypeMask}");
+        }
     }
 
     private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
