@@ -3,7 +3,7 @@ using Type = Blaze.Type;
 
 Hasher.Init();
 Bitboards.Init();
-Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis, depth: 6, debug: false, moves: 400);
+Match match = new Match(new Board(Presets.StartingBoard), Type.Autoplay, depth: 7, debug: false, moves: 400);
 //Match match = new Match(new Board("3r1k2/8/8/8/8/8/8/3RK3 w - - 0 1"), Type.Analysis, depth: 6, debug: false, moves: 400);
 //match.Print(0);
 
