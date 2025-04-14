@@ -32,8 +32,8 @@ public static class Bitboards
     public static readonly ulong[,] BlackPawnCaptureMasks = new ulong[8,8];
     private static readonly ulong[,][] BlackPawnCaptureCombinations = new ulong[8,8][];
     
-    public static readonly ulong[,] SmallRookMasks = new ulong[8,8];
-    public static readonly ulong[,] SmallBishopMasks = new ulong[8,8];
+    private static readonly ulong[,] SmallRookMasks = new ulong[8,8];
+    private static readonly ulong[,] SmallBishopMasks = new ulong[8,8];
     private static readonly ulong[,][] SmallRookCombinations = new ulong[8,8][];
     private static readonly ulong[,][] SmallBishopCombinations = new ulong[8,8][];
     private static readonly ulong[,][] SmallRookBitboards = new ulong[8,8][];
@@ -54,7 +54,7 @@ public static class Bitboards
     
     private static readonly ulong[] PassedPawnMasks = new ulong[8];
     public static readonly ulong[] NeighbourMasks = new ulong[8];
-    public static readonly int[] BitCount = new int[byte.MaxValue + 1];
+    public static readonly int[] BitValues = new int[byte.MaxValue + 1];
     
     private static readonly int[,] PriorityWeights =
     {
@@ -235,9 +235,9 @@ public static class Bitboards
         List<ulong> enPassantBitboards = new List<ulong>();
         
         // count the bits in one row for getting the controlled squares for a side
-        for (int i = 0; i < BitCount.Length; i++)
+        for (int i = 0; i < BitValues.Length; i++)
         {
-            BitCount[i] = CountBits(i);
+            BitValues[i] = CountBits(i);
         }
 
         // Create the masks for every square on the board
