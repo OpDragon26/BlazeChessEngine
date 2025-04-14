@@ -54,6 +54,7 @@ public static class Bitboards
     
     private static readonly ulong[] PassedPawnMasks = new ulong[8];
     public static readonly ulong[] NeighbourMasks = new ulong[8];
+    public static readonly int[] BitCount = new int[byte.MaxValue + 1];
     
     private static readonly int[,] PriorityWeights =
     {
@@ -67,7 +68,7 @@ public static class Bitboards
         {0,1,2,3,3,2,1,0},
     };
     
-    public static class MagicLookup
+    private static class MagicLookup
     {
         public static readonly (ulong magicNumber, int push, int highest)[,] RookMove = new (ulong magicNumber, int push, int highest)[8,8];
         public static readonly (ulong magicNumber, int push, int highest)[,] BishopMove = new (ulong magicNumber, int push, int highest)[8,8];
@@ -232,6 +233,12 @@ public static class Bitboards
         if (init) return;
         init = true;
         List<ulong> enPassantBitboards = new List<ulong>();
+        
+        // count the bits in one row for getting the controlled squares for a side
+        for (int i = 0; i < BitCount.Length; i++)
+        {
+            BitCount[i] = CountBits(i);
+        }
 
         // Create the masks for every square on the board
         for (int rank = 0; rank < 8; rank++)
@@ -872,6 +879,19 @@ public static class Bitboards
         for (int i = 0; i < 64; i++)
         {
             if ((bitboard & ((ulong)1 << i)) != 0)
+                count++;
+        }
+        
+        return count;
+    }
+    
+    private static int CountBits(int num)
+    {
+        int count = 0;
+
+        for (int i = 0; i < 32; i++)
+        {
+            if ((num & (1 << i)) != 0)
                 count++;
         }
         
