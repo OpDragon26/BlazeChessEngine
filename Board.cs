@@ -373,7 +373,7 @@ public class Board
 
     public bool IsEndgame()
     {
-        return values[0] + int.Abs(values[1]) < 3600;
+        return values[0] + int.Abs(values[1]) < 5300;
     }
 
     public ulong AllPieces()
