@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Blaze;
@@ -22,6 +23,7 @@ public class Match
     private readonly int depth;
     private readonly int moves;
     private int movesMade;
+    private bool WindowsMode;
 
     public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
     {
@@ -31,6 +33,8 @@ public class Match
         this.debug = debug;
         this.depth = depth;
         this.moves = moves;
+
+        WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     }
 
     public void Play()
@@ -44,13 +48,13 @@ public class Match
             switch (type)
             {
                 case Type.Analysis:
-                    Print(side);
+                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     play = PlayerTurn();
                 break;
                 
                 case Type.Random:
                     if (!debug) Console.Clear();
-                    Print(side);
+                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -64,7 +68,7 @@ public class Match
                 
                 case Type.Standard:
                     if (!debug) Console.Clear();
-                    Print(side);
+                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -86,7 +90,7 @@ public class Match
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
-                        Print(side);
+                        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
                         Move botMove = Search.BestMove(board, depth).move;
                         board.MakeMove(botMove);
@@ -96,7 +100,7 @@ public class Match
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            Print(side);
+                            if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
                     }
@@ -117,7 +121,7 @@ public class Match
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
-                        Print(side);
+                        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
                         Move botMove = Search.BestMove(board, depth).move;
                         board.MakeMove(botMove);
@@ -127,7 +131,7 @@ public class Match
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            Print(side);
+                            if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
                     }
@@ -183,6 +187,44 @@ public class Match
                 for (int file = 0; file < 8; file++)
                 {
                     rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
+                }
+                
+                Console.WriteLine(rankStr);
+            }
+        }
+    }
+
+        private void Print(int perspective, string[] pieceStrings)
+    {
+        if (perspective == 1)
+        {
+            // black's perspective
+            Console.WriteLine("# h g f e d c b a");
+            
+            for (int rank = 0; rank < 8; rank++)
+            {
+                string rankStr = $"{rank + 1} ";
+                
+                for (int file = 7; file >= 0; file--)
+                {
+                    rankStr += pieceStrings[board.GetPiece(file, rank)] + " ";
+                }
+                
+                Console.WriteLine(rankStr);
+            }
+        }
+        else
+        {
+            // white's perspective
+            Console.WriteLine("# a b c d e f g h");
+            
+            for (int rank = 7; rank >= 0; rank--)
+            {
+                string rankStr = $"{rank + 1} ";
+                
+                for (int file = 0; file < 8; file++)
+                {
+                    rankStr += pieceStrings[board.GetPiece((file, rank))] + " ";
                 }
                 
                 Console.WriteLine(rankStr);
@@ -301,6 +343,26 @@ public class Match
         "\u2657",
         "\u2655",
         "\u2654", // 13
+        "?",
+        " "
+    ];
+
+        private static readonly string[] IHateWindows =
+    [
+        "P",
+        "R",
+        "N",
+        "B",
+        "Q",
+        "K", // 5
+        "?",
+        "?",
+        "p", // 8
+        "r",
+        "n",
+        "b",
+        "q",
+        "k", // 13
         "?",
         " "
     ];
