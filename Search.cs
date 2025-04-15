@@ -48,7 +48,7 @@ public static class Search
                 
                 eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 alpha = Math.Max(alpha, eval);
-                if (beta <= alpha) break; // beta cutoff
+                if (eval >= beta) break; // beta cutoff
             }
             
             if (found)
@@ -79,7 +79,7 @@ public static class Search
                 
                 eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
-                if (beta <= alpha) break; // alpha cutoff
+                if (eval <= alpha) break; // alpha cutoff
             }
             
             if (found)
