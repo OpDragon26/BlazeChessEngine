@@ -97,49 +97,58 @@ public static class Search
     public static int StaticEvaluate(Board board)
     {
         int eval = 0;
+        
+        ulong whiteAttacks = 0;
+        ulong blackAttacks = 0;
 
         if (!board.IsEndgame())
         {
-            ulong whiteAttacks = 0;
-            ulong blackAttacks = 0;
-            
             for (int rank = 0; rank < 8; rank++)
             {
                 for (int file = 7; file >= 0; file--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                    if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
+                    {
+                        eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
+                        
+                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
+                        {
+                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
+                                eval += Weights.WhitePassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
+                                eval -= 10;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
+                                eval -= 15;
+                        }
+                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval += 40;
+                        }
+
+                        whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                    }
+                    else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
 
-                        if ((board.GetPiece(file, rank) & Pieces.ColorMask) == 0) // the piece belongs to white
+                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
                         {
-                            if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
-                            {
-                                if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
-                                    eval += Weights.WhitePassedPawnBonuses[rank];
-                                if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
-                                    eval -= 10;
-                                if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
-                                    eval -= 15;
-                            }
-
-                            whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
+                                eval += Weights.BlackPassedPawnBonuses[rank];
+                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
+                                eval += 10;
+                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
+                                eval += 15;
                         }
-                        else // the piece belongs to black
+                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {
-                            if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
-                            {
-                                if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
-                                    eval += Weights.BlackPassedPawnBonuses[rank];
-                                if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
-                                    eval += 10;
-                                if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
-                                    eval += 15;
-                            }
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval -= 40;
+                        }
                             
-                            blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
-                        }
+                        blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
                     }
                 }
             }
@@ -156,10 +165,6 @@ public static class Search
             eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
             if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
                 eval += 50;
-            
-            // add the number of squares each side controls on their opponent's side
-            eval += Controlled(board, 0, whiteAttacks);
-            eval -= Controlled(board, 1, blackAttacks);
         }
         else
         {
@@ -168,7 +173,7 @@ public static class Search
                 for (int file = 7; file >= 0; file--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                    if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
                     {
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
                         
@@ -181,7 +186,19 @@ public static class Search
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
                                 eval -= 35;
                         }
-                        else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
+                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        {
+                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
+                                eval += 40;
+                        }
+
+                        whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                    }
+                    else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
+                    {
+                        eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
+
+                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
                         {
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.EndgameBlackPassedPawnBonuses[rank];
@@ -190,20 +207,21 @@ public static class Search
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
                                 eval += 35;
                         }
-                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
-                        {
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval += 40;
-                        }
                         else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
+                        
+                        blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
                     }
                 }
             }
         }
+        
+        // add the number of squares each side controls on their opponent's side
+        eval += Controlled(whiteAttacks);
+        eval -= Controlled(blackAttacks);
 
         return eval;
     }
@@ -442,21 +460,13 @@ public static class Search
         return false;
     }
 
-    public static int Controlled(Board board, int side, ulong attacked)
+    private static int Controlled(ulong attacked)
     {
         // counts how many squares are controlled on the opponent's side of the board
         int count = 0;
         
-        if (side == 0) // white
-        {
-            for (int i = 0; i < 32; i += 8)
-                count += Bitboards.BitValues[(attacked >> i) & 0xFF];
-        }
-        else // black
-        {
-            for (int i = 32; i < 64; i += 8)
-                count += Bitboards.BitValues[(attacked >> i) & 0xFF];
-        }
+        for (int i = 0; i < 64; i += 8)
+            count += Bitboards.BitValues[(attacked >> i) & 0xFF];
 
         return count;
     }
