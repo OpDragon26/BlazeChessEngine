@@ -373,7 +373,7 @@ public class Board
 
     public bool IsEndgame()
     {
-        return values[0] + int.Abs(values[1]) < 3600;
+        return values[0] + int.Abs(values[1]) < 5300;
     }
 
     public ulong AllPieces()
@@ -442,7 +442,7 @@ public static class Pieces
     public const uint Empty = 0b1111; // 15
 
     public const uint TypeMask = 0b111;
-    // public const uint ColorMask = 0b1000;
+    public const uint ColorMask = 0b1000;
 
     public static readonly int[] Value =
     [

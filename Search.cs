@@ -6,7 +6,7 @@ public static class Search
     {
         Move[] moves = FilterChecks(SearchBoard(board), board);
         int[] evals = new int[moves.Length];
-        if (moves.Length == 0) throw new MoveNotFoundException();
+        if (moves.Length == 0) throw new Exception("No move found");
 
         Parallel.For(0, moves.Length, i =>
         {
@@ -100,6 +100,9 @@ public static class Search
 
         if (!board.IsEndgame())
         {
+            ulong whiteAttacks = 0;
+            ulong blackAttacks = 0;
+            
             for (int rank = 0; rank < 8; rank++)
             {
                 for (int file = 7; file >= 0; file--)
@@ -108,34 +111,34 @@ public static class Search
                     if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
-                        
-                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
+
+                        if ((board.GetPiece(file, rank) & Pieces.ColorMask) == 0) // the piece belongs to white
                         {
-                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.WhitePassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
-                                eval -= 10;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
-                                eval -= 15;
+                            if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
+                            {
+                                if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
+                                    eval += Weights.WhitePassedPawnBonuses[rank];
+                                if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
+                                    eval -= 10;
+                                if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
+                                    eval -= 15;
+                            }
+
+                            whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
                         }
-                        else if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
+                        else // the piece belongs to black
                         {
-                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.BlackPassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
-                                eval += 10;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
-                                eval += 15;
-                        }
-                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
-                        {
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval += 40;
-                        }
-                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
-                        {
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval -= 40;
+                            if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
+                            {
+                                if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
+                                    eval += Weights.BlackPassedPawnBonuses[rank];
+                                if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
+                                    eval += 10;
+                                if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
+                                    eval += 15;
+                            }
+                            
+                            blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
                         }
                     }
                 }
@@ -153,6 +156,10 @@ public static class Search
             eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
             if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
                 eval += 50;
+            
+            // add the number of squares each side controls on their opponent's side
+            eval += Controlled(board, 0, whiteAttacks);
+            eval -= Controlled(board, 1, blackAttacks);
         }
         else
         {
@@ -230,6 +237,27 @@ public static class Search
         }
 
         return new Span<Move>(moveArray, 0, index).ToArray();
+    }
+
+    private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side)
+    {
+        switch (piece & Pieces.TypeMask)
+        {
+            case Pieces.WhitePawn:
+                return side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank];
+            case Pieces.WhiteRook:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteBishop:
+                return Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteKnight:
+                return Bitboards.KnightMasks[pos.file, pos.rank];
+            case Pieces.WhiteQueen:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces()) | Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces());
+            case Pieces.WhiteKing:
+                return Bitboards.KingMasks[pos.file, pos.rank];
+            default:
+                throw new Exception($"Unknown piece: {piece & Pieces.TypeMask}");
+        }
     }
 
     private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
@@ -414,6 +442,25 @@ public static class Search
         return false;
     }
 
+    public static int Controlled(Board board, int side, ulong attacked)
+    {
+        // counts how many squares are controlled on the opponent's side of the board
+        int count = 0;
+        
+        if (side == 0) // white
+        {
+            for (int i = 0; i < 32; i += 8)
+                count += Bitboards.BitValues[(attacked >> i) & 0xFF];
+        }
+        else // black
+        {
+            for (int i = 32; i < 64; i += 8)
+                count += Bitboards.BitValues[(attacked >> i) & 0xFF];
+        }
+
+        return count;
+    }
+
     public static Move[] FilterChecks(Move[] moves, Board board)
     {
         List<Move> MoveList = moves.ToList();
@@ -429,13 +476,4 @@ public static class Search
         
         return MoveList.ToArray();
     }
-}
-
-[Serializable]
-public class MoveNotFoundException : Exception
-{
-    // occurs when trying to get the best move in a position with no legal moves
-    public MoveNotFoundException() {}
-    public MoveNotFoundException(string message) : base(message) {}
-    public MoveNotFoundException(string message, Exception inner) : base(message, inner) {}
 }
