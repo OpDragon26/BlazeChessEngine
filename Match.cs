@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 
 namespace Blaze;
 
@@ -12,30 +11,13 @@ public enum Type
     Autoplay,
 }
 
-public class Match
+public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
 {
     private static readonly  Random random = new();
-    
-    public readonly Board board;
-    private readonly Type type;
-    private readonly int side; // side of the player
-    private readonly bool debug;
-    private readonly int depth;
-    private readonly int moves;
+
+    private readonly Board board = board;
     private int movesMade;
-    private readonly bool WindowsMode;
-
-    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
-    {
-        this.board = board;
-        this.type = type;
-        this.side = side;
-        this.debug = debug;
-        this.depth = depth;
-        this.moves = moves;
-
-        WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-    }
+    private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
     public void Play()
     {
@@ -156,7 +138,7 @@ public class Match
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    public void Print(int perspective)
+    private void Print(int perspective)
     {
         if (perspective == 1)
         {
@@ -242,10 +224,10 @@ public class Match
             if (playerMoveString == "exit") return false;
                         
             // if the move is in the correct notation
-            if (Regex.IsMatch(playerMoveString, "^[a-h][1-8][a-h][1-8][qrbn]?"))
+            try
             {
                 Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
-                Move move = new Move(playerMoveString, board);
+                Move move = Move.Parse(playerMoveString, board);
 
                 if (!debug) Console.Clear();
 
@@ -259,10 +241,10 @@ public class Match
                 else
                     Console.WriteLine("Illegal move");
             }
-            else
+            catch
             {
                 if (!debug) Console.Clear();
-                Console.WriteLine("Incorrect notation");
+                Console.WriteLine("Invalid move");
             }
         }
 
@@ -347,7 +329,7 @@ public class Match
         " "
     ];
 
-        private static readonly string[] IHateWindows =
+    private static readonly string[] IHateWindows =
     [
         "P",
         "R",
