@@ -136,14 +136,14 @@ public class Move
         public readonly uint bPiece = bPiece;
     }
 
-private static Finder GetFinderMask(char c, int file, int rank)
+private static Finder GetFinderMask(char c, int file, int rank, Board board)
 {
     return c switch
     {
         'N' => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
-        'B' => new Finder(Bitboards.BishopMasks[file, rank], Pieces.WhiteBishop, Pieces.BlackBishop),
-        'Q' => new Finder(Bitboards.RookMasks[file, rank] | Bitboards.BishopMasks[file, rank], Pieces.WhiteQueen, Pieces.BlackQueen),
-        'R' => new Finder(Bitboards.RookMasks[file, rank], Pieces.WhiteRook, Pieces.BlackRook),
+        'B' => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
+        'Q' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
+        'R' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
         'K' => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
         _ => throw new NotationParsingException($"Unknown piece: {c}")
     };
@@ -180,7 +180,7 @@ private static Finder GetFinderMask(char c, int file, int rank)
                     flag = board.side == 0 ? 0b0001 : 0b1001;
                 }
                 else
-                    throw new NotationParsingException("No pawn can move to the given square");
+                    throw new NotationParsingException($"No pawn can move to the given square: {alg}");
 
                 return new Move(src, dest, type: flag, pawn: true);
             
@@ -190,7 +190,7 @@ private static Finder GetFinderMask(char c, int file, int rank)
                 
                 // regular non-disambiguated piece move: Nf3
                 dest = ParseSquare($"{alg[1]}{alg[2]}");
-                return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank), Disambiguation.None), dest);
+                return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.None, dest), dest);
             
             case 4:
                 if (alg[3] == '#' || alg[3] == '+') // move is a check or checkmate
@@ -241,42 +241,30 @@ private static Finder GetFinderMask(char c, int file, int rank)
                 {
                     // file disambiguation: Nfd2
                     dest = ParseSquare($"{alg[2]}{alg[3]}");
-                    return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank), Disambiguation.File, Indices[alg[1]]), dest);
+                    return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.File, dest, Indices[alg[1]]), dest);
                 }
                 else if (ValidRanks.Contains(alg[1]))
                 {
                     // rank disambiguation
                     dest = ParseSquare($"{alg[2]}{alg[3]}");
-                    return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank), Disambiguation.Rank, int.Parse(alg[1].ToString())), dest);
+                    return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.Rank, dest,int.Parse(alg[1].ToString())), dest);
                 }
                 throw new NotationParsingException($"Unknown notation: {alg}");
             case 5:
                 if (alg[4] == '#' || alg[4] == '+') // move is a check or checkmate
                     return Parse($"{alg[0]}{alg[1]}{alg[2]}{alg[3]}", board);
                 
-                // capture promotion: fxe8=Q
                 // doubly disambiguated move
                 // single disambiguated capture
-
-                if (alg[1] == 'x' && alg[4] == '=' && ValidFiles.Contains(alg[0]) && validPromotions.Contains(alg[5]))
-                {
-                    // capture promotion
-                    dest = ParseSquare($"{alg[2]}{alg[3]}");
-                        
-                    if (board.side == 0 && board.GetPiece(Indices[alg[0]], dest.rank - 1) == Pieces.WhitePawn)
-                        return new Move((Indices[alg[0]], dest.rank - 1), dest, pawn: true, promotion: Promotions[char.ToLower(alg[5])]);
-                    if (board.GetPiece(Indices[alg[0]], dest.rank + 1) == Pieces.BlackPawn)
-                        return new Move((Indices[alg[0]], dest.rank + 1), dest, pawn: true, promotion: Promotions[char.ToLower(alg[5])]);
-                }
                 
                 // disambiguated capture: Nfxe5
                 if (ValidPieces.Contains(alg[0]) && alg[2] == 'x')
                 {
-                    dest = ParseSquare($"{alg[2]}{alg[3]}");
+                    dest = ParseSquare($"{alg[3]}{alg[4]}");
                     if (ValidFiles.Contains(alg[1])) // file disambiguation
-                        return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank), Disambiguation.File, Indices[alg[1]]), dest);
+                        return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.File, dest, Indices[alg[1]]), dest);
                     if (ValidRanks.Contains(alg[1])) // rank disambiguation
-                       return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank), Disambiguation.Rank, int.Parse(alg[1].ToString())), dest);
+                       return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.Rank, dest, int.Parse(alg[1].ToString())), dest);
                     throw new NotationParsingException($"Unknown notation: {alg}");
                 }
                 
@@ -288,9 +276,22 @@ private static Finder GetFinderMask(char c, int file, int rank)
             case 6:
                 if (alg[5] == '#' || alg[5] == '+') // move is a check or checkmate
                     return Parse($"{alg[0]}{alg[1]}{alg[2]}{alg[3]}{alg[4]}", board);
+                
                 // doubly disambiguated capture: Nd3xe5
                 if (ValidPieces.Contains(alg[0]) && alg[3] == 'x')
                     return new Move(ParseSquare($"{alg[1]}{alg[2]}"), ParseSquare($"{alg[4]}{alg[5]}"));
+                // capture promotion: fxe8=Q
+                if (alg[1] == 'x' && alg[4] == '=' && ValidFiles.Contains(alg[0]) && validPromotions.Contains(alg[5]))
+                {
+                    // capture promotion
+                    dest = ParseSquare($"{alg[2]}{alg[3]}");
+                        
+                    if (board.side == 0 && board.GetPiece(Indices[alg[0]], dest.rank - 1) == Pieces.WhitePawn)
+                        return new Move((Indices[alg[0]], dest.rank - 1), dest, pawn: true, promotion: Promotions[char.ToLower(alg[5])]);
+                    if (board.GetPiece(Indices[alg[0]], dest.rank + 1) == Pieces.BlackPawn)
+                        return new Move((Indices[alg[0]], dest.rank + 1), dest, pawn: true, promotion: Promotions[char.ToLower(alg[5])]);
+                }
+                
                 throw new NotationParsingException($"Unknown notation: {alg}");
             
             case 7:
@@ -309,28 +310,31 @@ private static Finder GetFinderMask(char c, int file, int rank)
         Rank
     }
 
-    private static (int File, int rank) FindMovingPiece(Board board, Finder finder, Disambiguation disambiguation, int d=8)
+    private static (int File, int rank) FindMovingPiece(Board board, Finder finder, Disambiguation disambiguation, (int File, int rank) dest, int d=8)
     {
         int found = 0;
         (int File, int rank) last = (8,8);
         
         for (int rank = 7; rank >= 0; rank--)
         {
-            if (disambiguation == Disambiguation.Rank && rank != d) continue;
+            if (disambiguation == Disambiguation.Rank && rank != d - 1) continue;
             for (int file = 0; file < 8; file++)
             {
                 if (disambiguation == Disambiguation.File && file != d) continue;
                 if ((finder.mask & Bitboards.GetSquare(file, rank)) != 0 && board.GetPiece(file, rank) == (board.side == 0 ? finder.wPiece : finder.bPiece)) 
                 {
-                    last = (file, rank);
-                    found++;
+                    if (Search.FilterChecks(Search.SearchBoard(board, false), board).Contains(new Move((file, rank), dest)))
+                    {
+                        last = (file, rank);
+                        found++;
+                    }
                 }
             }
         }
         if (found == 0)
-            throw new NotationParsingException("Unnecessary disambiguation");
+            throw (new NotationParsingException(d != 8 ? $"Unnecessary disambiguation: None found on {d - 1}" : "No piece found that could move to the given square"));
         if (found != 1)
-            throw new NotationParsingException("Inadequate disambiguation");
+            throw new NotationParsingException($"Inadequate disambiguation: found {found}");
         return last;
     }
 }

@@ -15,7 +15,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 {
     private static readonly  Random random = new();
 
-    private readonly Board board = board;
+    public readonly Board board = board;
     private int movesMade;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
@@ -138,7 +138,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    private void Print(int perspective)
+    public static void PrintBoard(Board board, int perspective)
     {
         if (perspective == 1)
         {
@@ -176,7 +176,12 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         }
     }
 
-        private void Print(int perspective, string[] pieceStrings)
+    public void Print(int perspective)
+    {
+        PrintBoard(board, perspective);
+    }
+
+    private void Print(int perspective, string[] pieceStrings)
     {
         if (perspective == 1)
         {
