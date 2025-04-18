@@ -2,7 +2,7 @@ namespace Blaze;
 
 public static class Book
 {
-    static readonly List<Entry>[] book = new List<Entry>[18];
+    static readonly List<Entry>[] book = new List<Entry>[15];
     private static bool init;
     private static readonly Random random = new();
 
@@ -14,7 +14,7 @@ public static class Book
         
         // set the first board to the staring board
         book[0] = [new Entry { board = new Board(Presets.StartingBoard), moves = new List<BookMove>() }];
-        for (int i = 1; i < 14; i++)
+        for (int i = 1; i < 15; i++)
             book[i] = new List<Entry>();
         
         string[] lines = File.ReadAllLines(path);

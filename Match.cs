@@ -20,6 +20,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     private int ply;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     private bool inBook = true;
+    private readonly List<PGNNode> game = new();
 
     public void Play()
     {
@@ -46,7 +47,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     {
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
-                        board.MakeMove(filtered[random.Next(0, filtered.Length)]);
+                        Move move = filtered[random.Next(0, filtered.Length)];
+                        board.MakeMove(move);
+                        game.Add(new PGNNode { board = new Board(board) , move = move });
                         play = CheckOutcome();
                     }
                 break;
@@ -63,6 +66,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         inBook = searchResult.bookMove;
                         Move bestMove = searchResult.move;
                         board.MakeMove(bestMove);
+                        game.Add(new PGNNode { board = new Board(board) , move = bestMove });
                         play = CheckOutcome();
                     }
                 break;
@@ -83,6 +87,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
                         board.MakeMove(botMove);
+                        game.Add(new PGNNode { board = new Board(board), move = botMove });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -118,6 +123,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
                         board.MakeMove(botMove);
+                        game.Add(new PGNNode { board = new Board(board) , move = botMove });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -138,6 +144,28 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
             movesMade += 1 - board.side; // if the side is white, add one
             ply++;
         }
+        
+        if (!debug) Console.Clear();
+        CheckOutcome();
+        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+        Console.WriteLine($"Full game:\n{GetUCI()}");
+    }
+
+    private string GetUCI()
+    {
+        string[] pgn = new string[game.Count];
+
+        for (int i = 0; i < pgn.Length; i++)
+        {
+            pgn[i] = game[i].move.GetUCI();
+        }
+        
+        return string.Join(' ', pgn);
+    }
+
+    public PGNNode[] GetNodes()
+    {
+        return game.ToArray();
     }
 
     public void SpeedTest(int repetition = 1000000)
@@ -256,6 +284,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 if (filtered.Contains(move))
                 {
                     board.MakeMove(move);
+                    game.Add(new PGNNode { board = new Board(board) , move = move });
                     if (!CheckOutcome())
                         return false;
                 }
