@@ -19,6 +19,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     private int movesMade;
     private int ply;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    private bool inBook = true;
 
     public void Play()
     {
@@ -58,7 +59,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     else
                     {
                         // make the top choice of the engine on the board
-                        Move bestMove = Search.BestMove(board, depth, ply).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move bestMove = searchResult.move;
                         board.MakeMove(bestMove);
                         play = CheckOutcome();
                     }
@@ -76,7 +79,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth, ply).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move botMove = searchResult.move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop
@@ -109,7 +114,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth, ply).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move botMove = searchResult.move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop

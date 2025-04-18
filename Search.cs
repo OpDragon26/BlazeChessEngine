@@ -2,13 +2,16 @@ namespace Blaze;
 
 public static class Search
 {
-    public static (Move move, int eval) BestMove(Board board, int depth, int bookDepth)
+    public static (Move move, int eval, bool bookMove) BestMove(Board board, int depth, bool useBook, int bookDepth)
     {
-        Output output = Book.Retrieve(board, bookDepth);
-        if (output.result == Result.Found)
+        if (useBook)
         {
-            Console.WriteLine("Book move");
-            return (output.move, 1);
+            Output output = Book.Retrieve(board, bookDepth);
+            if (output.result == Result.Found)
+            {
+                Console.WriteLine("Book move");
+                return (output.move, 1, true);
+            }
         }
         
         Move[] moves = FilterChecks(SearchBoard(board), board);
@@ -23,8 +26,8 @@ public static class Search
         });
         
         if (board.side == 0)
-            return (moves[Array.IndexOf(evals, evals.Max())], evals.Max()); // white
-        return (moves[Array.IndexOf(evals, evals.Min())], evals.Min()); // black
+            return (moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false); // white
+        return (moves[Array.IndexOf(evals, evals.Min())], evals.Min(), false); // black
     }
     
     private static int Minimax(Board board, int depth, int alpha, int beta)
