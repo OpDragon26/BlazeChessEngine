@@ -8,8 +8,8 @@ public static class Bitboards
     Select the enemy pieces from those captured using the AND operation and a second magic lookup is initiated using that bitboard, which returns another span of moves
     */
 
-    public static readonly ulong[,] RookMasks = new ulong[8,8];
-    public static readonly ulong[,] BishopMasks = new ulong[8,8];
+    private static readonly ulong[,] RookMasks = new ulong[8,8];
+    private static readonly ulong[,] BishopMasks = new ulong[8,8];
 
     private static readonly ulong[,][] RookBlockers = new ulong[8,8][];
     private static readonly ulong[,][] BishopBlockers = new ulong[8,8][];

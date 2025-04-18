@@ -31,8 +31,6 @@ public static class Book
         if (depth > 17)
             return new Output { move = new Move((8,8),(8,8)), result = Result.NotFound };
         
-        Entry foundEntry;
-
         foreach (Entry entry in book[depth])
         {
             // if the board that belongs to the entry is the given board
