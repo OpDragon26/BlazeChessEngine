@@ -21,6 +21,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     private bool inBook = true;
     private readonly List<PGNNode> game = new();
+    private string? LasMove;
 
     public void Play()
     {
@@ -34,12 +35,14 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
             switch (type)
             {
                 case Type.Analysis:
+                    PrintLastMove();
                     if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     play = PlayerTurn();
                 break;
                 
                 case Type.Random:
                     if (!debug) Console.Clear();
+                    PrintLastMove();
                     if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
@@ -48,6 +51,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         Move move = filtered[random.Next(0, filtered.Length)];
+                        LasMove = move.Notate(board);
+                        
                         board.MakeMove(move);
                         game.Add(new PGNNode { board = new Board(board) , move = move });
                         play = CheckOutcome();
@@ -56,6 +61,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 
                 case Type.Standard:
                     if (!debug) Console.Clear();
+                    PrintLastMove();
                     if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
@@ -65,6 +71,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move bestMove = searchResult.move;
+                        LasMove = bestMove.Notate(board);
+                        
                         board.MakeMove(bestMove);
                         game.Add(new PGNNode { board = new Board(board) , move = bestMove });
                         play = CheckOutcome();
@@ -81,11 +89,15 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
+                        PrintLastMove();
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                        
                         // make the top choice of the engine on the board
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
+                        LasMove = botMove.Notate(board);
+                        
                         board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board), move = botMove });
                         
@@ -117,11 +129,15 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
+                        PrintLastMove();
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                        
                         // make the top choice of the engine on the board
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
+                        LasMove = botMove.Notate(board);
+                        
                         board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board) , move = botMove });
                         
@@ -148,7 +164,13 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         if (!debug) Console.Clear();
         CheckOutcome();
         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
-        Console.WriteLine($"Full game:\n{GetUCI()}");
+        Console.WriteLine($"Full game:\n{GetPGN()}");
+    }
+
+    private void PrintLastMove()
+    {
+        if (LasMove != null)
+            Console.WriteLine($"Last move: {LasMove}");
     }
 
     private string GetUCI()
@@ -158,6 +180,21 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         for (int i = 0; i < pgn.Length; i++)
         {
             pgn[i] = game[i].move.GetUCI();
+        }
+        
+        return string.Join(' ', pgn);
+    }
+
+    private string GetPGN()
+    {
+        string[] pgn = new string[game.Count];
+
+        pgn[0] = "1. " + game[0].move.Notate(new Board(Presets.StartingBoard));
+        for (int i = 1; i < pgn.Length; i++)
+        {
+            string num = i % 2 == 0 ? $"{i / 2 + 2}. " : "";
+            
+            pgn[i] = num + game[i].move.Notate(game[i-1].board);
         }
         
         return string.Join(' ', pgn);
@@ -283,6 +320,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 // if the move is legal
                 if (filtered.Contains(move))
                 {
+                    LasMove = move.Notate(board);
                     board.MakeMove(move);
                     game.Add(new PGNNode { board = new Board(board) , move = move });
                     if (!CheckOutcome())

@@ -129,19 +129,97 @@ public class Move
         throw new ArgumentException($"Failed to parse square: '{square}' Invalid file: '{square[0]}'");
     }
 
-    private readonly char[] Files = ['a','b','c','d','e','f','g','h'];
-    private readonly string[] PromotionStr = ["?", "r", "n", "b", "q","?","?",String.Empty];
+    private static string GetSquare((int file, int rank) square)
+    {
+        return Files[square.file] + (square.rank + 1).ToString();
+    }
+    private static string GetSquare(int file, int rank)
+    {
+        return Files[file] + (rank + 1).ToString();
+    }
+
+    private static readonly char[] Files = ['a','b','c','d','e','f','g','h'];
+    private static readonly string[] PromotionStr = ["?", "r", "n", "b", "q","?","?",String.Empty];
+    private static readonly char[] AlgPieces = ['?','R','N','B','Q','K'];
     
     public string GetUCI()
     {
-        return Files[Source.file] + (Source.rank + 1).ToString() + Files[Destination.file] + (Destination.rank + 1) + PromotionStr[Promotion & Pieces.TypeMask];
+        return GetSquare(Source) + GetSquare(Destination) + PromotionStr[Promotion & Pieces.TypeMask];
     }
 
-    private struct Finder(ulong mask, uint wPiece, uint bPiece)
+    public string Notate(Board board)
+    {
+        string notation = "";
+        
+        if (board.GetPiece(Source) == (board.side == 0 ? Pieces.WhitePawn : Pieces.BlackPawn))
+        {
+            // pawn move
+
+            if (Source.file == Destination.file) // move forward
+            {
+                if (board.GetPiece(Destination) == Pieces.Empty)
+                    notation = GetSquare(Destination);
+                else
+                    throw new NotationParsingException($"Failed to convert to Algebraic notation: {GetSquare(Destination)} is not empty");
+            }
+            else // capture
+            {
+                if (board.GetPiece(Destination) != Pieces.Empty)
+                    notation = Files[Source.file] + "x" + GetSquare(Destination);
+                else
+                    throw new NotationParsingException($"Failed to convert to Algebraic notation: cannot capture empty: {GetSquare(Destination)}");
+            }
+            if (Promotion != (Pieces.Empty & Pieces.TypeMask))
+                notation += '=' + char.ToUpper(PromotionStr[Promotion][0]).ToString();
+        }
+        else
+        {
+            // piece move
+            notation += AlgPieces[board.GetPiece(Source) & Pieces.TypeMask];
+            
+            Disambiguation disambiguation = FindLowestDisambiguation(board, GetFinderMask(board.GetPiece(Source) & Pieces.TypeMask, Destination.file, Destination.rank, board), Source, Destination);
+
+            notation += disambiguation switch
+            {
+                Disambiguation.None => string.Empty,
+                Disambiguation.Complete => GetSquare(Source),
+                Disambiguation.File => Files[Source.file],
+                Disambiguation.Rank => Source.rank + 1,
+                _ => throw new NotationParsingException($"What? {disambiguation}")
+            };
+
+            if (board.GetPiece(Destination) != Pieces.Empty) // capture
+                notation += 'x';
+            
+            notation += GetSquare(Destination);
+        }
+        
+        Board tempBoard = new Board(board);
+        tempBoard.MakeMove(this);
+        Outcome outcome = tempBoard.GetOutcome();
+        if (outcome is Outcome.BlackWin or Outcome.WhiteWin)
+        {
+            // checkmate
+            notation += '#';
+        }
+
+        if (Search.Attacked(tempBoard.KingPositions[tempBoard.side], tempBoard, 1 - tempBoard.side))
+        {
+            // check
+            notation += '+';
+        }
+        
+        return notation;
+    }
+
+    private readonly struct Finder(ulong mask, uint wPiece, uint bPiece)
     {
         public readonly ulong mask = mask;
-        public readonly uint wPiece = wPiece;
-        public readonly uint bPiece = bPiece;
+
+        public uint GetPiece(int side)
+        {
+            return side == 0 ? wPiece : bPiece;
+        }
     }
 
     private static Finder GetFinderMask(char c, int file, int rank, Board board)
@@ -154,6 +232,19 @@ public class Move
             'R' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
             'K' => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
             _ => throw new NotationParsingException($"Unknown piece: {c}")
+        };
+    }
+    
+    private static Finder GetFinderMask(uint piece, int file, int rank, Board board)
+    {
+        return piece switch
+        {
+            Pieces.WhiteKnight => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
+            Pieces.WhiteBishop => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
+            Pieces.WhiteQueen => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
+            Pieces.WhiteRook => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
+            Pieces.WhiteKing => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
+            _ => throw new NotationParsingException($"Unknown piece: {piece}")
         };
     }
     
@@ -315,13 +406,15 @@ public class Move
     {
         None,
         File,
-        Rank
+        Rank,
+        Complete
     }
 
     private static (int File, int rank) FindMovingPiece(Board board, Finder finder, Disambiguation disambiguation, (int File, int rank) dest, int d=8)
     {
         int found = 0;
         (int File, int rank) last = (8,8);
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, false), board);
         
         for (int rank = 7; rank >= 0; rank--)
         {
@@ -329,9 +422,9 @@ public class Move
             for (int file = 0; file < 8; file++)
             {
                 if (disambiguation == Disambiguation.File && file != d) continue;
-                if ((finder.mask & Bitboards.GetSquare(file, rank)) != 0 && board.GetPiece(file, rank) == (board.side == 0 ? finder.wPiece : finder.bPiece)) 
+                if ((finder.mask & Bitboards.GetSquare(file, rank)) != 0 && board.GetPiece(file, rank) == finder.GetPiece(board.side)) 
                 {
-                    if (Search.FilterChecks(Search.SearchBoard(board, false), board).Contains(new Move((file, rank), dest)))
+                    if (moves.Contains(new Move((file, rank), dest)))
                     {
                         last = (file, rank);
                         found++;
@@ -344,6 +437,54 @@ public class Move
         if (found != 1)
             throw new NotationParsingException($"Inadequate disambiguation: found {found}");
         return last;
+    }
+
+    private static Disambiguation FindLowestDisambiguation(Board board, Finder finder, (int file, int rank) src, (int file, int rank) dest)
+    {
+        int count = 0;
+        List<(int file, int rank)> sources = new();
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, false), board);
+
+        foreach (Move move in moves)
+        {
+            // if the moves is made by the given piece to the given square
+            if (move.Destination == dest && board.GetPiece(move.Source) == finder.GetPiece(board.side))
+            {
+                sources.Add(move.Source);
+                count++;
+            }
+        }
+
+
+        if (count == 0)
+            throw new NotationParsingException(
+                $"No piece found that could move to the given square: {GetSquare(dest)}");
+        if (count == 1)
+            return Disambiguation.None;
+        // count > 1
+
+        
+        int file = 0;
+        int rank = 0;
+        
+        // counts how many squares have a given file or rank
+        foreach ((int file, int rank) square in sources)
+        {
+            // if any of the found moves start from the same file as the disambiguated move
+            if (square.file == src.file)
+                file++;
+            // if any of the found moves start from the same rank as the disambiguated move
+            if (square.rank == src.rank)
+                rank++;
+        }
+
+        return (file > 1, rank > 1) switch
+        {
+            (false, false) => Disambiguation.File,
+            (true, false) => Disambiguation.Rank,
+            (false, true) => Disambiguation.File,
+            (true, true) => Disambiguation.Complete,
+        };
     }
 }
 

@@ -170,7 +170,7 @@ public static class Parser
 
         foreach (string alg in game)
         {
-            if (alg.Equals(string.Empty) || alg[^1] == '.') // notates the index of the move
+            if (alg.Equals(string.Empty) || alg[^1] == '.' || alg.Equals("0-1") || alg.Equals("1-0") || alg.Equals("1/2-1/2")) // notates the index of the move, or end of game
                 continue;
             Move move;
             try
