@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Blaze;
 
 public static class Book
@@ -17,7 +15,7 @@ public static class Book
         foreach (string line in lines)
         {
             //Console.WriteLine(line);
-            AddLine(Parser.ParsePGN(line));
+            AddLine(Parser.ParseUCI(line));
         }
     }
 
@@ -27,13 +25,13 @@ public static class Book
         // if the board has the move, increase its weight
         // for each move of the board
         bool found = false;
-        for (int move = 0; move < boards[0][0].moves.Count; move++)
+        foreach (BookMove move in boards[0][0].moves)
         {
             // if the board contains the move, increase its weight
-            if (boards[0][0].moves[move].move.Equals(line[0].move))
+            if (move.move.Equals(line[0].move))
             {
                 found = true;
-                boards[0][0].moves[move].weight += 1;
+                move.weight += 1;
                 break;
             }
         }
@@ -59,13 +57,13 @@ public static class Book
                     // if the board has the move, increase its weight
                     // for each move of the board
                     found = false;
-                    for (int move = 0; move < boards[i][board].moves.Count; move++)
+                    foreach (BookMove move in boards[i][board].moves)
                     {
                         // if the board contains the move, increase its weight
-                        if (boards[i][board].moves[move].move.Equals(line[i].move))
+                        if (move.move.Equals(line[i].move))
                         {
                             found = true;
-                            boards[i][board].moves[move].weight += 1;
+                            move.weight += 1;
                             break;
                         }
                     }
@@ -132,6 +130,34 @@ public static class Parser
 
             board.MakeMove(move);
 
+            nodes.Add(new PGNNode { board = new Board(board), move = move });
+        }
+
+        return nodes.ToArray();
+    }
+
+    public static string ToUCI(PGNNode[] game)
+    {
+        List<string> UCI = [];
+        foreach (PGNNode node in game)
+            UCI.Add(node.move.GetUCI());
+        
+        return string.Join(' ', UCI);
+    }
+
+    public static PGNNode[] ParseUCI(string pgn)
+    {
+        List<PGNNode> nodes = new List<PGNNode>();
+        string[] game = pgn.Replace("\n", " ").Split(' ');
+        Board board = new Board(Presets.StartingBoard);
+
+        foreach (string uci in game)
+        {
+            if (uci.Equals(string.Empty) || uci[^1] == '.') // notates the index of the move
+                continue;
+            Move move = new Move(uci, board); // converts the move from UCI notation to Move
+            board.MakeMove(move);
+            
             nodes.Add(new PGNNode { board = new Board(board), move = move });
         }
 

@@ -129,6 +129,14 @@ public class Move
         throw new ArgumentException($"Failed to parse square: '{square}' Invalid file: '{square[0]}'");
     }
 
+    private readonly char[] Files = ['a','b','c','d','e','f','g','h'];
+    private readonly string[] PromotionStr = ["?", "r", "n", "b", "q","?","?",String.Empty];
+    
+    public string GetUCI()
+    {
+        return Files[Source.file] + (Source.rank + 1).ToString() + Files[Destination.file] + (Destination.rank + 1) + PromotionStr[Promotion & Pieces.TypeMask];
+    }
+
     private struct Finder(ulong mask, uint wPiece, uint bPiece)
     {
         public readonly ulong mask = mask;
@@ -136,18 +144,18 @@ public class Move
         public readonly uint bPiece = bPiece;
     }
 
-private static Finder GetFinderMask(char c, int file, int rank, Board board)
-{
-    return c switch
+    private static Finder GetFinderMask(char c, int file, int rank, Board board)
     {
-        'N' => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
-        'B' => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
-        'Q' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
-        'R' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
-        'K' => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
-        _ => throw new NotationParsingException($"Unknown piece: {c}")
-    };
-}
+        return c switch
+        {
+            'N' => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
+            'B' => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
+            'Q' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
+            'R' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
+            'K' => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
+            _ => throw new NotationParsingException($"Unknown piece: {c}")
+        };
+    }
     
     private static readonly char[] ValidPieces = ['R','N','B','Q','K'];
     private static readonly char[] ValidFiles = ['a','b','c','d','e','f','g','h'];
