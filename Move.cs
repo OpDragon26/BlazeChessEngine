@@ -150,8 +150,8 @@ public class Move
     public string Notate(Board board)
     {
         string notation = "";
-        
-        if (board.GetPiece(Source) == (board.side == 0 ? Pieces.WhitePawn : Pieces.BlackPawn))
+
+        if ((board.GetPiece(Source) & Pieces.TypeMask) == Pieces.WhitePawn)
         {
             // pawn move
 
@@ -160,17 +160,20 @@ public class Move
                 if (board.GetPiece(Destination) == Pieces.Empty)
                     notation = GetSquare(Destination);
                 else
-                    throw new NotationParsingException($"Failed to convert to Algebraic notation: {GetSquare(Destination)} is not empty");
+                    throw new NotationParsingException(
+                        $"Failed to convert to Algebraic notation: {GetSquare(Destination)} is not empty: {GetUCI()}");
             }
             else // capture
             {
-                if (board.GetPiece(Destination) != Pieces.Empty)
+                if (board.GetPiece(Destination) != Pieces.Empty || Destination == board.enPassant)
                     notation = Files[Source.file] + "x" + GetSquare(Destination);
                 else
-                    throw new NotationParsingException($"Failed to convert to Algebraic notation: cannot capture empty: {GetSquare(Destination)}");
+                    throw new NotationParsingException(
+                        $"Failed to convert to Algebraic notation: cannot capture empty: {GetSquare(Destination)}: {GetUCI()}");
             }
-            if (Promotion != (Pieces.Empty & Pieces.TypeMask))
-                notation += '=' + char.ToUpper(PromotionStr[Promotion][0]).ToString();
+
+            if ((Promotion & Pieces.TypeMask) != 0b111)
+                notation += '=' + char.ToUpper(PromotionStr[Promotion & Pieces.TypeMask][0]).ToString();
         }
         else
         {

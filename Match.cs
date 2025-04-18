@@ -51,12 +51,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make a random move on the board
                         Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
                         Move move = filtered[random.Next(0, filtered.Length)];
-                        try
-                        {
-                            LasMove = move.Notate(board);
-                        }
-                        catch {Console.Write("");}
-                        
+
+                        LasMove = move.Notate(board);
                         board.MakeMove(move);
                         game.Add(new PGNNode { board = new Board(board) , move = move });
                         play = CheckOutcome();
@@ -75,11 +71,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move bestMove = searchResult.move;
-                        try
-                        {
-                            LasMove = bestMove.Notate(board);
-                        }
-                        catch {Console.Write("");}
+
+                        LasMove = bestMove.Notate(board);
                         
                         board.MakeMove(bestMove);
                         game.Add(new PGNNode { board = new Board(board) , move = bestMove });
@@ -104,12 +97,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
-                        try
-                        {
-                            LasMove = botMove.Notate(board);
-                        }
-                        catch {Console.Write("");}
-                        
+
+                        LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board), move = botMove });
                         
@@ -148,12 +137,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
                         inBook = searchResult.bookMove;
                         Move botMove = searchResult.move;
-                        try
-                        {
-                            LasMove = botMove.Notate(board);
-                        }
-                        catch {Console.Write("");}
-                        
+
+                        LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board) , move = botMove });
                         
@@ -336,11 +321,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 // if the move is legal
                 if (filtered.Contains(move))
                 {
-                    try
-                    {
-                        LasMove = move.Notate(board);
-                    }
-                    catch {Console.Write("");}
+                    LasMove = move.Notate(board);
                     board.MakeMove(move);
                     game.Add(new PGNNode { board = new Board(board) , move = move });
                     if (!CheckOutcome())

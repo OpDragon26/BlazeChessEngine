@@ -7,6 +7,8 @@ Hasher.Init();
 Bitboards.Init();
 Book.Init(Path + "book.txt");
 
+//new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: false, moves: 1000).Play();
+
 int side;
 int depth;
 Type type;
