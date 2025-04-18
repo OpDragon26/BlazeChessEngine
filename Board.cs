@@ -56,7 +56,7 @@ public class Board
     
     public Board(uint[] board)
     {
-        this.board = board;
+        this.board = (uint[])board.Clone();
         
         // init bitboards
         AutoFillBitboards();
@@ -369,6 +369,19 @@ public class Board
         }
 
         return c;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        var item = obj as Board;
+        if (item == null)
+            return false;
+        return board.SequenceEqual(item.board) && enPassant == item.enPassant && side == item.side && castling == item.castling;
+    }
+
+    public override int GetHashCode()
+    {
+        return Hasher.ZobristHash(this);
     }
 
     public bool IsEndgame()

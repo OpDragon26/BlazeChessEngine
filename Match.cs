@@ -15,13 +15,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 {
     private static readonly  Random random = new();
 
-    private readonly Board board = board;
+    public readonly Board board = board;
     private int movesMade;
+    private int ply;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    private bool inBook = true;
 
     public void Play()
     {
         movesMade = 0;
+        ply = 0;
         bool play = true;
         
         while (play)
@@ -56,7 +59,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     else
                     {
                         // make the top choice of the engine on the board
-                        Move bestMove = Search.BestMove(board, depth).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move bestMove = searchResult.move;
                         board.MakeMove(bestMove);
                         play = CheckOutcome();
                     }
@@ -74,7 +79,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move botMove = searchResult.move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop
@@ -85,6 +92,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                             if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
+
+                        ply++;
                     }
 
                     play = false; // break loop
@@ -105,7 +114,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth).move;
+                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.bookMove;
+                        Move botMove = searchResult.move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop
@@ -116,11 +127,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                             if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
+
+                        ply++;
                     }
 
                     play = false; // break loop
                 break;
             }
+            
+            movesMade += 1 - board.side; // if the side is white, add one
+            ply++;
         }
     }
 
@@ -138,7 +154,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    private void Print(int perspective)
+    public static void PrintBoard(Board board, int perspective)
     {
         if (perspective == 1)
         {
@@ -176,7 +192,12 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         }
     }
 
-        private void Print(int perspective, string[] pieceStrings)
+    public void Print(int perspective)
+    {
+        PrintBoard(board, perspective);
+    }
+
+    private void Print(int perspective, string[] pieceStrings)
     {
         if (perspective == 1)
         {
