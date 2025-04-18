@@ -6,20 +6,16 @@ string Path = Directory.GetCurrentDirectory()[..^16] + "Book/";
 Hasher.Init();
 Bitboards.Init();
 Book.Init(Path + "book.txt");
-Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis, side: 0, depth: 6, debug: false, moves: 400);
+Match match = new Match(new Board(Presets.StartingBoard), Type.Standard, side: 0, depth: 6, debug: false, moves: 400);
 //match.board.MakeMove(Move.Parse("e3=N", match.board))
 //Parser.PrintGame(Parser.ParseUCI("e2e4 d7d5 e4d5 g8f6 b1c3 f6d5 c3d5 d8d5 d2d4 b8c6 g1f3 c8g4 f1e2 e8c8\n"),0);
 //Match match = new Match(new Board("3r1k2/8/8/8/8/8/8/3RK3 w - - 0 1"), Type.Analysis, depth: 6, debug: false, moves: 400);
-Output output = Book.Retrieve(match.board, 0);
-match.board.MakeMove(output.move);
-output = Book.Retrieve(match.board, 1);
-match.board.MakeMove(output.move);
 
-match.Print(0);
+//match.Print(0);
 
 
 //match.SpeedTest();
-//match.Play();
+match.Play();
 
 //Search.SearchBoard(match.board);
 

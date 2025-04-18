@@ -2,8 +2,15 @@ namespace Blaze;
 
 public static class Search
 {
-    public static (Move move, int eval) BestMove(Board board, int depth)
+    public static (Move move, int eval) BestMove(Board board, int depth, int bookDepth)
     {
+        Output output = Book.Retrieve(board, bookDepth);
+        if (output.result == Result.Found)
+        {
+            Console.WriteLine("Book move");
+            return (output.move, 1);
+        }
+        
         Move[] moves = FilterChecks(SearchBoard(board), board);
         int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new Exception("No move found");

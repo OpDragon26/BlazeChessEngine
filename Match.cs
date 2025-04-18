@@ -17,11 +17,13 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
     public readonly Board board = board;
     private int movesMade;
+    private int ply;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
     public void Play()
     {
         movesMade = 0;
+        ply = 0;
         bool play = true;
         
         while (play)
@@ -56,7 +58,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     else
                     {
                         // make the top choice of the engine on the board
-                        Move bestMove = Search.BestMove(board, depth).move;
+                        Move bestMove = Search.BestMove(board, depth, ply).move;
                         board.MakeMove(bestMove);
                         play = CheckOutcome();
                     }
@@ -74,7 +76,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth).move;
+                        Move botMove = Search.BestMove(board, depth, ply).move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop
@@ -85,6 +87,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                             if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
+
+                        ply++;
                     }
 
                     play = false; // break loop
@@ -105,7 +109,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         // make the top choice of the engine on the board
-                        Move botMove = Search.BestMove(board, depth).move;
+                        Move botMove = Search.BestMove(board, depth, ply).move;
                         board.MakeMove(botMove);
                         
                         // if the game ended, break the loop
@@ -116,11 +120,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                             if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
+
+                        ply++;
                     }
 
                     play = false; // break loop
                 break;
             }
+            
+            movesMade += 1 - board.side; // if the side is white, add one
+            ply++;
         }
     }
 
