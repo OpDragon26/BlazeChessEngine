@@ -203,7 +203,7 @@ public class Move
             notation += '#';
         }
 
-        if (Search.Attacked(tempBoard.KingPositions[tempBoard.side], tempBoard, 1 - tempBoard.side))
+        else if (Search.Attacked(tempBoard.KingPositions[tempBoard.side], tempBoard, 1 - tempBoard.side))
         {
             // check
             notation += '+';
