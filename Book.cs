@@ -5,7 +5,7 @@ public static class Book
     static readonly List<Entry>[] book = new List<Entry>[15];
     private static bool init;
     private static readonly Random random = new();
-    private static readonly string Path = Directory.GetCurrentDirectory()[..^16] + "Book/";
+    private static readonly string Path = Directory.GetCurrentDirectory() + "/Book/";
 
     private static void Init(string path)
     {
