@@ -68,8 +68,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     else
                     {
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
+                        SearchResult searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.book;
                         Move bestMove = searchResult.move;
 
                         LasMove = bestMove.Notate(board);
@@ -94,8 +94,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
+                        SearchResult searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.book;
                         Move botMove = searchResult.move;
 
                         LasMove = botMove.Notate(board);
@@ -134,8 +134,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
+                        SearchResult searchResult = Search.BestMove(board, depth, inBook, ply);
+                        inBook = searchResult.book;
                         Move botMove = searchResult.move;
 
                         LasMove = botMove.Notate(board);

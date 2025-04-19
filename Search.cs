@@ -1,16 +1,23 @@
 namespace Blaze;
 
+public struct SearchResult(Move move, int eval, bool book)
+{
+    public readonly Move move = move;
+    public readonly int eval = eval;
+    public readonly bool book = book;
+}
+
 public static class Search
 {
-    public static (Move move, int eval, bool bookMove) BestMove(Board board, int depth, bool useBook, int bookDepth)
+    public static SearchResult BestMove(Board board, int depth, bool useBook, int bookDepth)
     {
         if (useBook)
         {
             Output output = Book.Retrieve(board, bookDepth);
             if (output.result == Result.Found)
             {
-                Console.WriteLine("Book move");
-                return (output.move, 1, true);
+                //Console.WriteLine("Book move");
+                return new SearchResult(output.move, 1, true);
             }
         }
         
@@ -26,8 +33,8 @@ public static class Search
         });
         
         if (board.side == 0)
-            return (moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false); // white
-        return (moves[Array.IndexOf(evals, evals.Min())], evals.Min(), false); // black
+            return new SearchResult(moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false); // white
+        return new SearchResult(moves[Array.IndexOf(evals, evals.Min())], evals.Min(), false); // black
     }
     
     private static int Minimax(Board board, int depth, int alpha, int beta)

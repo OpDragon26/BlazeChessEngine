@@ -5,8 +5,9 @@ public static class Book
     static readonly List<Entry>[] book = new List<Entry>[15];
     private static bool init;
     private static readonly Random random = new();
+    private static readonly string Path = Directory.GetCurrentDirectory()[..^16] + "Book/";
 
-    public static void Init(string path)
+    private static void Init(string path)
     {
         // ensures that the code only runs once
         if (init) return;
@@ -24,10 +25,27 @@ public static class Book
             AddLine(Parser.ParseUCI(line));
         }
     }
+
+    public static void Init()
+    {
+        Init(Path + "book.txt");
+    }
     
     // tries to find the given board at the given depth, and if it found it, return a random stored move for that board
     public static Output Retrieve(Board board, int depth)
     {
+        if (depth == -1)
+        {
+            for (int i = 0; i < book.Length; i++)
+            {
+                Output result = Retrieve(board, i);
+                if (result.result == Result.Found)
+                    return result;
+            }
+            
+            return new Output { move = new Move((8,8),(8,8)), result = Result.NotFound };
+        }
+        
         if (depth > 17)
             return new Output { move = new Move((8,8),(8,8)), result = Result.NotFound };
         
@@ -205,6 +223,25 @@ public static class Parser
         List<PGNNode> nodes = new List<PGNNode>();
         string[] game = pgn.Replace("\n", " ").Split(' ');
         Board board = new Board(Presets.StartingBoard);
+
+        foreach (string uci in game)
+        {
+            if (uci.Equals(string.Empty) || uci[^1] == '.') // notates the index of the move
+                continue;
+            Move move = new Move(uci, board); // converts the move from UCI notation to Move
+            board.MakeMove(move);
+            
+            nodes.Add(new PGNNode { board = new Board(board), move = move });
+        }
+
+        return nodes.ToArray();
+    }
+    
+    public static PGNNode[] ParseUCI(string pgn, string FEN)
+    {
+        List<PGNNode> nodes = new List<PGNNode>();
+        string[] game = pgn.Replace("\n", " ").Split(' ');
+        Board board = new Board(FEN);
 
         foreach (string uci in game)
         {

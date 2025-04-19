@@ -1,11 +1,21 @@
 ﻿using Blaze;
-using Type = Blaze.Type;
 
-string Path = Directory.GetCurrentDirectory()[..^16] + "Book/";
+EngineUCI Engine = new EngineUCI();
+while (true)
+{
+    string? input = Console.ReadLine();
+    if (input != null)
+    {
+        if (input == "quit")
+            break;
+        Engine.ReceiveCommand(input);
+    }
+}
 
+/*
 Hasher.Init();
 Bitboards.Init();
-Book.Init(Path + "book.txt");
+Book.Init();
 
 //new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: false, moves: 1000).Play();
 

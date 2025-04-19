@@ -133,18 +133,31 @@ public class Move
     {
         return Files[square.file] + (square.rank + 1).ToString();
     }
-    private static string GetSquare(int file, int rank)
-    {
-        return Files[file] + (rank + 1).ToString();
-    }
 
     private static readonly char[] Files = ['a','b','c','d','e','f','g','h'];
+    private static readonly char[] Ranks = ['1','2','3','4','5','6','7','8'];
+    private static readonly char[] ValidPromotions = ['q','r','b','n'];
     private static readonly string[] PromotionStr = ["?", "r", "n", "b", "q","?","?",String.Empty];
     private static readonly char[] AlgPieces = ['?','R','N','B','Q','K'];
     
     public string GetUCI()
     {
         return GetSquare(Source) + GetSquare(Destination) + PromotionStr[Promotion & Pieces.TypeMask];
+    }
+
+    public static bool ValidUCI(string? move)
+    {
+        if (move == null) return false;
+        
+        if (move.Length is 4 or 5)
+        {
+            bool valid = Files.Contains(move[0]) && Ranks.Contains(move[1]) && Files.Contains(move[2]) && Ranks.Contains(move[3]);
+            if (move.Length == 5)
+                valid &= ValidPromotions.Contains(move[4]);
+            return valid;
+        }
+
+        return false;
     }
 
     public string Notate(Board board)
