@@ -149,6 +149,14 @@ public class Move
 
     public string Notate(Board board)
     {
+        if ((board.GetPiece(Source) & Pieces.TypeMask) == Pieces.WhiteKing && Source.file == 4)
+        {
+            if (Destination.file == 6)
+                return "O-O";
+            if (Destination.file == 2)
+                return "O-O-O";
+        }
+
         string notation = "";
 
         if ((board.GetPiece(Source) & Pieces.TypeMask) == Pieces.WhitePawn)
