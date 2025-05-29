@@ -6,7 +6,7 @@ public static class Book
     private static bool init;
     private static readonly Random random = new();
 
-    public static void Init(string path)
+    public static void Init(string[] origin)
     {
         // ensures that the code only runs once
         if (init) return;
@@ -17,8 +17,7 @@ public static class Book
         for (int i = 1; i < 15; i++)
             book[i] = new List<Entry>();
         
-        string[] lines = File.ReadAllLines(path);
-        foreach (string line in lines)
+        foreach (string line in origin)
         {
             //Console.WriteLine(line);
             AddLine(Parser.ParseUCI(line));
