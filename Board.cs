@@ -54,10 +54,12 @@ public class Board
     // 0b10 - white castled
     // 0b01 - black castled
     
+    private readonly List<ReverseMove> reverseMoves = new();
+    
     public Board(uint[] board)
     {
         this.board = (uint[])board.Clone();
-        
+
         // init bitboards
         AutoFillBitboards();
 
@@ -170,8 +172,11 @@ public class Board
         }
     }
     
-    public void MakeMove(Move move)
+    public void MakeMove(Move move, bool reverse = false)
     {
+        if (reverse)
+            reverseMoves.Add(new ReverseMove(this, move));
+
         halfMoveClock++;
         if (side == 1)
             hashKey ^= Hasher.BlackToMove;
@@ -309,6 +314,20 @@ public class Board
         Add(); // adds the hash of the board to the dictionary
 
         side = 1 - side;
+    }
+
+    public void UnmakeMove()
+    {
+        if (reverseMoves.Count == 0)
+            throw new Exception("No reverse moves found");
+
+        ReverseMove move = reverseMoves[^1];
+        reverseMoves.RemoveAt(reverseMoves.Count - 1);
+
+        if (move.Pawn)
+        {
+            
+        }
     }
 
     public bool IsDraw()
