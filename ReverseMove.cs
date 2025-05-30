@@ -1,26 +1,16 @@
 namespace Blaze;
 
-public class ReverseMove
+public class ReverseMove(Board board, Move move)
 {
     // The source and destination are reverses of the original move
-    public readonly (int file, int rank) Source;
-    public readonly (int file, int rank) Destination;
-    public readonly uint Captured;
-    public readonly bool Promotion;
-    public readonly int Type;
-    public readonly byte CastlingRights;
-    public readonly (int file, int rank) EnPassant;
-    public readonly bool Pawn;
-
-    public ReverseMove(Board board, Move move)
-    {
-        Source = move.Destination;
-        Destination = move.Source;
-        Captured = board.GetPiece(move.Destination);
-        Promotion = move.Promotion != 0b111;
-        CastlingRights = board.castling;
-        Type = move.Type;
-        EnPassant = board.enPassant;
-        Pawn = move.Pawn;
-    }
+    public readonly (int file, int rank) Source = move.Destination;
+    public readonly (int file, int rank) Destination = move.Source;
+    public readonly uint Captured = board.GetPiece(move.Destination);
+    public readonly bool Promotion = move.Promotion != 0b111;
+    public readonly int Type = move.Type;
+    public readonly byte CastlingRights = board.castling;
+    public readonly (int file, int rank) EnPassant = board.enPassant;
+    public readonly bool Pawn = move.Pawn;
+    public readonly int HalfMoveClock = board.halfMoveClock;
+    public readonly int hashkey = board.hashKey;
 }

@@ -15,7 +15,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 {
     private static readonly  Random random = new();
 
-    private readonly Board board = board;
+    public readonly Board board = board;
     private int movesMade;
     private int ply;
     private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -258,7 +258,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         }
     }
 
-    private void Print(int perspective)
+    public void Print(int perspective)
     {
         PrintBoard(board, perspective);
     }

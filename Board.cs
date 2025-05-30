@@ -43,18 +43,16 @@ public class Board
     
     public readonly (int file, int rank)[] KingPositions = new (int file, int rank)[2];
 
-    private int halfMoveClock;
+    public int halfMoveClock;
     private int pawns = 16;
     private readonly int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
-    private int hashKey;
+    public int hashKey;
 
     public byte castled;
     // only the last two bits can be on
     // 0b10 - white castled
     // 0b01 - black castled
-    
-    private readonly List<ReverseMove> reverseMoves = new();
     
     public Board(uint[] board)
     {
@@ -172,14 +170,12 @@ public class Board
         }
     }
     
-    public void MakeMove(Move move, bool reverse = false)
+    public void MakeMove(Move move)
     {
-        if (reverse)
-            reverseMoves.Add(new ReverseMove(this, move));
-
         halfMoveClock++;
         if (side == 1)
             hashKey ^= Hasher.BlackToMove;
+        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
 
         // if the moved piece is a pawn, remove the source from the bitboard
         if (move.Pawn)
@@ -219,7 +215,6 @@ public class Board
         }
         
         // update the hash key
-        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
         hashKey ^= Hasher.PieceNumbers[GetPiece(move.Destination), move.Destination.file, move.Destination.rank]; // add the moved piece, including promoted pieces
         hashKey ^= Hasher.CastlingNumbers[castling]; // remove the castling rights number
         // remove the en passant file if there was any, if it was 8, no need to change anything
@@ -316,17 +311,91 @@ public class Board
         side = 1 - side;
     }
 
-    public void UnmakeMove()
+    public void UnmakeMove(ReverseMove move)
     {
-        if (reverseMoves.Count == 0)
-            throw new Exception("No reverse moves found");
+        repeat[hashKey]--;
+        
+        side = 1 - side;
+        hashKey = move.hashkey;
 
-        ReverseMove move = reverseMoves[^1];
-        reverseMoves.RemoveAt(reverseMoves.Count - 1);
+        halfMoveClock = move.HalfMoveClock;
+        
+        SetPiece(move.Destination, GetPiece(move.Source));
+        SetPiece(move.Source, move.Captured);
+        
+        bitboards[side] ^= Bitboards.GetSquare(move.Source);
+        bitboards[side] ^= Bitboards.GetSquare(move.Destination);
 
+        if (move.Captured != 0b1111) // if the move was a capture
+        {
+            bitboards[1 - side] ^= Bitboards.GetSquare(move.Source);
+
+            // if the captured piece was a pawn
+            if ((move.Captured & Pieces.TypeMask) == Pieces.WhitePawn)
+            {
+                pawns++;
+                bitboards[3 - side] ^= Bitboards.GetSquare(move.Source);
+            }
+            
+            values[1 - side] += Pieces.Value[move.Captured];
+        }
+        
         if (move.Pawn)
         {
+            bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
+            bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination);
+        }
+
+        castling = move.CastlingRights;
+        enPassant = move.EnPassant;
+
+        switch (move.Type)
+        {
+            case 0b0010: // white short castle
+                Clear(5, 0);
+                SetPiece(7,0, Pieces.WhiteRook);
+                bitboards[0] ^= Bitboards.GetSquare(7,0);
+                bitboards[0] ^= Bitboards.GetSquare(5,0);
+                castled &= 0b01;
+            break;
             
+            case 0b0011: // white long castle
+                Clear(3, 0);
+                SetPiece(0,0, Pieces.WhiteRook);
+                bitboards[0] ^= Bitboards.GetSquare(0,0);
+                bitboards[0] ^= Bitboards.GetSquare(3,0);
+                castled &= 0b01;
+            break;
+            
+            case 0b1010: // black short castle
+                Clear(5, 7);
+                SetPiece(7,7, Pieces.BlackRook);
+                bitboards[1] ^= Bitboards.GetSquare(7,7);
+                bitboards[1] ^= Bitboards.GetSquare(5,7);
+                castled &= 0b10;
+            break;
+            
+            case 0b1011: // black long castle
+                Clear(3, 7);
+                SetPiece(0,7, Pieces.BlackRook);
+                bitboards[1] ^= Bitboards.GetSquare(0,7);
+                bitboards[1] ^= Bitboards.GetSquare(3,7);
+                castled &= 0b10;
+            break;
+            
+            case 0b0100: // white en passant
+                SetPiece(move.Source.file, 4, Pieces.BlackPawn);
+                bitboards[1] ^= Bitboards.GetSquare(move.Source.file,4);
+                bitboards[3] ^= Bitboards.GetSquare(move.Source.file,4);
+                values[1] -= 100;
+            break;
+            
+            case 0b1100: // black en passant
+                SetPiece(move.Source.file, 3, Pieces.WhitePawn);
+                bitboards[0] ^= Bitboards.GetSquare(move.Source.file,3);
+                bitboards[2] ^= Bitboards.GetSquare(move.Source.file,3);
+                values[0] += 100;
+            break;
         }
     }
 
@@ -405,7 +474,7 @@ public class Board
 
     public bool IsEndgame()
     {
-        return values[0] + int.Abs(values[1]) < 5300;
+        return values[0] - values[1] < 5300;
     }
 
     public ulong AllPieces()
