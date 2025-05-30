@@ -50,14 +50,21 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
-                Board moveBoard = new(board);
-                moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
+                ReverseMove reverseMove = new ReverseMove(board, move);
+                board.MakeMove(move);
+                if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check after the move
+                {
+                    board.UnmakeMove(reverseMove);
                     continue;
+                }
+                    
                 found = true; // if a move is legal, set found to true
                 
-                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Max(eval, Minimax(board, depth - 1, alpha, beta));
                 alpha = Math.Max(alpha, eval);
+                
+                board.UnmakeMove(reverseMove);
+                
                 if (eval >= beta) break; // beta cutoff
             }
             
@@ -81,14 +88,20 @@ public static class Search
 
             foreach (Move move in moves)
             {
-                Board moveBoard = new(board);
-                moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
+                ReverseMove reverseMove = new ReverseMove(board, move);
+                board.MakeMove(move);
+                if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check after the move
+                {
+                    board.UnmakeMove(reverseMove);
                     continue;
+                }
                 found = true;
                 
-                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Min(eval, Minimax(board, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
+                
+                board.UnmakeMove(reverseMove);
+                
                 if (eval <= alpha) break; // alpha cutoff
             }
             

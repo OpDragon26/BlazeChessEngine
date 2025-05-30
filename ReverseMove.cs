@@ -1,6 +1,6 @@
 namespace Blaze;
 
-public class ReverseMove(Board board, Move move)
+public struct ReverseMove(Board board, Move move)
 {
     // The source and destination are reverses of the original move
     public readonly (int file, int rank) Source = move.Destination;

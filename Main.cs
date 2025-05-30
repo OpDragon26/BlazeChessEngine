@@ -8,9 +8,23 @@ Bitboards.Init();
 //new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: false, moves: 1000).Play();
 
 //Parser.PrintGame(Parser.ParseUCI("e2e4 d7d5 e4d5 g8f6 b1c3 f6d5 c3d5 d8d5 d2d4 b8c6 g1f3 c8g4 f1e2 e8c8\n"),0);
-Match match = new Match(new Board(Presets.StartingBoard), Type.Analysis, depth: 6, debug: false, moves: 1000);
+Match match = new Match(new Board(Presets.StartingBoard), Type.Autoplay, depth: 6, debug: false, moves: 1000);
 
-match.Play();
+match.board.MakeMove(Move.Parse("e4", match.board));
+match.board.MakeMove(Move.Parse("d5", match.board));
+match.board.MakeMove(Move.Parse("Nf3", match.board));
+match.board.MakeMove(Move.Parse("d4", match.board));
+match.board.MakeMove(Move.Parse("c4", match.board));
+Move move = Move.Parse("dxc3", match.board);
+
+ReverseMove rMove = new ReverseMove(match.board, move);
+match.board.MakeMove(move);
+match.board.UnmakeMove(rMove);
+match.Print(0);
+Match.PrintBitboard(match.board.bitboards[0],0);
+Match.PrintBitboard(match.board.bitboards[1],0);
+
+//match.Play();
 
 //Search.SearchBoard(match.board);
 

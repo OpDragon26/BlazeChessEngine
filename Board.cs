@@ -175,8 +175,9 @@ public class Board
         halfMoveClock++;
         if (side == 1)
             hashKey ^= Hasher.BlackToMove;
+        
         hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
-
+            
         // if the moved piece is a pawn, remove the source from the bitboard
         if (move.Pawn)
             bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
@@ -314,6 +315,9 @@ public class Board
     public void UnmakeMove(ReverseMove move)
     {
         repeat[hashKey]--;
+
+        if (repeat[hashKey] == 0)
+            repeat.Remove(hashKey);
         
         side = 1 - side;
         hashKey = move.hashkey;
@@ -326,6 +330,8 @@ public class Board
         bitboards[side] ^= Bitboards.GetSquare(move.Source);
         bitboards[side] ^= Bitboards.GetSquare(move.Destination);
 
+        //if ()
+        
         if (move.Captured != 0b1111) // if the move was a capture
         {
             bitboards[1 - side] ^= Bitboards.GetSquare(move.Source);
@@ -344,6 +350,9 @@ public class Board
         {
             bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
             bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination);
+
+            if (move.Promotion)
+                pawns++;
         }
 
         castling = move.CastlingRights;
