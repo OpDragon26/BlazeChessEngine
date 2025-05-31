@@ -32,7 +32,7 @@ public class Board
     public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    public readonly ulong[] bitboards = new ulong[4];
+    public ulong[] bitboards = new ulong[4];
     // white pieces
     // black pieces
     // white pawns only
@@ -45,7 +45,7 @@ public class Board
 
     public int halfMoveClock;
     private int pawns = 16;
-    private readonly int[] values = new int[2];
+    private int[] values = new int[2];
     private readonly Dictionary<int, int> repeat = new();
     public int hashKey;
 
@@ -134,6 +134,9 @@ public class Board
 
     private void AutoFillBitboards()
     {
+        bitboards = new ulong[4];
+        values = new int[2];
+        
         for (int rank = 0; rank < 8; rank++)
         {
             for (int file = 7; file >= 0; file--)
@@ -314,6 +317,8 @@ public class Board
 
     public void UnmakeMove(ReverseMove move)
     {
+        ulong before = AllPieces();
+        
         repeat[hashKey]--;
 
         if (repeat[hashKey] == 0)
@@ -330,7 +335,8 @@ public class Board
         bitboards[side] ^= Bitboards.GetSquare(move.Source);
         bitboards[side] ^= Bitboards.GetSquare(move.Destination);
 
-        //if ()
+        if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing)
+            KingPositions[side] = move.Destination;
         
         if (move.Captured != 0b1111) // if the move was a capture
         {
@@ -349,10 +355,11 @@ public class Board
         if (move.Pawn)
         {
             bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
-            bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination);
 
             if (move.Promotion)
                 pawns++;
+            else
+                bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination);
         }
 
         castling = move.CastlingRights;
@@ -405,6 +412,22 @@ public class Board
                 bitboards[2] ^= Bitboards.GetSquare(move.Source.file,3);
                 values[0] += 100;
             break;
+        }
+        
+        ulong[] bitboard_copy = (ulong[])bitboards.Clone();
+        AutoFillBitboards();
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (bitboard_copy[i] != bitboards[i])
+            {
+                Match.PrintBoard(this, 0);
+                Match.PrintBitboard(AllPieces() ^ (bitboard_copy[0] | bitboard_copy[1]), 0);
+                Match.PrintBitboard(before, 0);
+                //Match.PrintBitboard(AllPawns() ^ (bitboard_copy[2] | bitboard_copy[3]), 0);
+                Console.WriteLine($"Type {move.Type} by {side}");
+                throw new Exception($"Mismatch after move type {move.Type}");
+            }
         }
     }
 

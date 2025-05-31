@@ -12,15 +12,15 @@ public class Move
     
     /*
     Special moves
-    0000 - regular move
-    0001 - white double move
-    1001 - black double move
-    0010 - white short castle
-    0011 - white long castle
-    1010 - black short castle
-    1011 - black long castle
-    0100 - white en passant
-    1100 - black en passant
+    0000-0  - regular move
+    0001-1  - white double move
+    1001-9  - black double move
+    0010-2  - white short castle
+    0011-3  - white long castle
+    1010-10 - black short castle
+    1011-11 - black long castle
+    0100-4  - white en passant
+    1100-12 - black en passant
     */
 
     // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
@@ -129,11 +129,11 @@ public class Move
         throw new ArgumentException($"Failed to parse square: '{square}' Invalid file: '{square[0]}'");
     }
 
-    private static string GetSquare((int file, int rank) square)
+    public static string GetSquare((int file, int rank) square)
     {
         return Files[square.file] + (square.rank + 1).ToString();
     }
-    private static string GetSquare(int file, int rank)
+    public static string GetSquare(int file, int rank)
     {
         return Files[file] + (rank + 1).ToString();
     }

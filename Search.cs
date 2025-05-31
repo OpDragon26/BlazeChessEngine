@@ -50,6 +50,12 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
+                if (board.GetPiece(move.Source) == Pieces.Empty)
+                {
+                    Match.PrintBoard(board,0);
+                    throw new Exception($"Empty piece moved: {Move.GetSquare(move.Source)}");
+                }
+                
                 ReverseMove reverseMove = new ReverseMove(board, move);
                 board.MakeMove(move);
                 if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check after the move
@@ -88,6 +94,12 @@ public static class Search
 
             foreach (Move move in moves)
             {
+                if (board.GetPiece(move.Source) == Pieces.Empty)
+                {
+                    Match.PrintBoard(board,0);
+                    throw new Exception($"Empty piece moved: {Move.GetSquare(move.Source)}");
+                }
+                
                 ReverseMove reverseMove = new ReverseMove(board, move);
                 board.MakeMove(move);
                 if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check after the move
@@ -96,7 +108,7 @@ public static class Search
                     continue;
                 }
                 found = true;
-                
+
                 eval = Math.Min(eval, Minimax(board, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
                 
@@ -133,6 +145,13 @@ public static class Search
                     // the square is only worth checking if the searched side has a piece there
                     if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
                     {
+                        if (board.GetPiece(file, rank) == Pieces.Empty)
+                        {
+                            Match.PrintBoard(board, 0);
+                            Match.PrintBitboard(board.AllPieces(), 0);
+                            throw new Exception($"Empty piece evaluated: {Move.GetSquare(file, rank)}");
+                        }
+                        
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
                         
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0) // if the searched square is a white pawn
@@ -154,6 +173,13 @@ public static class Search
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
+                        if (board.GetPiece(file, rank) == Pieces.Empty)
+                        {
+                            Match.PrintBoard(board, 0);
+                            Match.PrintBitboard(board.AllPieces(), 0);
+                            throw new Exception($"Empty piece evaluated: {Move.GetSquare(file, rank)}");
+                        }
+                        
                         eval += Pieces.Value[board.GetPiece(file, rank)] + Weights.Pieces[board.GetPiece(file, rank), file, rank];
 
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
