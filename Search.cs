@@ -131,7 +131,7 @@ public static class Search
                             if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.WhitePassedPawnBonuses[rank];
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
-                                eval -= 15;
+                                eval -= 120;
                         }
                         else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
@@ -150,7 +150,7 @@ public static class Search
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.BlackPassedPawnBonuses[rank];
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
-                                eval += 15;
+                                eval += 120;
                         }
                         else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {

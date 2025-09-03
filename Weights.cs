@@ -296,7 +296,7 @@ public static class Weights
     public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,60,80,135,0];
     public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-135,-80,-60,-50,-40,-30,0];
     public static readonly int[] CastlingBonuses = [0,-60,60,0];
-    public static readonly int[] DoublePawnPenalties = [0, 0, -30, -60, -70, -75, -80];
+    public static readonly int[] DoublePawnPenalties = [0, 0, -40, -70, -80, -85, -90];
     
     public static readonly int[] KingSafetyBonuses = [40,160,160,40,20,0,-40,-40,-40];
 }
