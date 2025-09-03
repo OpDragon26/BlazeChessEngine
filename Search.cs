@@ -259,12 +259,77 @@ public static class Search
 
         if (ordering)
         {
-            Move[] sortedMoveArray = new Span<Move>(moveArray, 0, index).ToArray();
-            Array.Sort(sortedMoveArray, (x,y) => y.Priority.CompareTo(x.Priority));
-            return sortedMoveArray;
+            Span<Move> moveSpan = new Span<Move>(moveArray, 0, index);
+            
+            MoveUnit[] sortedMoveArray = new MoveUnit[moveSpan.Length];
+
+            for (int i = 0; i < moveSpan.Length; i++)
+                sortedMoveArray[i] = Reevaluate(board, moveSpan[i]);
+
+            Array.Sort(sortedMoveArray, (x, y) => y.priority.CompareTo(x.priority));
+            
+            for (int i = 0; i < moveSpan.Length; i++)
+                moveSpan[i] = sortedMoveArray[i];
+            
+            return moveSpan.ToArray();
         }
 
         return new Span<Move>(moveArray, 0, index).ToArray();
+    }
+
+    private static MoveUnit Reevaluate(Board board, Move move)
+    {
+        MoveUnit moveUnit = new MoveUnit(move);
+
+        moveUnit.priority += Pieces.Value[board.GetPiece(move.Destination) & Pieces.TypeMask];
+
+        switch (board.GetPiece(move.Source))
+        {
+            case Pieces.WhitePawn:
+                if ((Bitboards.WhitePawnCaptureMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.BlackPawn:
+                if ((Bitboards.BlackPawnCaptureMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.WhiteRook:
+                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.BlackRook:
+                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.WhiteKnight:
+                if ((Bitboards.KnightMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.BlackKnight:
+                if ((Bitboards.KnightMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.WhiteBishop:
+                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.BlackBishop:
+                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.WhiteQueen:
+                ulong wCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]);
+                if ((wCaptures & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                    moveUnit.priority += 50;
+                break;
+            case Pieces.BlackQueen:
+                ulong bCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]);
+                if ((bCaptures & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                    moveUnit.priority += 50;
+                break;
+        }
+        
+        return moveUnit;
     }
 
     private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side)
@@ -323,7 +388,7 @@ public static class Search
                     if (enPassant && (Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & Bitboards.GetSquare(board.enPassant)) != 0)
                         moveSpan[index++] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
                 }
-            break;
+                break;
             
             case Pieces.WhiteRook:
                 // magic lookup moves
@@ -433,7 +498,7 @@ public static class Search
                             moveSpan[index++] = Bitboards.BlackLongCastle;
                     }
                 }
-            break;
+                break;
         }
 
         return index;
@@ -495,5 +560,12 @@ public static class Search
         }
         
         return MoveList.ToArray();
+    }
+    
+    private struct MoveUnit(Move move)
+    {
+        private readonly Move move = move;
+        public int priority = move.Priority;
+        public static implicit operator Move(MoveUnit moveUnit) => moveUnit.move;
     }
 }
