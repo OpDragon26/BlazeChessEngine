@@ -58,15 +58,17 @@ public static class Bitboards
     
     private static readonly int[,] PriorityWeights =
     {
-        {0,1,2,3,3,2,1,0},
-        {1,2,3,4,4,3,2,1},
-        {2,3,4,5,5,4,3,2},
-        {3,4,5,6,6,5,4,3},
-        {3,4,5,6,6,5,4,3},
-        {2,3,4,5,5,4,3,2},
-        {1,2,3,4,4,3,2,1},
-        {0,1,2,3,3,2,1,0},
+        {0,10,20,30,30,20,10,0},
+        {10,20,30,40,40,30,20,10},
+        {20,30,40,50,50,40,30,20},
+        {30,40,50,60,60,50,40,30},
+        {30,40,50,60,60,50,40,30},
+        {20,30,40,50,50,40,30,20},
+        {10,20,30,40,40,30,20,10},
+        {0,10,20,30,30,20,10,0},
     };
+
+    public static int[][] FileGroupLookup = [[0,1], [0,1,2], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7]];
     
     private static class MagicLookup
     {
@@ -872,7 +874,7 @@ public static class Bitboards
         return file is >= 0 and < 8 && rank is >= 0 and < 8;
     }
 
-    private static int CountBits(ulong bitboard)
+    public static int CountBits(ulong bitboard)
     {
         int count = 0;
 

@@ -113,9 +113,13 @@ public static class Search
 
         if (!board.IsEndgame())
         {
-            for (int rank = 0; rank < 8; rank++)
+            for (int file = 0; file < 8; file++)
             {
-                for (int file = 7; file >= 0; file--)
+                // counts pawns on the file and applies a penalty for multiple on one file
+                eval += Weights.DoublePawnPenalties[Bitboards.CountBits(Bitboards.GetFile(file) & board.bitboards[2])];
+                eval -= Weights.DoublePawnPenalties[Bitboards.CountBits(Bitboards.GetFile(file) & board.bitboards[3])];
+                
+                for (int rank = 7; rank >= 0; rank--)
                 {
                     // the square is only worth checking if the searched side has a piece there
                     if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
@@ -126,8 +130,6 @@ public static class Search
                         {
                             if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.WhitePassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
-                                eval -= 10;
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
                                 eval -= 15;
                         }
@@ -147,8 +149,6 @@ public static class Search
                         {
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.BlackPassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
-                                eval += 10;
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
                                 eval += 15;
                         }
@@ -171,16 +171,30 @@ public static class Search
             if ((Bitboards.KingMasks[board.KingPositions[0].file, board.KingPositions[0].rank] & board.bitboards[1]) != 0) // if there is an enemy piece adjacent to the king
                 eval -= 50;
             
-            // take from the eval based on the safety of white's king
+            // take from eval if the pawns in front of the king are missing
+            foreach (int file in Bitboards.FileGroupLookup[board.KingPositions[0].file])
+                if ((Bitboards.GetFile(file) & board.bitboards[2]) == 0)
+                    eval -= 100;
+            
+            foreach (int file in Bitboards.FileGroupLookup[board.KingPositions[1].file])
+                if ((Bitboards.GetFile(file) & board.bitboards[3]) == 0)
+                    eval += 100;
+            
+            
+            // take from the eval based on the safety of black's king
             eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
             if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
                 eval += 50;
         }
         else
         {
-            for (int rank = 0; rank < 8; rank++)
+            for (int file = 0; file < 8; file++)
             {
-                for (int file = 7; file >= 0; file--)
+                // counts pawns on the file and applies a penalty for multiple on one file
+                eval += Weights.DoublePawnPenalties[Bitboards.CountBits(Bitboards.GetFile(file) & board.bitboards[2])];
+                eval -= Weights.DoublePawnPenalties[Bitboards.CountBits(Bitboards.GetFile(file) & board.bitboards[3])];
+                
+                for (int rank = 7; rank >= 0; rank--)
                 {
                     // the square is only worth checking if the searched side has a piece there
                     if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
