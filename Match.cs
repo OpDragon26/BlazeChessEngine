@@ -11,7 +11,7 @@ public enum Type
     Autoplay,
 }
 
-public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10)
+public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10, bool alwaysUseUnicode = false)
 {
     private static readonly  Random random = new();
 
@@ -36,14 +36,14 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
             {
                 case Type.Analysis:
                     PrintLastMove();
-                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     play = PlayerTurn();
                 break;
                 
                 case Type.Random:
                     if (!debug) Console.Clear();
                     PrintLastMove();
-                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -56,13 +56,13 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         board.MakeMove(move);
                         game.Add(new PGNNode { board = new Board(board) , move = move });
                         play = CheckOutcome();
-                    }
-                break;
+                    } 
+                    break;
                 
                 case Type.Standard:
                     if (!debug) Console.Clear();
                     PrintLastMove();
-                    if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -78,7 +78,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         game.Add(new PGNNode { board = new Board(board) , move = bestMove });
                         play = CheckOutcome();
                     }
-                break;
+                    break;
                 
                 case Type.Autoplay:
                     for (int i = 0; i < moves; i++)
@@ -91,7 +91,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
                         PrintLastMove();
-                        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
@@ -107,7 +107,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
 
@@ -131,7 +131,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
                         PrintLastMove();
-                        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
                         (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
@@ -147,7 +147,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
 
@@ -155,7 +155,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     }
 
                     play = false; // break loop
-                break;
+                    break;
             }
             
             movesMade += 1 - board.side; // if the side is white, add one
