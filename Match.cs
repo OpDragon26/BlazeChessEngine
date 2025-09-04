@@ -193,7 +193,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         pgn[0] = "1. " + game[0].move.Notate(new Board(Presets.StartingBoard));
         for (int i = 1; i < pgn.Length; i++)
         {
-            string num = i % 2 == 0 ? $"{i / 2 + 2}. " : "";
+            string num = i % 2 == 0 ? $"{i / 2 + 1}. " : "";
             
             pgn[i] = num + game[i].move.Notate(game[i-1].board);
         }
