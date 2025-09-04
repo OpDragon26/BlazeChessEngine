@@ -131,15 +131,17 @@ public static class Search
                             if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.WhitePassedPawnBonuses[rank];
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
-                                eval -= 120;
+                                eval -= 30;
                         }
                         else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval += 40;
                         }
-
-                        whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                        
+                        ulong PieceAttacks = SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                        eval += Bitboards.CountBits(PieceAttacks);
+                        whiteAttacks |= PieceAttacks;
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
@@ -150,15 +152,17 @@ public static class Search
                             if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
                                 eval += Weights.BlackPassedPawnBonuses[rank];
                             if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
-                                eval += 120;
+                                eval += 30;
                         }
                         else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
-                            
-                        blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
+
+                        ulong PieceAttacks = SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
+                        eval -= Bitboards.CountBits(PieceAttacks);
+                        blackAttacks |= PieceAttacks;
                     }
                 }
             }
@@ -174,17 +178,16 @@ public static class Search
             // take from eval if the pawns in front of the king are missing
             foreach (int file in Bitboards.FileGroupLookup[board.KingPositions[0].file])
                 if ((Bitboards.GetFile(file) & board.bitboards[2]) == 0)
-                    eval -= 100;
-            
-            foreach (int file in Bitboards.FileGroupLookup[board.KingPositions[1].file])
-                if ((Bitboards.GetFile(file) & board.bitboards[3]) == 0)
-                    eval += 100;
-            
+                    eval -= 50;
             
             // take from the eval based on the safety of black's king
             eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
             if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
                 eval += 50;
+            
+            foreach (int file in Bitboards.FileGroupLookup[board.KingPositions[1].file])
+                if ((Bitboards.GetFile(file) & board.bitboards[3]) == 0)
+                    eval += 50;
         }
         else
         {
@@ -215,8 +218,10 @@ public static class Search
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval += 40;
                         }
-
-                        whiteAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                        
+                        ulong PieceAttacks = SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0);
+                        eval += Bitboards.CountBits(PieceAttacks);
+                        whiteAttacks |= PieceAttacks;
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
@@ -236,8 +241,9 @@ public static class Search
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
-                        
-                        blackAttacks |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
+                        ulong PieceAttacks = SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1);
+                        eval += Bitboards.CountBits(PieceAttacks);
+                        blackAttacks |= PieceAttacks;
                     }
                 }
             }
