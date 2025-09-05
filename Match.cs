@@ -22,12 +22,33 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     private bool inBook = true;
     private readonly List<PGNNode> game = new();
     private string? LasMove;
+    private int depth = depth;
+
+    private static readonly int[,] Thresholds = new[,]
+    {
+        {0, 0, 0}, // 0
+        {0, 1000, 1000}, // 1
+        {0, 1000, 1000}, // 2
+        {0, 1000, 1000}, // 3
+        {50, 1000, 1000}, // 4
+        {100, 5000, 2000}, // 5
+        {500, 9000, 6000}, // 6
+        {1000, 30000, 10000}, // 7
+        {20000, 300000, 150000}, // 8
+    };
+    private static int increaseThreshold = 500;
+    private static int decreaseThreshold = 9000;
+    private static int endgameDecreaseThreshold = 6000;
 
     public void Play()
     {
         movesMade = 0;
         ply = 0;
         bool play = true;
+        
+        increaseThreshold = Thresholds[depth, 0];
+        decreaseThreshold = Thresholds[depth, 1];
+        endgameDecreaseThreshold = Thresholds[depth, 2];
         
         while (play)
         {
@@ -68,9 +89,15 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     else
                     {
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
-                        Move bestMove = searchResult.move;
+                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
+                        if (result.time < increaseThreshold && !result.bookMove) depth++;
+                        else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                            depth--;
+
+                        inBook = result.bookMove;
+                        Move bestMove = result.move;
 
                         LasMove = bestMove.Notate(board);
                         
@@ -94,9 +121,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
-                        Move botMove = searchResult.move;
+                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
+                        if (ply % 2 == 0)
+                            if (result.time < increaseThreshold && !result.bookMove) depth++;
+                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                            depth--;
+                        
+                        inBook = result.bookMove;
+                        Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);
@@ -134,9 +168,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        (Move move, int eval, bool bookMove) searchResult = Search.BestMove(board, depth, inBook, ply);
-                        inBook = searchResult.bookMove;
-                        Move botMove = searchResult.move;
+                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
+                        if (ply % 2 == 0)
+                            if (result.time < increaseThreshold && !result.bookMove) depth++;
+                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                            depth--;
+
+                        inBook = result.bookMove;
+                        Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);

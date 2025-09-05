@@ -2,7 +2,7 @@ namespace Blaze;
 
 public static class Search
 {
-    public static (Move move, int eval, bool bookMove) BestMove(Board board, int depth, bool useBook, int bookDepth)
+    public static SearchResult BestMove(Board board, int depth, bool useBook, int bookDepth)
     {
         if (useBook)
         {
@@ -10,9 +10,12 @@ public static class Search
             if (output.result == Result.Found)
             {
                 Console.WriteLine("Book move");
-                return (output.move, 1, true);
+                return new SearchResult(output.move, 1, true, 0);
             }
         }
+        
+        Timer timer = new Timer();
+        timer.Start();
         
         Move[] moves = FilterChecks(SearchBoard(board), board);
         int[] evals = new int[moves.Length];
@@ -26,8 +29,16 @@ public static class Search
         });
         
         if (board.side == 0)
-            return (moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false); // white
-        return (moves[Array.IndexOf(evals, evals.Min())], evals.Min(), false); // black
+            return  new SearchResult(moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false, timer.Stop()); // white
+        return  new SearchResult(moves[Array.IndexOf(evals, evals.Min())], evals.Min(), false, timer.Stop()); // black
+    }
+
+    public readonly struct SearchResult(Move move, int eval, bool bookMove, long time)
+    {
+        public readonly Move move = move;
+        public readonly int eval = eval;
+        public readonly bool bookMove = bookMove;
+        public readonly long time = time;
     }
     
     private static int Minimax(Board board, int depth, int alpha, int beta)
