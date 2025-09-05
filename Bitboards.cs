@@ -68,7 +68,7 @@ public static class Bitboards
         {0,1,2,3,3,2,1,0},
     };
 
-    public static int[][] FileGroupLookup = [[0,1], [0,1,2], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7]];
+    public static readonly int[][] AdjacentFiles = [[0,1], [0,1,2], [1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7]];
     
     private static class MagicLookup
     {
@@ -114,6 +114,9 @@ public static class Bitboards
 
     private const ulong SmallFile = 0x80808080808000;
     private const ulong SmallRank = 0x7E00000000000000;
+
+    public const ulong KingSafetyAppliesWhite = 0b1100011111000111000000000000000000000000000000000000000000000000;
+    public const ulong KingSafetyAppliesBlack = 0b1100011111000111;
 
     private static bool init;
 
@@ -235,12 +238,6 @@ public static class Bitboards
         if (init) return;
         init = true;
         List<ulong> enPassantBitboards = new List<ulong>();
-        
-        // count the bits in one row for getting the controlled squares for a side
-        for (int i = 0; i < BitValues.Length; i++)
-        {
-            BitValues[i] = CountBits(i);
-        }
 
         // Create the masks for every square on the board
         for (int rank = 0; rank < 8; rank++)
@@ -495,7 +492,7 @@ public static class Bitboards
                 {
                     MagicLookup.KingLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 5);
                     MagicLookup.KingCaptureLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 3);
-                    MagicLookup.KingSafetyLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = Weights.KingSafetyBonuses[CountBits(KingCombinations[file, rank][i])];
+                    MagicLookup.KingSafetyLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = Weights.KingSafetyBonuses[UInt64.PopCount(KingCombinations[file, rank][i])];
                 }
                 
                 //done++;
@@ -872,31 +869,5 @@ public static class Bitboards
     private static bool ValidSquare(int file, int rank)
     {
         return file is >= 0 and < 8 && rank is >= 0 and < 8;
-    }
-
-    public static int CountBits(ulong bitboard)
-    {
-        int count = 0;
-
-        for (int i = 0; i < 64; i++)
-        {
-            if ((bitboard & ((ulong)1 << i)) != 0)
-                count++;
-        }
-        
-        return count;
-    }
-    
-    private static int CountBits(int num)
-    {
-        int count = 0;
-
-        for (int i = 0; i < 32; i++)
-        {
-            if ((num & (1 << i)) != 0)
-                count++;
-        }
-        
-        return count;
     }
 }

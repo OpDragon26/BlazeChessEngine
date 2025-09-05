@@ -3,6 +3,7 @@ namespace Blaze;
 public static class Weights
 {
     // files and ranks are reversed, files go from a to h on the y-axis
+    public const float MaterialMultiplier = 2f;
     
     public static readonly int[,,] Pieces = new[,,]
     {
@@ -296,7 +297,6 @@ public static class Weights
     public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,60,80,135,0];
     public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-135,-80,-60,-50,-40,-30,0];
     public static readonly int[] CastlingBonuses = [0,-40,40,0];
-    public static readonly int[] DoublePawnPenalties = [0, 0, -20, -25, -30, -30, -30];
-    
-    public static readonly int[] KingSafetyBonuses = [20,50,50,30,10,0,-20,-20,-20];
+    public static readonly int[] DoublePawnPenalties = [0, 0, -10, -15, -20, -20, -20];
+    public static readonly int[] KingSafetyBonuses = [10,30,30,20,10,0,-20,-20,-20];
 }

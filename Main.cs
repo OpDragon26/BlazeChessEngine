@@ -12,6 +12,7 @@ new Match(new Board(Presets.StartingBoard), Type.Standard, side: 1, depth: 6, de
 
 //match.Print(0);
 
+//Match.PrintBitboard(Bitboards.GetSquare(new Board(Presets.StartingBoard).KingPositions[1]), 0);
 
 //match.SpeedTest();
 //match.Play();
