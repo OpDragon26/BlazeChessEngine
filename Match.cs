@@ -11,7 +11,7 @@ public enum Type
     Autoplay,
 }
 
-public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 10, bool alwaysUseUnicode = false)
+public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
 {
     private static readonly  Random random = new();
 
@@ -91,10 +91,14 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
-                        if (result.time < increaseThreshold && !result.bookMove) depth++;
-                        else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
-                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
-                            depth--;
+
+                        if (dynamicDepth)
+                        {
+                            if (result.time < increaseThreshold && !result.bookMove) depth++;
+                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                            if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                                depth--;   
+                        }
 
                         inBook = result.bookMove;
                         Move bestMove = result.move;
@@ -123,11 +127,15 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
-                        if (ply % 2 == 0)
-                            if (result.time < increaseThreshold && !result.bookMove) depth++;
-                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
-                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
-                            depth--;
+
+                        if (dynamicDepth)
+                        {
+                            if (ply % 2 == 0)
+                                if (result.time < increaseThreshold && !result.bookMove) depth++;
+                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                            if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                                depth--;   
+                        }
                         
                         inBook = result.bookMove;
                         Move botMove = result.move;
@@ -170,11 +178,15 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
-                        if (ply % 2 == 0)
-                            if (result.time < increaseThreshold && !result.bookMove) depth++;
-                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
-                        if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
-                            depth--;
+
+                        if (dynamicDepth)
+                        {
+                            if (ply % 2 == 0)
+                                if (result.time < increaseThreshold && !result.bookMove) depth++;
+                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                            if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                                depth--;
+                        }
 
                         inBook = result.bookMove;
                         Move botMove = result.move;
