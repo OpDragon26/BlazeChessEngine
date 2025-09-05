@@ -62,6 +62,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 break;
                 
                 case Type.Random:
+                    Console.WriteLine($"Depth: {depth}");
                     if (!debug) Console.Clear();
                     PrintLastMove();
                     if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
@@ -81,6 +82,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     break;
                 
                 case Type.Standard:
+                    Console.WriteLine($"Depth: {depth}");
                     if (!debug) Console.Clear();
                     PrintLastMove();
                     if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
@@ -117,6 +119,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!debug) Console.Clear();
 
                         movesMade += 1 - board.side; // if the side is white, add one
+                        
+                        Console.WriteLine($"Depth: {depth}");
                         
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
@@ -168,6 +172,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (!debug) Console.Clear();
 
                         movesMade += 1 - board.side; // if the side is white, add one
+                        
+                        Console.WriteLine($"Depth: {depth}");
                         
                         string movingSide = board.side == 0 ? "White" : "Black";
                         Console.WriteLine($"Move {movesMade} - {movingSide}");

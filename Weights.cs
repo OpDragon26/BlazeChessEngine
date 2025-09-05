@@ -3,19 +3,19 @@ namespace Blaze;
 public static class Weights
 {
     // files and ranks are reversed, files go from a to h on the y-axis
-    public const float MaterialMultiplier = 1.6f;
+    public const float MaterialMultiplier = 1.75f;
     
     public static readonly int[,,] Pieces = new[,,]
     {
         { // white pawn
-            {0,10,20,10,30,40,100,0},
-            {0,25,10,10,30,40,100,0},
-            {0,30,15,10,30,40,100,0},
-            {0,0,30,70,55,55,100,0},
-            {0,0,30,70,55,55,100,0},
-            {0,30,15,10,30,40,100,0},
-            {0,25,10,10,30,40,100,0},
-            {0,10,20,10,30,40,100,0},
+            {0,5,10,5,15,20,60,0},
+            {0,15,5,5,15,20,60,0},
+            {0,15,15,5,15,20,60,0},
+            {0,0,20,50,55,55,60,0},
+            {0,0,20,50,55,55,60,0},
+            {0,15,15,5,15,20,60,0},
+            {0,15,5,5,15,20,60,0},
+            {0,5,10,5,15,20,60,0},
         },
         { // white rook
             {0,5,5,5,5,5,55,30},
@@ -88,14 +88,14 @@ public static class Weights
             {0,0,0,0,0,0,0,0},
         },
         { // black pawn - 8
-            {0,-100,-40,-30,-10,-20,-10,0},
-            {0,-100,-40,-30,-10,-10,-25,0},
-            {0,-100,-40,-30,-10,-15,-30,0},
-            {0,-100,-55,-55,-70,-30,0,0},
-            {0,-100,-55,-55,-70,-30,0,0},
-            {0,-100,-40,-30,-10,-15,-30,0},
-            {0,-100,-40,-30,-10,-10,-25,0},
-            {0,-100,-40,-30,-10,-20,-10,0},
+            {0,-60,-20,-15,-5,-10,-5,0},
+            {0,-60,-20,-15,-5,-5,-15,0},
+            {0,-60,-20,-15,-5,-5,-15,0},
+            {0,-60,-20,-15,-5,-5,-30,0},
+            {0,-60,-20,-15,-5,-5,-30,0},
+            {0,-60,-20,-15,-5,-5,-15,0},
+            {0,-60,-20,-15,-5,-5,-15,0},
+            {0,-60,-20,-15,-5,-10,-5,0},
         },
         { // black rook
             {-30,-55,-5,-5,-5,-5,-5,10},
@@ -294,8 +294,8 @@ public static class Weights
 
     public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,100,200,0];
     public static readonly int[] BlackPassedPawnBonuses = [0,-200,-100,-50,-20,-11,-10,0];
-    public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,80,200,350,0];
-    public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-350,-200,-80,-50,-40,-30,0];
+    public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,80,150,250,0];
+    public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-250,-150,-80,-50,-40,-30,0];
     public static readonly int[] CastlingBonuses = [0,-50,50,0];
     public static readonly int[] DoublePawnPenalties = [0, 0, -10, -15, -20, -20, -20];
     public static readonly int[] KingSafetyBonuses = [10,30,30,20,10,0,-20,-20,-20];
