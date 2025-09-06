@@ -333,6 +333,17 @@ public class Board
         return Outcome.Ongoing;
     }
 
+    public int GetImbalance()
+    {
+        int material = 0;
+        
+        for (int rank = 0; rank < 8; rank++)
+            for (int file = 7; file >= 0; file--)
+                material += Pieces.Value[GetPiece(file, rank)];
+        
+        return material;
+    }
+
     // adds the hash of the board 
     private void Add()
     {

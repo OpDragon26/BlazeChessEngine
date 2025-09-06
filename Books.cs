@@ -3,7 +3,7 @@ namespace Blaze
 {
     static class Books
     {
-        public static string[] Standard = [
+        public static readonly string[] Standard = [
 "d2d4 d7d5 c1f4 g8f6 e2e3 e7e6 b1d2 f8d6 f4g3 d8e7 g1f3 b8d7 f1d3 e6e5",
 "d2d4 b7b6 e2e4 c8b7 f1d3 e7e6 g1e2 g8f6 b1c3 c7c5 e1g1 c5c4 d3c4 f6e4",
 "g1f3 g8f6 d2d4 g7g6 c1g5 f8g7 b1d2 d7d5 e2e3 e8g8 f1e2 c7c5 c2c3 b7b6",

@@ -47,8 +47,6 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         ply = 0;
         bool play = true;
         
-        Timer timer = new();
-        
         increaseThreshold = Thresholds[depth, 0];
         decreaseThreshold = Thresholds[depth, 1];
         endgameDecreaseThreshold = Thresholds[depth, 2];
@@ -96,7 +94,6 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
-                        GC.Collect();
 
                         if (dynamicDepth)
                         {
@@ -134,9 +131,6 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
-                        timer.Start();
-                        GC.Collect();
-                        Console.WriteLine($"Garbage collected in {timer.Stop()}ms");
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
@@ -190,7 +184,6 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
-                        GC.Collect();
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
@@ -287,12 +280,12 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
-    public static void PrintBoard(Board board, int perspective)
+    public static void PrintBoard(Board board, int perspective, int imbalance = 0)
     {
         if (perspective == 1)
         {
             // black's perspective
-            Console.WriteLine("# h g f e d c b a");
+            Console.WriteLine(imbalance > 0 ? $"# h g f e d c b a  +{imbalance}" : "# h g f e d c b a");
             
             for (int rank = 0; rank < 8; rank++)
             {
@@ -303,13 +296,16 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
                 }
                 
+                if (imbalance < 0 && rank == 7) // black advantage
+                    rankStr += $" +{-imbalance}";
+                
                 Console.WriteLine(rankStr);
             }
         }
         else
         {
             // white's perspective
-            Console.WriteLine("# a b c d e f g h");
+            Console.WriteLine(imbalance < 0 ? $"# a b c d e f g h  +{-imbalance}" : "# a b c d e f g h");
             
             for (int rank = 7; rank >= 0; rank--)
             {
@@ -320,6 +316,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                     rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
                 }
                 
+                if (imbalance > 0 && rank == 0)
+                    rankStr += $" +{imbalance}";
+                
                 Console.WriteLine(rankStr);
             }
         }
@@ -327,7 +326,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
     private void Print(int perspective)
     {
-        PrintBoard(board, perspective);
+        PrintBoard(board, perspective, board.GetImbalance() / 100);
     }
 
     private void Print(int perspective, string[] pieceStrings)

@@ -152,7 +152,7 @@ public static class Search
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.Pieces[board.GetPiece(file, rank), file, rank];
+                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.Pieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
 
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0) // if the searched square is a black pawn
                         {
@@ -253,7 +253,7 @@ public static class Search
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
+                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.EndgamePieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
 
                         if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
                         {
