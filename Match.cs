@@ -47,6 +47,8 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         ply = 0;
         bool play = true;
         
+        Timer timer = new();
+        
         increaseThreshold = Thresholds[depth, 0];
         decreaseThreshold = Thresholds[depth, 1];
         endgameDecreaseThreshold = Thresholds[depth, 2];
@@ -94,6 +96,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
+                        GC.Collect();
 
                         if (dynamicDepth)
                         {
@@ -131,6 +134,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        timer.Start();
+                        GC.Collect();
+                        Console.WriteLine($"Garbage collected in {timer.Stop()}ms");
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
@@ -184,6 +190,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        GC.Collect();
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
