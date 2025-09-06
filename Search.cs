@@ -49,6 +49,7 @@ public static class Search
         if (depth == 0) // return heuristic evaluation
             return StaticEvaluate(board);
         
+        Board moveBoard;
         if (board.side == 0)
         {
             // white - maximizing player
@@ -61,7 +62,7 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
-                Board moveBoard = new(board);
+                moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
                     continue;
@@ -92,7 +93,7 @@ public static class Search
 
             foreach (Move move in moves)
             {
-                Board moveBoard = new(board);
+                moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
                     continue;
@@ -172,7 +173,26 @@ public static class Search
             }
 
             // add or take eval according to which side has castled
-            eval += Weights.CastlingBonuses[board.castled];
+            if ((board.castled & 0b10) != 0) // white castled
+                eval += Weights.CastlingBonus;
+            else
+            {
+                if ((board.castling & 0b1000) != 0) // can't short castle
+                    eval -= Weights.NoCastlingPenalty;
+                if ((board.castling & 0b100) != 0) // can't long castle
+                    eval -= Weights.NoCastlingPenalty;
+            }
+            
+            if ((board.castled & 0b1) != 0) // black castled
+                eval -= Weights.CastlingBonus;
+            else
+            {
+                if ((board.castling & 0b10) != 0) // can't short castle
+                    eval += Weights.NoCastlingPenalty;
+                if ((board.castling & 0b1) != 0) // can't long castle
+                    eval += Weights.NoCastlingPenalty;
+            }
+            
             
             // check if white's king is in the right spot (likely castled) to have its safety evaluated
             if ((Bitboards.KingSafetyAppliesWhite & Bitboards.GetSquare(board.KingPositions[0])) != 0)

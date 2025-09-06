@@ -23,6 +23,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     private readonly List<PGNNode> game = new();
     private string? LasMove;
     private int depth = depth;
+    private readonly int OriginalDepth = depth;
 
     private static readonly int[,] Thresholds = new[,]
     {
@@ -97,7 +98,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         if (dynamicDepth)
                         {
                             if (result.time < increaseThreshold && !result.bookMove) depth++;
-                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth = Math.Max(OriginalDepth, depth - 1);
                             if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
                                 depth--;   
                         }
@@ -136,7 +137,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         {
                             if (ply % 2 == 0)
                                 if (result.time < increaseThreshold && !result.bookMove) depth++;
-                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth = Math.Max(OriginalDepth, depth - 1);
                             if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
                                 depth--;   
                         }
@@ -189,7 +190,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         {
                             if (ply % 2 == 0)
                                 if (result.time < increaseThreshold && !result.bookMove) depth++;
-                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth--;
+                                else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth = Math.Max(OriginalDepth, depth - 1);
                             if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
                                 depth--;
                         }
