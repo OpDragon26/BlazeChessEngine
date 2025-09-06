@@ -6,18 +6,19 @@ public static class Weights
     public const float MaterialMultiplier = 1.2f;
     public const int CastlingBonus = 50;
     public const int NoCastlingPenalty = -25;
+    public const float MobilityMultiplier = 2;
     
     public static readonly int[,,] Pieces = new[,,]
     {
         { // white pawn
-            {0,20,20,10,30,40,100,0},
-            {0,30,15,10,30,40,100,0},
-            {0,30,15,10,30,40,100,0},
+            {0,25,15,10,30,40,100,0},
+            {0,35,10,10,30,40,100,0},
+            {0,35,10,10,30,40,100,0},
             {0,0,30,50,55,55,100,0},
             {0,0,30,50,55,55,100,0},
-            {0,30,15,10,30,40,100,0},
-            {0,30,15,10,30,40,100,0},
-            {0,20,20,10,30,40,100,0},
+            {0,35,10,10,30,40,100,0},
+            {0,35,10,10,30,40,100,0},
+            {0,25,10,10,30,40,100,0},
         },
         { // white rook
             {0,5,5,5,5,5,55,30},

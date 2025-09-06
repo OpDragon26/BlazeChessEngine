@@ -148,7 +148,7 @@ public static class Search
                                 eval += 30;
                         }
                         
-                        eval += (int)UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0));
+                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
@@ -167,7 +167,7 @@ public static class Search
                                 eval -= 30;
                         }
 
-                        eval -= (int)UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1));
+                        eval -= (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
                 }
             }
@@ -249,7 +249,7 @@ public static class Search
                                 eval += 40;
                         }
                         
-                        eval += (int)UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0));
+                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
                     else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
                     {
@@ -269,7 +269,7 @@ public static class Search
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
-                        eval += (int)UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1));
+                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
                 }
             }
