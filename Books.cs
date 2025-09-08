@@ -4036,5 +4036,10 @@ namespace Blaze
 "g1f3 d7d5 d2d4 c7c6 c2c4 e7e6 d1c2 g8f6 c1g5 f8e7 b1d2 e8g8 e2e3 h7h6",
 "g1f3 b8c6 d2d4 d7d5 c1f4 c8g4 f3e5 c6e5 f4e5 c7c6 d1d3 e7e6 b1d2 d8b6",
         ];
+
+        public static readonly string[] Test =
+        [
+            "e2e4 e7e6 d1e2 c7c5 g1f3 b8c6 c2c3 g7g6 d2d4 c5d4 c3d4 f8g7 d4d5 c6d4"
+        ];
     }
 }

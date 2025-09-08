@@ -77,7 +77,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = move.Notate(board);
                         board.MakeMove(move);
-                        game.Add(new PGNNode { board = new Board(board) , move = move });
+                        game.Add(new PGNNode { board = new Board(board) , move = move});
                         play = CheckOutcome();
                     } 
                     break;
@@ -109,7 +109,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         LasMove = bestMove.Notate(board);
                         
                         board.MakeMove(bestMove);
-                        game.Add(new PGNNode { board = new Board(board) , move = bestMove });
+                        game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
                         play = CheckOutcome();
                     }
                     break;
@@ -147,7 +147,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);
-                        game.Add(new PGNNode { board = new Board(board), move = botMove });
+                        game.Add(new PGNNode { board = new Board(board), move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -200,7 +200,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove);
-                        game.Add(new PGNNode { board = new Board(board) , move = botMove });
+                        game.Add(new PGNNode { board = new Board(board) , move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -221,6 +221,11 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
             movesMade += 1 - board.side; // if the side is white, add one
             ply++;
         }
+
+        long time = 0;
+        foreach (var node in game)
+            time += node.time;
+        Console.WriteLine($"Average time per move = {time / game.Count}ms");
         
         if (!debug) Console.Clear();
         CheckOutcome();
@@ -264,20 +269,6 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
     public PGNNode[] GetNodes()
     {
         return game.ToArray();
-    }
-
-    public void SpeedTest(int repetition = 1000000)
-    {
-        TimeSpan t1 = DateTime.UtcNow - new DateTime(1970, 1, 1);
-        for (int i = 0; i < repetition; i++)
-        {
-            Board moveBoard = new(board);
-            Move[] moveList = Search.SearchBoard(moveBoard);
-            moveBoard.MakeMove(moveList[0]);
-        }
-        
-        TimeSpan t2 = DateTime.UtcNow - new DateTime(1970, 1, 1);
-        Console.WriteLine($"Test completed in {Math.Round(t2.TotalMilliseconds - t1.TotalMilliseconds)} milliseconds");
     }
 
     public static void PrintBoard(Board board, int perspective, int imbalance = 0)
@@ -369,6 +360,9 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
     private bool PlayerTurn()
     {
+        Timer timer = new Timer();
+        timer.Start();
+        
         // ask the player for a move
         Console.WriteLine("Enter your move:");
         string? playerMoveString = Console.ReadLine();
@@ -389,7 +383,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 {
                     LasMove = move.Notate(board);
                     board.MakeMove(move);
-                    game.Add(new PGNNode { board = new Board(board) , move = move });
+                    game.Add(new PGNNode { board = new Board(board) , move = move , time = timer.Stop()});
                     if (!CheckOutcome())
                         return false;
                 }

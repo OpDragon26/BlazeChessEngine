@@ -21,12 +21,23 @@ public static class Search
         int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new Exception("No move found");
 
+        
         Parallel.For(0, moves.Length, i =>
         {
             Board moveBoard = new(board);
             moveBoard.MakeMove(moves[i]);
             evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
         });
+        
+
+        /*
+        for (int i = 0; i < moves.Length; i++)
+        {
+            Board moveBoard = new(board);
+            moveBoard.MakeMove(moves[i]);
+            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
+        }
+        */
         
         if (board.side == 0)
             return  new SearchResult(moves[Array.IndexOf(evals, evals.Max())], evals.Max(), false, timer.Stop()); // white
