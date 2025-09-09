@@ -65,7 +65,7 @@ public static class Search
         {
             // white - maximizing player
             int eval = int.MinValue;
-            Move[] moves = SearchBoard(board);
+            Span<Move> moves = SearchBoard(board);
             
             // denotes whether a legal move has been found - if the king is in check after the move it's not counted, of none are found, the player has no legal moves
             bool found = false;
@@ -98,7 +98,7 @@ public static class Search
         {
             // black - minimizing player
             int eval = int.MaxValue;
-            Move[] moves = SearchBoard(board);
+            Span<Move> moves = SearchBoard(board);
             
             bool found = false;
 
@@ -127,7 +127,7 @@ public static class Search
     }
 
     // returns the heuristic evaluation of the board
-    public static int StaticEvaluate(Board board)
+public static int StaticEvaluate(Board board)
     {
         int eval = 0;
 
@@ -290,7 +290,7 @@ public static class Search
     }
     
     // returns pseudo legal moves: abides by the rules of piece movement, but does not account for checks
-    public static Move[] SearchBoard(Board board, bool ordering = true)
+    public static Span<Move> SearchBoard(Board board, bool ordering = true)
     {
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
@@ -314,75 +314,72 @@ public static class Search
         {
             Span<Move> moveSpan = new Span<Move>(moveArray, 0, index);
             
-            MoveUnit[] sortedMoveArray = new MoveUnit[moveSpan.Length];
-
-            for (int i = 0; i < moveSpan.Length; i++)
-                sortedMoveArray[i] = Reevaluate(board, moveSpan[i]);
-
-            Array.Sort(sortedMoveArray, (x, y) => y.priority.CompareTo(x.priority));
+            int[] keys = new int[moveSpan.Length];
             
             for (int i = 0; i < moveSpan.Length; i++)
-                moveSpan[i] = sortedMoveArray[i];
+                keys[i] = Reevaluate(board, moveSpan[i]);
+
+            new Span<int>(keys).Sort(moveSpan, (x, y) => y.CompareTo(x));
             
-            return moveSpan.ToArray();
+            return moveSpan;
         }
 
-        return new Span<Move>(moveArray, 0, index).ToArray();
+        return new Span<Move>(moveArray, 0, index);
     }
 
-    private static MoveUnit Reevaluate(Board board, Move move)
+    private static int Reevaluate(Board board, Move move)
     {
-        MoveUnit moveUnit = new MoveUnit(move);
-
-        moveUnit.priority += Pieces.Value[board.GetPiece(move.Destination) & Pieces.TypeMask];
+        int priority = move.Priority;
+        
+        priority += Pieces.Value[board.GetPiece(move.Destination) & Pieces.TypeMask];
 
         switch (board.GetPiece(move.Source))
         {
             case Pieces.WhitePawn:
                 if ((Bitboards.WhitePawnCaptureMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[1])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.BlackPawn:
                 if ((Bitboards.BlackPawnCaptureMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[0])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.WhiteRook:
                 if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.BlackRook:
                 if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.WhiteKnight:
                 if ((Bitboards.KnightMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[1])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.BlackKnight:
                 if ((Bitboards.KnightMasks[move.Destination.file, move.Destination.rank] & Bitboards.GetSquare(board.KingPositions[0])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.WhiteBishop:
                 if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.BlackBishop:
                 if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.WhiteQueen:
                 ulong wCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]);
                 if ((wCaptures & Bitboards.GetSquare(board.KingPositions[1])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
             case Pieces.BlackQueen:
                 ulong bCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]);
                 if ((bCaptures & Bitboards.GetSquare(board.KingPositions[0])) != 0)
-                    moveUnit.priority += 50;
+                    priority += 50;
                 break;
         }
         
-        return moveUnit;
+        return priority;
     }
 
     private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side)
@@ -604,10 +601,19 @@ public static class Search
         return MoveList.ToArray();
     }
     
-    private struct MoveUnit(Move move)
+    public static Move[] FilterChecks(Span<Move> moves, Board board)
     {
-        private readonly Move move = move;
-        public int priority = move.Priority;
-        public static implicit operator Move(MoveUnit moveUnit) => moveUnit.move;
+        List<Move> MoveList = moves.ToArray().ToList();
+
+        for (int i = moves.Length - 1; i >= 0; i--)
+        {
+            Board moveBoard = new(board);
+            moveBoard.MakeMove(MoveList[i]);
+            // if the king of the moving side is in check after the move, the move is illegal
+            if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))
+                MoveList.RemoveAt(i);
+        }
+        
+        return MoveList.ToArray();
     }
 }
