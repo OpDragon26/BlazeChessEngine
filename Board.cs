@@ -335,13 +335,7 @@ public class Board
 
     public int GetImbalance()
     {
-        int material = 0;
-        
-        for (int rank = 0; rank < 8; rank++)
-            for (int file = 7; file >= 0; file--)
-                material += Pieces.Value[GetPiece(file, rank)];
-        
-        return material;
+        return values.Sum();
     }
 
     // adds the hash of the board 

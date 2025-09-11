@@ -283,9 +283,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 7; file >= 0; file--)
-                {
                     rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
-                }
                 
                 if (imbalance < 0 && rank == 7) // black advantage
                     rankStr += $" +{-imbalance}";
@@ -303,9 +301,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 0; file < 8; file++)
-                {
                     rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
-                }
                 
                 if (imbalance > 0 && rank == 0)
                     rankStr += $" +{imbalance}";
@@ -317,24 +313,27 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
     private void Print(int perspective)
     {
-        PrintBoard(board, perspective, board.GetImbalance() / 100);
+        PrintBoard(board, perspective, board.GetImbalance());
     }
 
     private void Print(int perspective, string[] pieceStrings)
     {
+        int imbalance = board.GetImbalance() / 100;
+        
         if (perspective == 1)
         {
             // black's perspective
-            Console.WriteLine("# h g f e d c b a");
+            Console.WriteLine(imbalance > 0 ? $"# h g f e d c b a  +{imbalance}" : "# h g f e d c b a");
             
             for (int rank = 0; rank < 8; rank++)
             {
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 7; file >= 0; file--)
-                {
                     rankStr += pieceStrings[board.GetPiece(file, rank)] + " ";
-                }
+                
+                if (imbalance < 0 && rank == 7) // black advantage
+                    rankStr += $" +{-imbalance}";
                 
                 Console.WriteLine(rankStr);
             }
@@ -342,16 +341,17 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         else
         {
             // white's perspective
-            Console.WriteLine("# a b c d e f g h");
+            Console.WriteLine(imbalance < 0 ? $"# a b c d e f g h  +{-imbalance}" : "# a b c d e f g h");
             
             for (int rank = 7; rank >= 0; rank--)
             {
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 0; file < 8; file++)
-                {
                     rankStr += pieceStrings[board.GetPiece((file, rank))] + " ";
-                }
+                
+                if (imbalance > 0 && rank == 0)
+                    rankStr += $" +{imbalance}";
                 
                 Console.WriteLine(rankStr);
             }
