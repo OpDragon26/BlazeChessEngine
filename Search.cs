@@ -286,7 +286,8 @@ public static int StaticEvaluate(Board board)
             }
         }
 
-        return eval;
+        //return eval * (int)((7900 - board.AllMaterial()) / 2000f + 1);
+        return eval * (int)(board.AllMaterial() / 20000f + 1);
     }
     
     // returns pseudo legal moves: abides by the rules of piece movement, but does not account for checks

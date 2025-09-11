@@ -338,6 +338,11 @@ public class Board
         return values.Sum();
     }
 
+    public int AllMaterial()
+    {
+        return values[0] - values[1];
+    }
+
     // adds the hash of the board 
     private void Add()
     {
