@@ -295,16 +295,11 @@ public class Move
                 return new Move(src, dest, type: flag, pawn: true);
             
             case 3:
-                if (alg[2] == '#' || alg[2] == '+') // move is a check or checkmate
-                    return Parse($"{alg[0]}{alg[1]}", board);
-                
                 // regular non-disambiguated piece move: Nf3
                 dest = ParseSquare($"{alg[1]}{alg[2]}");
                 return new Move(FindMovingPiece(board, GetFinderMask(alg[0], dest.file, dest.rank, board), Disambiguation.None, dest), dest);
             
             case 4:
-                if (alg[3] == '#' || alg[3] == '+') // move is a check or checkmate
-                    return Parse($"{alg[0]}{alg[1]}{alg[2]}", board);
                 
                 // pawn capture
                 // piece capture
@@ -361,9 +356,6 @@ public class Move
                 }
                 throw new NotationParsingException($"Unknown notation: {alg}");
             case 5:
-                if (alg[4] == '#' || alg[4] == '+') // move is a check or checkmate
-                    return Parse($"{alg[0]}{alg[1]}{alg[2]}{alg[3]}", board);
-                
                 // doubly disambiguated move
                 // single disambiguated capture
                 
@@ -384,9 +376,6 @@ public class Move
                 throw new NotationParsingException($"Unknown notation: {alg}");
             
             case 6:
-                if (alg[5] == '#' || alg[5] == '+') // move is a check or checkmate
-                    return Parse($"{alg[0]}{alg[1]}{alg[2]}{alg[3]}{alg[4]}", board);
-                
                 // doubly disambiguated capture: Nd3xe5
                 if (ValidPieces.Contains(alg[0]) && alg[3] == 'x')
                     return new Move(ParseSquare($"{alg[1]}{alg[2]}"), ParseSquare($"{alg[4]}{alg[5]}"));
