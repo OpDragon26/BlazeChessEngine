@@ -24,7 +24,7 @@ public static class Search
         
         Parallel.For(0, moves.Length, i =>
         {
-            Board moveBoard = new(board);
+            Board moveBoard = new(board, moves[i].PermaChange);
             moveBoard.MakeMove(moves[i]);
             evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
         });
@@ -73,7 +73,7 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
-                moveBoard = new(board);
+                moveBoard = new(board, move.PermaChange);
                 moveBoard.MakeMove(move);
                 if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
                     continue;
@@ -104,7 +104,7 @@ public static class Search
 
             foreach (Move move in moves)
             {
-                moveBoard = new(board);
+                moveBoard = new(board, move.PermaChange);
                 moveBoard.MakeMove(move);
                 if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
                     continue;
@@ -591,7 +591,7 @@ public static int StaticEvaluate(Board board)
 
         for (int i = moves.Length - 1; i >= 0; i--)
         {
-            Board moveBoard = new(board);
+            Board moveBoard = new(board, false);
             moveBoard.MakeMove(MoveList[i]);
             // if the king of the moving side is in check after the move, the move is illegal
             if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))
@@ -607,7 +607,7 @@ public static int StaticEvaluate(Board board)
 
         for (int i = moves.Length - 1; i >= 0; i--)
         {
-            Board moveBoard = new(board);
+            Board moveBoard = new(board, MoveList[i].PermaChange);
             moveBoard.MakeMove(MoveList[i]);
             // if the king of the moving side is in check after the move, the move is illegal
             if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))

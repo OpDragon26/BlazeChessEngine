@@ -184,7 +184,7 @@ public static class Parser
 
             board.MakeMove(move);
 
-            nodes.Add(new PGNNode { board = new Board(board), move = move });
+            nodes.Add(new PGNNode { board = new Board(board, false), move = move });
         }
 
         return nodes.ToArray();
@@ -212,7 +212,7 @@ public static class Parser
             Move move = new Move(uci, board); // converts the move from UCI notation to Move
             board.MakeMove(move);
             
-            nodes.Add(new PGNNode { board = new Board(board), move = move });
+            nodes.Add(new PGNNode { board = new Board(board, false), move = move });
         }
 
         return nodes.ToArray();

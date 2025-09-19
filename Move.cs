@@ -9,6 +9,7 @@ public class Move
     public readonly int Priority;
     public readonly byte CastlingBan;
     public readonly bool Pawn;
+    public readonly bool PermaChange;
     
     /*
     Special moves
@@ -25,7 +26,7 @@ public class Move
 
     // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
     
-    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false)
+    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false, bool capture = false)
     {
         Source = source;
         Destination = destination;
@@ -41,6 +42,7 @@ public class Move
         if (destination == (0, 7) || source == (0, 7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
         if (source == (4, 0)) CastlingBan = 0b0011; // if the origin of the move is the white king's starting position, remove white's castling rights
         if (source == (4, 7)) CastlingBan = 0b1100; // if the origin of the move is the black king's starting position, remove black's castling rights
+        PermaChange = CastlingBan != 0b1111 || pawn;
     }
 
     public override bool Equals(object? obj)
@@ -205,7 +207,7 @@ public class Move
             notation += GetSquare(Destination);
         }
         
-        Board tempBoard = new Board(board);
+        Board tempBoard = new Board(board, false);
         tempBoard.MakeMove(this);
         Outcome outcome = tempBoard.GetOutcome();
         if (outcome is Outcome.BlackWin or Outcome.WhiteWin)

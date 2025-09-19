@@ -64,7 +64,7 @@ public class Board
         hashKey = Hasher.ZobristHash(this);
     }
     
-    public Board(Board board) // clone board
+    public Board(Board board, bool permChange) // clone board
     {
         this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
         side = board.side;
@@ -75,7 +75,7 @@ public class Board
         halfMoveClock = board.halfMoveClock;
         pawns = board.pawns;
         values = [board.values[0], board.values[1]];
-        repeat = new(board.repeat);
+        repeat = permChange ? new() : new(board.repeat);
         hashKey = board.hashKey;
         castled = board.castled;
     }
@@ -170,8 +170,11 @@ public class Board
         }
     }
     
-    public void MakeMove(Move move)
+    public void MakeMove(Move move, bool considerPermChange = false)
     {
+        if (considerPermChange && move.PermaChange)
+            repeat.Clear();
+        
         halfMoveClock++;
         if (side == 1)
             hashKey ^= Hasher.BlackToMove;
