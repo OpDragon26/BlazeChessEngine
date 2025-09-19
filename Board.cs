@@ -53,15 +53,19 @@ public class Board
     // only the last two bits can be on
     // 0b10 - white castled
     // 0b01 - black castled
+
+    public bool considerRepetition;
     
-    public Board(uint[] board)
+    public Board(uint[] board, bool considerRepetition = true)
     {
         this.board = (uint[])board.Clone();
         
         // init bitboards
         AutoFillBitboards();
+        CountPawns();
 
         hashKey = Hasher.ZobristHash(this);
+        this.considerRepetition = considerRepetition;
     }
     
     public Board(Board board, bool permChange) // clone board
@@ -75,12 +79,14 @@ public class Board
         halfMoveClock = board.halfMoveClock;
         pawns = board.pawns;
         values = [board.values[0], board.values[1]];
-        repeat = permChange ? new() : new(board.repeat);
+        if (considerRepetition)
+            repeat = permChange ? new() : new(board.repeat);
         hashKey = board.hashKey;
         castled = board.castled;
+        considerRepetition = board.considerRepetition;
     }
 
-    public Board(string FEN)
+    public Board(string FEN, bool considerRepetition = true)
     {
         string[] fields = FEN.Split(' ');
         
@@ -130,6 +136,8 @@ public class Board
         halfMoveClock = Int32.Parse(fields[4]);
 
         hashKey = Hasher.ZobristHash(this);
+        
+        this.considerRepetition = considerRepetition;
     }
 
     private void AutoFillBitboards()
@@ -176,7 +184,7 @@ public class Board
             repeat.Clear();
         
         halfMoveClock++;
-        if (side == 1)
+        if (side == 1 && considerRepetition)
             hashKey ^= Hasher.BlackToMove;
 
         // if the moved piece is a pawn, remove the source from the bitboard
@@ -217,17 +225,20 @@ public class Board
         }
         
         // update the hash key
-        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
-        hashKey ^= Hasher.PieceNumbers[GetPiece(move.Destination), move.Destination.file, move.Destination.rank]; // add the moved piece, including promoted pieces
-        hashKey ^= Hasher.CastlingNumbers[castling]; // remove the castling rights number
-        // remove the en passant file if there was any, if it was 8, no need to change anything
-        hashKey ^= Hasher.EnPassantFiles[enPassant.file];
+        if (considerRepetition)
+        {
+            hashKey ^= Hasher.PieceNumbers[GetPiece(move.Source), move.Source.file, move.Source.rank]; // remove the moving piece
+            hashKey ^= Hasher.PieceNumbers[GetPiece(move.Destination), move.Destination.file, move.Destination.rank]; // add the moved piece, including promoted pieces
+            hashKey ^= Hasher.CastlingNumbers[castling]; // remove the castling rights number
+            // remove the en passant file if there was any, if it was 8, no need to change anything
+            hashKey ^= Hasher.EnPassantFiles[enPassant.file];
+        }
         
         Clear(move.Source);
         enPassant = (8, 8);
         castling &= move.CastlingBan;
         
-        hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
+        if (considerRepetition) hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
         
         // update bitboards
         bitboards[side] ^= Bitboards.GetSquare(move.Source);
@@ -238,12 +249,12 @@ public class Board
             case 0b0000: break;
             case 0b0001: // white double move
                 enPassant = (move.Source.file, 2);
-                hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
+                if (considerRepetition) hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
             break;
             
             case 0b1001: // black double move
                 enPassant = (move.Source.file, 5);
-                hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
+                if (considerRepetition) hashKey ^= Hasher.EnPassantFiles[move.Source.file]; // add the en passant file
             break;
             
             case 0b0010: // white short castle
@@ -252,8 +263,12 @@ public class Board
                 bitboards[0] ^= Bitboards.GetSquare(7,0);
                 bitboards[0] ^= Bitboards.GetSquare(5,0);
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 7, 0];
-                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 5, 0];
+                if (considerRepetition)
+                { 
+                    hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 7, 0];
+                    hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 5, 0];
+                }
+
                 castled |= 0b10;
             break;
             
@@ -263,8 +278,12 @@ public class Board
                 bitboards[0] ^= Bitboards.GetSquare(0,0);
                 bitboards[0] ^= Bitboards.GetSquare(3,0);
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 0, 0];
-                hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 3, 0];
+                if (considerRepetition)
+                {
+                    hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 0, 0];
+                    hashKey ^= Hasher.PieceNumbers[Pieces.WhiteRook, 3, 0];
+                }
+
                 castled |= 0b10;
             break;
             
@@ -274,8 +293,12 @@ public class Board
                 bitboards[1] ^= Bitboards.GetSquare(7,7);
                 bitboards[1] ^= Bitboards.GetSquare(5,7);
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 7, 7];
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 5, 7];
+                if (considerRepetition)
+                {
+                    hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 7, 7];
+                    hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 5, 7]; 
+                }
+                
                 castled |= 0b01;
             break;
             
@@ -285,8 +308,12 @@ public class Board
                 bitboards[1] ^= Bitboards.GetSquare(0,7);
                 bitboards[1] ^= Bitboards.GetSquare(3,7);
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 0, 7];
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 3, 7];
+                if (considerRepetition)
+                {
+                    hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 0, 7];
+                    hashKey ^= Hasher.PieceNumbers[Pieces.BlackRook, 3, 7];
+                }
+
                 castled |= 0b01;
             break;
             
@@ -296,7 +323,7 @@ public class Board
                 bitboards[3] ^= Bitboards.GetSquare(move.Destination.file,4);
                 values[1] += 100;
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
+                if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
             break;
             
             case 0b1100: // black en passant
@@ -305,11 +332,12 @@ public class Board
                 bitboards[2] ^= Bitboards.GetSquare(move.Destination.file,3);
                 values[0] -= 100;
                 // update the hash key
-                hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
+                if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
             break;
         }
         
-        Add(); // adds the hash of the board to the dictionary
+        if (considerRepetition)
+            Add(); // adds the hash of the board to the dictionary
 
         side = 1 - side;
     }
