@@ -68,7 +68,7 @@ public class Board
         this.considerRepetition = considerRepetition;
     }
     
-    public Board(Board board, bool permChange) // clone board
+    public Board(Board board, bool permChange = false) // clone board
     {
         this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
         side = board.side;
