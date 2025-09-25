@@ -632,18 +632,6 @@ public static class Bitboards
         (-1, 2),
         (-1, -2),
     ];
-    
-    private static readonly (int file, int rank)[] QueenPattern =
-    [
-        (0, 1),
-        (0, -1),
-        (1, 0),
-        (-1, 0),
-        (1, 1),
-        (1, -1),
-        (-1, 1),
-        (-1, -1),
-    ];
 
     private static ulong GetPinLine(ulong blockers, (int file, int rank) pos, ulong piece)
     {
@@ -689,10 +677,10 @@ public static class Bitboards
         return final;
     }
 
-    public static List<PinSearchResult> GeneratePinResult((int file, int rank) pos, ulong pieces)
+    public static List<PinSearchResult> GeneratePinResult((int file, int rank) pos, ulong pieces, uint piece)
     {
         List<PinSearchResult> results = new();
-        (int file, int rank)[] pattern = QueenPattern;
+        (int file, int rank)[] pattern = piece == Pieces.WhiteRook ? RookPattern : BishopPattern;
         
         for (int i = 0; i < 8; i++) // for each direction
         {
@@ -701,7 +689,7 @@ public static class Bitboards
             (int, int) pinnedPos = (0,0);
             ulong line = 0;
             
-            for (int j = 0; j < 8; j++) // in each direction
+            for (int j = 0; j < 4; j++) // in each direction
             {
                 (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
                 
