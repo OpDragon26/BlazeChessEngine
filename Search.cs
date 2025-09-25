@@ -585,6 +585,14 @@ public static int StaticEvaluate(Board board)
         return false;
     }
 
+    public static (ulong pinned, Dictionary<ulong, ulong> pinStates) GetPinStates(Board board, int side)
+    {
+        ulong rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
+        ulong bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
+        
+        throw new NotImplementedException();
+    }
+
     public static Move[] FilterChecks(Move[] moves, Board board)
     {
         List<Move> MoveList = moves.ToList();

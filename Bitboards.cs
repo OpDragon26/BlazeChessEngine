@@ -632,6 +632,18 @@ public static class Bitboards
         (-1, 2),
         (-1, -2),
     ];
+    
+    private static readonly (int file, int rank)[] QueenPattern =
+    [
+        (0, 1),
+        (0, -1),
+        (1, 0),
+        (-1, 0),
+        (1, 1),
+        (1, -1),
+        (-1, 1),
+        (-1, -1),
+    ];
 
     private static ulong GetPinLine(ulong blockers, (int file, int rank) pos, ulong piece)
     {
@@ -675,6 +687,50 @@ public static class Bitboards
         }
         
         return final;
+    }
+
+    public static List<PinSearchResult> GeneratePinResult((int file, int rank) pos, ulong pieces)
+    {
+        List<PinSearchResult> results = new();
+        (int file, int rank)[] pattern = QueenPattern;
+        
+        for (int i = 0; i < 8; i++) // for each direction
+        {
+            int found = 0;
+            (int, int) pinPos = (0,0);
+            (int, int) pinnedPos = (0,0);
+            ulong line = 0;
+            
+            for (int j = 0; j < 8; j++) // in each direction
+            {
+                (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
+                
+                if (!ValidSquare(target.file, target.rank)) // if the square is outside the bounds of the board
+                    break;
+                if ((pieces & GetSquare(target)) != 0) // if the targeted square is not empty
+                {
+                    if (++found > 2) break;
+                    if (found == 1) // pinned piece
+                        pinnedPos = target;
+                    if (found == 2) // pinning piece
+                        pinPos = target;
+                }
+                else
+                    line |= GetSquare(target);
+            }
+            
+            if (found == 2)
+                results.Add(new PinSearchResult(pinPos, GetSquare(pinnedPos), line));
+        }
+        
+        return results;
+    }
+
+    public readonly struct PinSearchResult((int file, int rank) pinningPos, ulong pinnedPiece, ulong line)
+    {
+        public readonly (int file, int rank) pinningPos = pinningPos;
+        public readonly ulong pinnedPiece = pinnedPiece;
+        public readonly ulong line = line;
     }
     
     private static (Move[] moves, ulong captures) GetMoves(ulong blockers, (int file, int rank) pos, ulong piece)
