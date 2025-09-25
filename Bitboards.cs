@@ -115,8 +115,8 @@ public static class Bitboards
     private const ulong SmallFile = 0x80808080808000;
     private const ulong SmallRank = 0x7E00000000000000;
 
-    public const ulong KingSafetyAppliesWhite = 0b1100011111000111000000000000000000000000000000000000000000000000;
-    public const ulong KingSafetyAppliesBlack = 0b1100011111000111;
+    public const ulong KingSafetyAppliesWhite = 0xC7C7000000000000; 
+    public const ulong KingSafetyAppliesBlack = 0xC7C7;
 
     private static bool init;
 

@@ -15,7 +15,7 @@ Perft.Run(6);
 
 //match.Print(0);
 
-//Match.PrintBitboard(Bitboards.GetSquare(new Board(Presets.StartingBoard).KingPositions[1]), 0);
+//Match.PrintBitboard(0x102040810204080, 0);
 
 //match.SpeedTest();
 //match.Play();
