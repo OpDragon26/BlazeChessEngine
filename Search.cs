@@ -554,20 +554,6 @@ public static int StaticEvaluate(Board board)
         return index;
     }
 
-    private static (PinState, ulong line) GetPinState(Board board, (int file, int rank) pos, int side)
-    {
-        if (pos.file == board.KingPositions[side].file)
-        {
-            // Same file as the king
-            
-            // TODO: get line
-            // TODO: use magic lookup to find the possible pinning coordinate and line
-            // TODO: if pinned, use line as mask
-        }
-        
-        return (PinState.None, 0);
-    }
-
     public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
     {
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
@@ -605,7 +591,7 @@ public static int StaticEvaluate(Board board)
 
         for (int i = moves.Length - 1; i >= 0; i--)
         {
-            Board moveBoard = new(board, false);
+            Board moveBoard = new(board);
             moveBoard.MakeMove(MoveList[i]);
             // if the king of the moving side is in check after the move, the move is illegal
             if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))
@@ -629,14 +615,5 @@ public static int StaticEvaluate(Board board)
         }
         
         return MoveList.ToArray();
-    }
-
-    private enum PinState
-    {
-        None,
-        UpDiagonal,
-        DownDiagonal,
-        File,
-        Rank
     }
 }

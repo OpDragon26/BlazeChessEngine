@@ -104,6 +104,7 @@ public static class Bitboards
         public static readonly ulong[,][] BishopBitboardLookup = new ulong[8,8][];
         public static Move[] EnPassantLookupArray = [];
         public static readonly int[,][] KingSafetyLookup = new int[8,8][];
+        public static readonly (ulong line, (int file, int rank) pinPosition)[,,,][] LineLookup = new (ulong line, (int file, int rank) pinPosition)[8,8,8,8][];
     }
 
     private const ulong File = 0x8080808080808080;
