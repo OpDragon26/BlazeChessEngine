@@ -701,7 +701,10 @@ public static class Bitboards
                     if (found == 1) // pinned piece
                         pinnedPos = target;
                     if (found == 2) // pinning piece
+                    {
                         pinPos = target;
+                        line |= GetSquare(target);
+                    }
                 }
                 else
                     line |= GetSquare(target);
