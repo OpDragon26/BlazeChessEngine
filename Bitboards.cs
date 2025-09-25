@@ -104,7 +104,9 @@ public static class Bitboards
         public static readonly ulong[,][] BishopBitboardLookup = new ulong[8,8][];
         public static Move[] EnPassantLookupArray = [];
         public static readonly int[,][] KingSafetyLookup = new int[8,8][];
-        public static readonly (ulong line, (int file, int rank) pinPosition)[,,,][] LineLookup = new (ulong line, (int file, int rank) pinPosition)[8,8,8,8][];
+        
+        public static readonly ulong[,][] RookPinLineBitboardLookup =  new ulong[8,8][];
+        public static readonly ulong[,][] BishopPinLineBitboardLookup = new ulong[8,8][];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -602,6 +604,50 @@ public static class Bitboards
         (-1, -2),
     ];
 
+    public static ulong GetPinLine(ulong blockers, (int file, int rank) pos, ulong piece)
+    {
+        ulong final = 0;
+        
+        (int file, int rank)[] pattern = piece == Pieces.WhiteRook ? RookPattern : BishopPattern;
+        
+        for (int i = 0; i < 4; i++) // for each pattern
+        {
+            bool blockerFound = false;
+            for (int j = 1; j < 8; j++) // in each direction
+            {
+                (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
+                
+                if (!ValidSquare(target.file, target.rank)) // if the square is outside the bounds of the board
+                    break;
+                if ((blockers & GetSquare(target)) != 0) // if the targeted square is occupied
+                {
+                    blockerFound = true;
+                    break;
+                }
+            }
+            
+            if (!blockerFound)
+                continue;
+            
+            for (int j = 1; j < 8; j++) // in each direction
+            {
+                (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
+                
+                if (!ValidSquare(target.file, target.rank)) // if the square is outside the bounds of the board
+                    break;
+                if ((blockers & GetSquare(target)) == 0) // if the targeted square is empty
+                    final |= GetSquare(target);
+                else
+                {
+                    final |= GetSquare(target);
+                    break;
+                }
+            }
+        }
+        
+        return final;
+    }
+    
     private static (Move[] moves, ulong captures) GetMoves(ulong blockers, (int file, int rank) pos, ulong piece)
     {
         ulong captures = 0;
