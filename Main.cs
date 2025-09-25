@@ -17,7 +17,8 @@ Bitboards.Init();
 
 //match.Print(0);
 
-Match.PrintBitboard(0x7ffe000000000000, 0);
+//Match.PrintBitboard(0x101010100ff, 0);
+//Match.PrintBitboard(Bitboards.RookPinLineLookup((4,4), 0x101010100ff), 0);
 
 //match.SpeedTest();
 //match.Play();
