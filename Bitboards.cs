@@ -249,6 +249,18 @@ public static class Bitboards
         return MagicLookup.BishopPinLineBitboardLookup[pos.file, pos.rank]
             [((blockers & BishopMasks[pos.file, pos.rank]) * MagicLookup.BishopMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopMove[pos.file, pos.rank].push];
     }
+    
+    public static List<PinSearchResult> RookPinSearch((int file, int rank) pos, ulong selected)
+    {
+        return MagicLookup.RookPinLookup[pos.file, pos.rank]
+            [((selected & RookMasks[pos.file, pos.rank]) * MagicLookup.RookMove[pos.file, pos.rank].magicNumber) >> MagicLookup.RookMove[pos.file, pos.rank].push];
+    }
+    
+    public static List<PinSearchResult> BishopPinSearch((int file, int rank) pos, ulong selected)
+    {
+        return MagicLookup.BishopPinLookup[pos.file, pos.rank]
+            [((selected & BishopMasks[pos.file, pos.rank]) * MagicLookup.BishopMove[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopMove[pos.file, pos.rank].push];
+    }
 
     public static void Init()
     {
@@ -694,7 +706,7 @@ public static class Bitboards
         return final;
     }
 
-    public static List<PinSearchResult> GeneratePinResult((int file, int rank) pos, ulong pieces, uint piece)
+    private static List<PinSearchResult> GeneratePinResult((int file, int rank) pos, ulong pieces, uint piece)
     {
         List<PinSearchResult> results = new();
         (int file, int rank)[] pattern = piece == Pieces.WhiteRook ? RookPattern : BishopPattern;
@@ -703,6 +715,7 @@ public static class Bitboards
         {
             int found = 0;
             (int, int) pinPos = (0,0);
+            (int, int) pinnedPos = (0, 0);
             ulong path = 0;
             
             for (int j = 0; j < 4; j++) // in each direction
@@ -714,6 +727,8 @@ public static class Bitboards
                 if ((pieces & GetSquare(target)) != 0) // if the targeted square is not empty
                 {
                     if (++found > 2) break;
+                    if (found == 1) // pinned piece
+                        pinnedPos = target;
                     if (found == 2) // pinning piece
                     {
                         pinPos = target;
@@ -725,15 +740,16 @@ public static class Bitboards
             }
             
             if (found == 2)
-                results.Add(new PinSearchResult(pinPos, path));
+                results.Add(new PinSearchResult(pinPos, GetSquare(pinnedPos), path));
         }
         
         return results;
     }
 
-    public readonly struct PinSearchResult((int file, int rank) pinningPos, ulong path)
+    public readonly struct PinSearchResult((int file, int rank) pinningPos, ulong pinnedPiece, ulong path)
     {
         public readonly (int file, int rank) pinningPos = pinningPos;
+        public readonly ulong pinnedPiece = pinnedPiece;
         public readonly ulong path = path;
     }
     

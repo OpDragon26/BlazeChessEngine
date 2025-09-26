@@ -587,10 +587,34 @@ public static int StaticEvaluate(Board board)
 
     public static (ulong pinned, Dictionary<ulong, ulong> pinStates) GetPinStates(Board board, int side)
     {
+        Dictionary<ulong, ulong> pinStates = new();
+        ulong pinned = 0;
+        
         ulong rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
         ulong bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
+
+        List<Bitboards.PinSearchResult> rookPinSearch = Bitboards.RookPinSearch(board.KingPositions[side], rookSelected);
+        List<Bitboards.PinSearchResult> bishopPinSearch = Bitboards.BishopPinSearch(board.KingPositions[side], bishopSelected);
+
+        foreach (Bitboards.PinSearchResult result in rookPinSearch)
+        {
+            if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteRook or Pieces.WhiteQueen) // is pinned
+            {
+                pinStates.Add(result.pinnedPiece, result.path);
+                pinned |= result.pinnedPiece;
+            }
+        }
         
-        throw new NotImplementedException();
+        foreach (Bitboards.PinSearchResult result in bishopPinSearch)
+        {
+            if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteBishop or Pieces.WhiteQueen) // is pinned
+            {
+                pinStates.Add(result.pinnedPiece, result.path);
+                pinned |= result.pinnedPiece;
+            }
+        }
+        
+        return (pinned, pinStates);
     }
 
     public static Move[] FilterChecks(Move[] moves, Board board)
