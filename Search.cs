@@ -127,7 +127,7 @@ public static class Search
     }
 
     // returns the heuristic evaluation of the board
-public static int StaticEvaluate(Board board)
+    public static int StaticEvaluate(Board board)
     {
         int eval = 0;
 
@@ -295,6 +295,7 @@ public static int StaticEvaluate(Board board)
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
         (ulong pinned, Dictionary<ulong, ulong> pinStates) pinState = GetPinStates(board, board.side);
+        bool kingInCheck = Attacked(board.KingPositions[board.side], board, 1 - board.side);
 
         int index = 0;
         // loop through every square
@@ -305,10 +306,12 @@ public static int StaticEvaluate(Board board)
                 // the square is only worth checking if the searched side has a piece there
                 if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
                 {
-                    ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? pinState.pinStates[Bitboards.GetSquare(file, rank)] : 0;
+                    // if the piece is pinned, get the pin path
+                    ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? ~pinState.pinStates[Bitboards.GetSquare(file, rank)] : 
+                        (file, rank) == board.KingPositions[board.side] ? GetAttackedBitboard(board, 1 - board.side) : 0; // if the searched piece is the king, don't allow it to move into check
                     
                     Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
-                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant, blockMoves: ~blockMoves);
+                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant, blockMoves: blockMoves);
                 }
             }
         }
@@ -500,11 +503,11 @@ public static int StaticEvaluate(Board board)
             break;
             
             case Pieces.WhiteKing:
-                Span<Move> kingMoves = new(Bitboards.KingLookupMoves(pos, board.AllPieces()));
+                Span<Move> kingMoves = new(Bitboards.KingLookupMoves(pos, board.AllPieces() | blockMoves));
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
                 
-                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side]));
+                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -588,7 +591,19 @@ public static int StaticEvaluate(Board board)
         return false;
     }
 
-    public static (ulong pinned, Dictionary<ulong, ulong> pinStates) GetPinStates(Board board, int side)
+    private static ulong GetAttackedBitboard(Board board, int side)
+    {
+        ulong attacked = 0;
+
+        for (int rank = 0; rank < 8; rank++)
+        for (int file = 7; file >= 0; file--)
+            if ((board.bitboards[side] & Bitboards.GetSquare(file, rank)) != 0)
+                attacked |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), side);
+        
+        return attacked;
+    }
+
+    private static (ulong pinned, Dictionary<ulong, ulong> pinStates) GetPinStates(Board board, int side)
     {
         Dictionary<ulong, ulong> pinStates = new();
         ulong pinned = 0;

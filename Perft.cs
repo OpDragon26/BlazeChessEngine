@@ -22,7 +22,7 @@ public static class Perft
 
         board.considerRepetition = false;
 
-        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, false), board);
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
         
         Parallel.For(0, moves.Length, i =>
         {
@@ -49,8 +49,11 @@ public static class Perft
 
     private static void PerftSearch(Board board, int depth, ulong[] results)
     {
-        if (depth == 0)
+        if (depth == 1)
+        {
+            results[1] += (ulong)Search.SearchBoard(board, false).Length;
             return;
+        }
         
         Span<Move> moves = Search.SearchBoard(board, false);
 
@@ -59,12 +62,9 @@ public static class Perft
             Board MoveBoard = new Board(board);
             MoveBoard.MakeMove(move);
 
-            if (!Search.Attacked(MoveBoard.KingPositions[board.side], MoveBoard, 1 - board.side))
-            {
-                results[depth]++;
+            results[depth]++;
                 
-                PerftSearch(MoveBoard, depth - 1, results);
-            }
+            PerftSearch(MoveBoard, depth - 1, results);
         }
     }
 

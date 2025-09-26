@@ -524,6 +524,38 @@ public static class Bitboards
                     MagicLookup.KingSafetyLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookup.KingMove[file, rank].magicNumber) >> MagicLookup.KingMove[file, rank].push] = Weights.KingSafetyBonuses[UInt64.PopCount(KingCombinations[file, rank][i])];
                 }
                 
+                // pin lines
+                // rook pin lines
+                MagicLookup.RookPinLineBitboardLookup[file, rank] = new ulong[MagicLookup.RookMove[file, rank].highest + 1];
+                
+                for (int i = 0; i < RookBlockers[file, rank].Length; i++) // for each blocker
+                {
+                    MagicLookup.RookPinLineBitboardLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = GetPinLine(RookBlockers[file, rank][i], (file, rank), Pieces.WhiteRook);
+                }
+                
+                // bishop pin lines
+                MagicLookup.BishopPinLineBitboardLookup[file, rank] = new ulong[MagicLookup.BishopMove[file, rank].highest + 1];
+                
+                for (int i = 0; i < BishopBlockers[file, rank].Length; i++) // for each blocker
+                {
+                    MagicLookup.BishopPinLineBitboardLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GetPinLine(BishopBlockers[file, rank][i], (file, rank), Pieces.WhiteBishop);
+                }
+                
+                // pin search
+                MagicLookup.RookPinLookup[file,rank] = new List<PinSearchResult>[MagicLookup.RookMove[file, rank].highest + 1];
+
+                for (int i = 0; i < RookBlockers[file, rank].Length; i++)
+                {
+                    MagicLookup.RookPinLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = GeneratePinResult((file, rank), RookBlockers[file, rank][i], Pieces.WhiteRook);
+                }
+                
+                MagicLookup.BishopPinLookup[file, rank] = new List<PinSearchResult>[MagicLookup.BishopMove[file, rank].highest + 1];
+
+                for (int i = 0; i < BishopBlockers[file, rank].Length; i++)
+                {
+                    MagicLookup.BishopPinLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GeneratePinResult((file, rank), BishopBlockers[file, rank][i], Pieces.WhiteBishop);
+                }
+                
                 //done++;
                 //Console.WriteLine($"Square done {done}/64");
                 // pawn moves
@@ -564,38 +596,6 @@ public static class Bitboards
                 for (int i = 0; i < BlackPawnCaptureCombinations[file, rank].Length; i++) // for each combination
                 {
                     MagicLookup.BlackPawnCaptureLookup[file, rank][(BlackPawnCaptureCombinations[file, rank][i] * MagicLookup.BlackPawnCapture[file, rank].magicNumber) >> MagicLookup.BlackPawnCapture[file, rank].push] = GetPawnCaptures(BlackPawnCaptureCombinations[file, rank][i], (file, rank), 1);
-                }
-                
-                // pin lines
-                // rook pin lines
-                MagicLookup.RookPinLineBitboardLookup[file, rank] = new ulong[MagicLookup.RookMove[file, rank].highest + 1];
-                
-                for (int i = 0; i < RookBlockers[file, rank].Length; i++) // for each blocker
-                {
-                    MagicLookup.RookPinLineBitboardLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = GetPinLine(RookBlockers[file, rank][i], (file, rank), Pieces.WhiteRook);
-                }
-                
-                // bishop pin lines
-                MagicLookup.BishopPinLineBitboardLookup[file, rank] = new ulong[MagicLookup.BishopMove[file, rank].highest + 1];
-                
-                for (int i = 0; i < BishopBlockers[file, rank].Length; i++) // for each blocker
-                {
-                    MagicLookup.BishopPinLineBitboardLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GetPinLine(BishopBlockers[file, rank][i], (file, rank), Pieces.WhiteBishop);
-                }
-                
-                // pin search
-                MagicLookup.RookPinLookup[file,rank] = new List<PinSearchResult>[MagicLookup.RookMove[file, rank].highest + 1];
-
-                for (int i = 0; i < RookBlockers[file, rank].Length; i++)
-                {
-                    MagicLookup.RookPinLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = GeneratePinResult((file, rank), RookBlockers[file, rank][i], Pieces.WhiteRook);
-                }
-                
-                MagicLookup.BishopPinLookup[file, rank] = new List<PinSearchResult>[MagicLookup.BishopMove[file, rank].highest + 1];
-
-                for (int i = 0; i < BishopBlockers[file, rank].Length; i++)
-                {
-                    MagicLookup.BishopPinLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GeneratePinResult((file, rank), BishopBlockers[file, rank][i], Pieces.WhiteBishop);
                 }
             }
         }
