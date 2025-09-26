@@ -294,6 +294,7 @@ public static int StaticEvaluate(Board board)
     {
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
+        (ulong pinned, Dictionary<ulong, ulong> pinStates) pinState = GetPinStates(board, board.side);
 
         int index = 0;
         // loop through every square
@@ -304,8 +305,10 @@ public static int StaticEvaluate(Board board)
                 // the square is only worth checking if the searched side has a piece there
                 if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
                 {
+                    ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? pinState.pinStates[Bitboards.GetSquare(file, rank)] : 0;
+                    
                     Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
-                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant);
+                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant, blockMoves: ~blockMoves);
                 }
             }
         }
@@ -403,7 +406,7 @@ public static int StaticEvaluate(Board board)
         }
     }
 
-    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false)
+    private static int SearchPiece(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, bool enPassant = false, ulong blockMoves = 0)
     {
         int index = 0;
         Span<Move> captures;
@@ -413,10 +416,10 @@ public static int StaticEvaluate(Board board)
             case Pieces.WhitePawn:
                 if (side == 0) // white
                 {
-                    Span<Move> WPawnMoves = new(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces()));
+                    Span<Move> WPawnMoves = new(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces() | blockMoves));
                     WPawnMoves.CopyTo(moveSpan);
                     index += WPawnMoves.Length;
-                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1]));
+                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1] & ~blockMoves));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -427,10 +430,10 @@ public static int StaticEvaluate(Board board)
                 }
                 else // black
                 {
-                    Span<Move> BPawnMoves = new(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces()));
+                    Span<Move> BPawnMoves = new(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces() | blockMoves));
                     BPawnMoves.CopyTo(moveSpan);
                     index += BPawnMoves.Length;                                                                 
-                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0]));
+                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0] & ~blockMoves));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -443,55 +446,55 @@ public static int StaticEvaluate(Board board)
             case Pieces.WhiteRook:
                 // magic lookup moves
                 // no captures
-                (Move[] moves, ulong captures) rMoves = Bitboards.RookLookupMoves(pos, board.AllPieces());
+                (Move[] moves, ulong captures) rMoves = Bitboards.RookLookupMoves(pos, board.AllPieces() | blockMoves);
                 new Span<Move>(rMoves.moves).CopyTo(moveSpan);
                 index += rMoves.moves.Length;
 
                 // magic lookup of only captures
                 // form a slice out of the span to ensure that none of the already added moves are overwritten
-                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
             
             case Pieces.WhiteBishop:
-                (Move[] moves, ulong captures) bMoves = Bitboards.BishopLookupMoves(pos, board.AllPieces());
+                (Move[] moves, ulong captures) bMoves = Bitboards.BishopLookupMoves(pos, board.AllPieces() | blockMoves);
                 new Span<Move>(bMoves.moves).CopyTo(moveSpan);
                 index += bMoves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
             
             case Pieces.WhiteQueen:
                 // find rook moves
-                (Move[] moves, ulong captures) moves = Bitboards.RookLookupMoves(pos, board.AllPieces());
+                (Move[] moves, ulong captures) moves = Bitboards.RookLookupMoves(pos, board.AllPieces() | blockMoves);
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
                 // find bishop moves
-                moves = Bitboards.BishopLookupMoves(pos, board.AllPieces());
+                moves = Bitboards.BishopLookupMoves(pos, board.AllPieces() | blockMoves);
                 new Span<Move>(moves.moves).CopyTo(moveSpan.Slice(index));
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
             
             case Pieces.WhiteKnight:
                 // find moves, no captures
-                Span<Move> knightMoves = new(Bitboards.KnightLookupMoves(pos, board.AllPieces()));
+                Span<Move> knightMoves = new(Bitboards.KnightLookupMoves(pos, board.AllPieces() | blockMoves));
                 knightMoves.CopyTo(moveSpan);
                 index += knightMoves.Length;
                 
                 // find only captures
-                captures = new(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side]));
+                captures = new(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side] & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
