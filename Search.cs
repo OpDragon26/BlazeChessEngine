@@ -598,6 +598,7 @@ public static int StaticEvaluate(Board board)
 
         foreach (Bitboards.PinSearchResult result in rookPinSearch)
         {
+            Console.WriteLine("there is definitely something here at least");
             if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteRook or Pieces.WhiteQueen) // is pinned
             {
                 pinStates.Add(result.pinnedPiece, result.path);
@@ -607,6 +608,7 @@ public static int StaticEvaluate(Board board)
         
         foreach (Bitboards.PinSearchResult result in bishopPinSearch)
         {
+            Console.WriteLine("there is definitely something here at least");
             if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteBishop or Pieces.WhiteQueen) // is pinned
             {
                 pinStates.Add(result.pinnedPiece, result.path);

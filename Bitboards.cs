@@ -711,14 +711,14 @@ public static class Bitboards
         List<PinSearchResult> results = new();
         (int file, int rank)[] pattern = piece == Pieces.WhiteRook ? RookPattern : BishopPattern;
         
-        for (int i = 0; i < 8; i++) // for each direction
+        for (int i = 0; i < 4; i++) // for each direction
         {
             int found = 0;
             (int, int) pinPos = (0,0);
             (int, int) pinnedPos = (0, 0);
             ulong path = 0;
             
-            for (int j = 0; j < 4; j++) // in each direction
+            for (int j = 1; j < 8; j++) // in each direction
             {
                 (int file, int rank) target = (pos.file + pattern[i].file * j, pos.rank + pattern[i].rank * j);
                 
