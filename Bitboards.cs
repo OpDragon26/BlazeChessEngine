@@ -107,6 +107,8 @@ public static class Bitboards
         
         public static readonly ulong[,][] RookPinLineBitboardLookup =  new ulong[8,8][];
         public static readonly ulong[,][] BishopPinLineBitboardLookup = new ulong[8,8][];
+        public static readonly List<PinSearchResult>[,][] RookPinLookup = new List<PinSearchResult>[8,8][];
+        public static readonly List<PinSearchResult>[,][] BishopPinLookup = new List<PinSearchResult>[8,8][];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -568,6 +570,21 @@ public static class Bitboards
                 {
                     MagicLookup.BishopPinLineBitboardLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GetPinLine(BishopBlockers[file, rank][i], (file, rank), Pieces.WhiteBishop);
                 }
+                
+                // pin search
+                MagicLookup.RookPinLookup[file,rank] = new List<PinSearchResult>[MagicLookup.RookMove[file, rank].highest + 1];
+
+                for (int i = 0; i < RookBlockers[file, rank].Length; i++)
+                {
+                    MagicLookup.RookPinLookup[file, rank][(RookBlockers[file, rank][i] * MagicLookup.RookMove[file, rank].magicNumber) >> MagicLookup.RookMove[file, rank].push] = GeneratePinResult((file, rank), RookBlockers[file, rank][i], Pieces.WhiteRook);
+                }
+                
+                MagicLookup.BishopPinLookup[file, rank] = new List<PinSearchResult>[MagicLookup.BishopMove[file, rank].highest + 1];
+
+                for (int i = 0; i < BishopBlockers[file, rank].Length; i++)
+                {
+                    MagicLookup.BishopPinLookup[file, rank][(BishopBlockers[file, rank][i] * MagicLookup.BishopMove[file, rank].magicNumber) >> MagicLookup.BishopMove[file, rank].push] = GeneratePinResult((file, rank), BishopBlockers[file, rank][i], Pieces.WhiteBishop);
+                }
             }
         }
     }
@@ -686,8 +703,7 @@ public static class Bitboards
         {
             int found = 0;
             (int, int) pinPos = (0,0);
-            (int, int) pinnedPos = (0,0);
-            ulong line = 0;
+            ulong path = 0;
             
             for (int j = 0; j < 4; j++) // in each direction
             {
@@ -698,30 +714,27 @@ public static class Bitboards
                 if ((pieces & GetSquare(target)) != 0) // if the targeted square is not empty
                 {
                     if (++found > 2) break;
-                    if (found == 1) // pinned piece
-                        pinnedPos = target;
                     if (found == 2) // pinning piece
                     {
                         pinPos = target;
-                        line |= GetSquare(target);
+                        path |= GetSquare(target);
                     }
                 }
                 else
-                    line |= GetSquare(target);
+                    path |= GetSquare(target);
             }
             
             if (found == 2)
-                results.Add(new PinSearchResult(pinPos, GetSquare(pinnedPos), line));
+                results.Add(new PinSearchResult(pinPos, path));
         }
         
         return results;
     }
 
-    public readonly struct PinSearchResult((int file, int rank) pinningPos, ulong pinnedPiece, ulong line)
+    public readonly struct PinSearchResult((int file, int rank) pinningPos, ulong path)
     {
         public readonly (int file, int rank) pinningPos = pinningPos;
-        public readonly ulong pinnedPiece = pinnedPiece;
-        public readonly ulong line = line;
+        public readonly ulong path = path;
     }
     
     private static (Move[] moves, ulong captures) GetMoves(ulong blockers, (int file, int rank) pos, ulong piece)
