@@ -295,7 +295,7 @@ public static class Search
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
         (ulong pinned, Dictionary<ulong, ulong> pinStates) pinState = GetPinStates(board, board.side);
-        bool kingInCheck = Attacked(board.KingPositions[board.side], board, 1 - board.side);
+        (bool attacked, bool doubleAttack, ulong attackLines) kingInCheck = GetAttackLines(board.KingPositions[board.side], board, 1 - board.side);
 
         int index = 0;
         // loop through every square
@@ -560,6 +560,30 @@ public static class Search
         return index;
     }
 
+    private static int SearchPieceCheck(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, ulong BlockPath, bool enPassant = false, ulong blockMoves = 0)
+    {
+        // TODO: magic lookup for checks
+        // magic lookup move bitboard
+        // use AND operations to find the bitboards for captures and regular blocks
+        // use two magic lookups to get the move spans for moves and captures (from any square to any 0-3 squares in a straight or diagonal line)
+        
+        // moves that can block the check (only single checks)
+        ulong pieceBitboard = SearchPieceBitboard(board, piece, pos, side) & BlockPath;
+        ulong captureBitboard = pieceBitboard & board.bitboards[1 - side]; // blocks that land on an enemy piece
+        ulong moveBitboard = pieceBitboard & ~captureBitboard; // blocks that aren't
+        int index = 0;
+
+        if (captureBitboard != 0)
+            moveSpan[index++] = Bitboards.BlockCaptureLookup(pos.file, pos.rank, captureBitboard);
+
+        if (moveBitboard != 0)
+        {
+            
+        }
+
+        return index;
+    }
+
     public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
     {
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
@@ -591,7 +615,7 @@ public static class Search
         return false;
     }
 
-    public static (bool attacked, bool doubleAttack, ulong attackLines) GetAttackLines((int file, int rank) pos, Board board, int side) // side is attacker side
+    private static (bool attacked, bool doubleAttack, ulong attackLines) GetAttackLines((int file, int rank) pos, Board board, int side) // side is attacker side
     {
         ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
         ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];

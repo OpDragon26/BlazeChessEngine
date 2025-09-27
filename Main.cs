@@ -20,7 +20,7 @@ Bitboards.Init();
 //match.Print(0);
 
 //Match.PrintBitboard(0x101010100ff, 0);
-Match.PrintBitboard(Bitboards.PathLookup[4,4,6,3], 0);
+//Match.PrintBitboard(Bitboards.PathLookup[4,4,6,3], 0);
 
 //match.SpeedTest();
 //match.Play();
@@ -30,19 +30,20 @@ Match.PrintBitboard(Bitboards.PathLookup[4,4,6,3], 0);
 //Move[] moves = Search.SearchBoard(match.board);
 
 /*
-Console.WriteLine("Rook bitboards");
+Console.WriteLine("Block capture lookup");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
 {
     Console.Write("{");
     for (int j = 0; j < 8; j++) // for every item in row
     {
-        Console.Write(Bitboards.MagicLookup.RookBitboardNumbers[i, j] + ",");
+        Console.Write(Bitboards.MagicLookup.BlockCaptureNumbers[i, j] + ",");
     }
     Console.Write("},\n");
 }
 Console.WriteLine("}");
-
+*/
+/*
 Console.WriteLine("Bishop bitboards");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
