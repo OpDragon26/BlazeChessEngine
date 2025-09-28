@@ -4,9 +4,9 @@ using Type = Blaze.Type;
 Bitboards.Init();
 
 Hasher.Init();
-Book.Init(Books.Standard);
+Book.Init(Books.Test);
 
-new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 7, debug: false, dynamicDepth: true).Play();
+new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: true, dynamicDepth: false).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
 //Perft.Run(8);

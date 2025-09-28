@@ -41,11 +41,11 @@ public class Board
     // castling
     public byte castling = 0b1111; // white short, white long, black short, black long
     
-    public readonly (int file, int rank)[] KingPositions = new (int file, int rank)[2];
+    public CoordinatePair KingPositions;
 
     private int halfMoveClock;
     private int pawns = 16;
-    private readonly int[] values = new int[2];
+    private ValuePair values;
     private readonly Dictionary<int, int> repeat = new();
     private int hashKey;
 
@@ -75,10 +75,10 @@ public class Board
         bitboards = [board.bitboards[0], board.bitboards[1], board.bitboards[2], board.bitboards[3]];
         enPassant = board.enPassant;
         castling = board.castling;
-        KingPositions = [board.KingPositions[0], board.KingPositions[1]];
+        KingPositions = board.KingPositions;
         halfMoveClock = board.halfMoveClock;
         pawns = board.pawns;
-        values = [board.values[0], board.values[1]];
+        values = board.values;
         if (considerRepetition)
             repeat = permChange ? new() : new(board.repeat);
         hashKey = board.hashKey;
@@ -321,7 +321,7 @@ public class Board
                 Clear(move.Destination.file, 4);
                 bitboards[1] ^= Bitboards.GetSquare(move.Destination.file,4);
                 bitboards[3] ^= Bitboards.GetSquare(move.Destination.file,4);
-                values[1] += 100;
+                values.black += 100;
                 // update the hash key
                 if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
             break;
@@ -330,7 +330,7 @@ public class Board
                 Clear(move.Destination.file, 3);
                 bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
                 bitboards[2] ^= Bitboards.GetSquare(move.Destination.file,3);
-                values[0] -= 100;
+                values.white -= 100;
                 // update the hash key
                 if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
             break;
@@ -346,7 +346,7 @@ public class Board
     {
         // threefold repetition or 50 move rule or each side has a minor piece or less and there are no pawns left (insufficient material)
         // stalemate requires searching for legal moves, so it's checked elsewhere
-        return repeat.ContainsValue(3) || halfMoveClock > 100 || (pawns == 0 && values[0] <= 1300 && values[1] >= -1300);
+        return repeat.ContainsValue(3) || halfMoveClock > 100 || (pawns == 0 && values.white <= 1300 && values.black >= -1300);
     }
     
     public Outcome GetOutcome()
@@ -371,7 +371,7 @@ public class Board
 
     public int AllMaterial()
     {
-        return values[0] - values[1];
+        return values.white - values.black;
     }
 
     // adds the hash of the board 
@@ -427,7 +427,7 @@ public class Board
 
     public bool IsEndgame()
     {
-        return values[0] + int.Abs(values[1]) < 5300;
+        return values.white + int.Abs(values.black) < 5300;
     }
 
     public ulong AllPieces()
@@ -472,6 +472,44 @@ public class Board
     {
         board[rank] &= ~(PieceMask << (file * 4)); // set the given square to 0000
         board[rank] |= (piece << (file * 4)); // set the square to the given piece
+    }
+    
+    public struct CoordinatePair((int file, int rank) white, (int file, int rank)  black)
+    {
+        private (int file, int rank)  white = white;
+        private (int file, int rank)  black = black;
+        
+        public (int file, int rank)  this[int side]
+        {
+            get => side == 0 ? white : black;
+            set {
+                if (side == 0) white = value;
+                else black = value;
+            }
+        }
+    }
+    
+    private struct ValuePair(int white, int black)
+    {
+        public int  white = white;
+        public int  black = black;
+        
+        public int this[int side]
+        {
+            get => side == 0 ? white : black;
+            set { if (side == 0) white = value;else black = value; }
+        }
+        
+        public int this[uint side]
+        {
+            get => side == 0 ? white : black;
+            set { if (side == 0) white = value;else black = value; }
+        }
+
+        public int Sum()
+        {
+            return white + black;
+        }
     }
 }
 
