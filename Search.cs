@@ -296,7 +296,7 @@ public static class Search
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
         (ulong pinned, Dictionary<ulong, ulong> pinStates) pinState = GetPinStates(board, board.side);
         (bool attacked, bool doubleAttack, ulong attackLines) kingInCheck = GetAttackLines(board.KingPositions[board.side], board, 1 - board.side);
-        ulong enemyAttacked = GetAttackedBitboard(board, 1 - board.side);
+        ulong enemyAttacked = GetAttackedBitboard(board, 1 - board.side, board.KingPositions[board.side]);
 
         int index = 0;
         // loop through every square
@@ -340,8 +340,6 @@ public static class Search
             index += SearchPieceCheck(board, Pieces.WhiteKing, board.KingPositions[board.side], board.side, moveSpan, kingInCheck.attackLines, enPassant, pinState.pinned, enemyAttacked, true);
         }
         
-
-
         if (ordering)
         {
             Span<Move> moveSpan = new Span<Move>(moveArray, 0, index);
@@ -414,6 +412,27 @@ public static class Search
         return priority;
     }
 
+    private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side, (int file, int rank) skipSquare) // blockMoves is to avoid moving out of pins
+    {
+        switch (piece & Pieces.TypeMask)
+        {
+            case Pieces.WhitePawn:
+                return (side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank]);
+            case Pieces.WhiteRook:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces() & ~Bitboards.GetSquare(skipSquare));
+            case Pieces.WhiteBishop:
+                return Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces() & ~Bitboards.GetSquare(skipSquare));
+            case Pieces.WhiteKnight:
+                return Bitboards.KnightMasks[pos.file, pos.rank];
+            case Pieces.WhiteQueen:
+                return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces() & ~Bitboards.GetSquare(skipSquare)) | Bitboards.BishopMoveBitboardLookup(pos, board.AllPieces() & ~Bitboards.GetSquare(skipSquare));
+            case Pieces.WhiteKing:
+                return Bitboards.KingMasks[pos.file, pos.rank];
+            default:
+                throw new Exception($"Unknown piece: {piece & Pieces.TypeMask}");
+        }
+    }
+    
     private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side) // blockMoves is to avoid moving out of pins
     {
         switch (piece & Pieces.TypeMask)
@@ -540,45 +559,20 @@ public static class Search
                 // castling
                 if (side == 0) // white
                 {
-                    int check = 0; // 0: not checked
+                    if ((board.castling & 0b1000) != 0 && (board.AllPieces() & Bitboards.WhiteShortCastleMask) == 0 && !Attacked((5,0), board, 1)) // white can castle short
+                        moveSpan[index++] = Bitboards.WhiteShortCastle;
                     
-                    if ((board.castling & 0b1000) != 0 && (board.bitboards[0] & Bitboards.WhiteShortCastleMask) == 0) // white can castle short
-                    {
-                        check = Attacked(board.KingPositions[0], board, 1) ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
-
-                        if (check == 2 && !Attacked((5,0), board, 1))
-                            moveSpan[index++] = Bitboards.WhiteShortCastle;
-                    }
-
-                    if ((board.castling & 0b0100) != 0 && (board.bitboards[0] & Bitboards.WhiteLongCastleMask) == 0) // white can castle long
-                    {
-                        if (check == 0) // if the king check hasn't been checked before
-                            check = Attacked(board.KingPositions[0], board, 1) ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
-                            
-                        if (check == 2 && !Attacked((3,0), board, 1))
-                            moveSpan[index++] = Bitboards.WhiteLongCastle;
-                    }
+                    if ((board.castling & 0b0100) != 0 && (board.AllPieces() & Bitboards.WhiteLongCastleMask) == 0 && !Attacked((3,0), board, 1)) // white can castle long
+                        moveSpan[index++] = Bitboards.WhiteLongCastle;
+                    
                 }
                 else // black
                 {
-                    int check = 0; // 0: not checked
+                    if ((board.castling & 0b0010) != 0 && (board.AllPieces() & Bitboards.BlackShortCastleMask) == 0  && !Attacked((5,7), board, 0)) // black can castle short
+                        moveSpan[index++] = Bitboards.BlackShortCastle;
                     
-                    if ((board.castling & 0b0010) != 0 && (board.bitboards[1] & Bitboards.BlackShortCastleMask) == 0) // black can castle short
-                    {
-                        check = Attacked(board.KingPositions[1], board, 0) ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
-
-                        if (check == 2 && !Attacked((5,7), board, 0))
-                            moveSpan[index++] = Bitboards.BlackShortCastle;
-                    }
-
-                    if ((board.castling & 0b0001) != 0 && (board.bitboards[1] & Bitboards.BlackLongCastleMask) == 0) // black can castle long
-                    {
-                        if (check == 0) // if the king check hasn't been checked before
-                            check = Attacked(board.KingPositions[1], board, 0) ? 1 : 2; // check here whether the king is in check 1 if it is, 2 if it isn't
-                            
-                        if (check == 2 && !Attacked((3,7), board, 0))
-                            moveSpan[index++] = Bitboards.BlackLongCastle;
-                    }
+                    if ((board.castling & 0b0001) != 0 && (board.AllPieces() & Bitboards.BlackLongCastleMask) == 0 && !Attacked((3,7), board, 0)) // black can castle long
+                        moveSpan[index++] = Bitboards.BlackLongCastle;
                 }
                 break;
         }
@@ -613,7 +607,7 @@ public static class Search
             ulong pieceBitboard = SearchPieceBitboard(board, piece, pos, side) & blockPath; 
             ulong captureBitboard = pieceBitboard & board.bitboards[1 - side]; // blocks that land on an enemy piece
             ulong moveBitboard = pieceBitboard & ~captureBitboard; // blocks that aren't
-
+            
             if (captureBitboard != 0)
                 moveSpan[index++] = Bitboards.BlockCaptureLookup(pos, captureBitboard);
 
@@ -635,7 +629,7 @@ public static class Search
             }
             else if (capture != 0)
             {
-                Span<Move> moves = new(Bitboards.BlockCapturePawnLookup(pos, move));
+                Span<Move> moves = new(Bitboards.BlockCapturePawnLookup(pos, capture));
                 moves.CopyTo(moveSpan.Slice(index));
                 index += moves.Length;
             }
@@ -731,14 +725,14 @@ public static class Search
         return (attackersFound > 0, attackersFound > 1, attackLines);
     }
 
-    private static ulong GetAttackedBitboard(Board board, int side)
+    private static ulong GetAttackedBitboard(Board board, int side, (int file, int rank) skipSquare)
     {
         ulong attacked = 0;
 
         for (int rank = 0; rank < 8; rank++)
         for (int file = 7; file >= 0; file--)
             if ((board.bitboards[side] & Bitboards.GetSquare(file, rank)) != 0)
-                attacked |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), side);
+                attacked |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), side, skipSquare);
         
         return attacked;
     }

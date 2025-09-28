@@ -4,7 +4,7 @@ public static class MagicNumbers
 {
     // generate a magic number with a push of at least 48
     // reused code from my previous attempt
-    private static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations)
+    private static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations, int minPush)
     {
         ulong magicNumber;
         int push = 0;
@@ -19,7 +19,7 @@ public static class MagicNumbers
             // multiply every combination with the magic number and push them right by 48, only leaving the leftmost 16 bits
             for (int i = 0; i < combinations.Length; i++)
             {
-                results[i] = (combinations[i] * candidateNumber) >> 48;
+                results[i] = (combinations[i] * candidateNumber) >> minPush;
             }
 
             // if the result array contains duplicates, the number isn't magic, so don't bother checking it for further pushes
@@ -56,7 +56,7 @@ public static class MagicNumbers
             }
         }
 
-        return (magicNumber, push + 48, (int)results.Max());
+        return (magicNumber, push + minPush, (int)results.Max());
     }
 
     public static (ulong magicNumber, int push, int highest)[,] Presets(string type)
@@ -64,13 +64,13 @@ public static class MagicNumbers
         return type == "rook" ? RookNumbers : BishopNumbers;
     }
 
-    public static (ulong magicNumber, int push, int highest) GenerateRepeat(ulong[] combinations, int iterations)
+    public static (ulong magicNumber, int push, int highest) GenerateRepeat(ulong[] combinations, int iterations, int minPush = 48)
     {
         (ulong magicNumber, int push, int highest) magicNumber = (0, 0, 0);
         
         for (int i = 0; i < iterations; i++)
         {
-            (ulong magicNumber, int push, int highest) New = GenerateMagicNumber(combinations);
+            (ulong magicNumber, int push, int highest) New = GenerateMagicNumber(combinations, minPush);
             if (New.push > magicNumber.push || (New.push == magicNumber.push && New.highest < magicNumber.highest))
                 magicNumber = New;
         }
@@ -630,50 +630,6 @@ public static class MagicNumbers
             (1730556494151492078, 58, 62), (12855315494560746201, 57, 100), (15606222225023585950, 57, 106),
             (10464506638414697203, 57, 94), (3995429928638883866, 57, 104), (14441080048848523022, 57, 92),
             (5098129475721629, 57, 103), (9830638387599035980, 57, 97),
-        },
-    };
-
-    public static readonly (ulong magicNumber, int push, int highest)[,] BlockMoveNumbers =
-    {
-        {
-            (14560450851705499597, 51, 8082), (11171325503872935873, 52, 4091), (5563692766447103215, 52, 4091),
-            (3439419493701999760, 52, 4067), (1513599717682759380, 52, 4091), (4822911237439680428, 52, 4058),
-            (10942624832697177693, 51, 7956), (1918145235603234275, 51, 8119),
-        },
-        {
-            (3936343754813805905, 52, 4094), (5624032232622424121, 51, 7840), (7848103215215811821, 51, 8018),
-            (8743007186664706599, 51, 8088), (14354380221071413977, 51, 8019), (14292194639297490589, 51, 8029),
-            (1406186673766046739, 51, 8086), (12319295650778197368, 52, 4051),
-        },
-        {
-            (450463588100537131, 52, 4065), (13909661104120581999, 52, 4077), (1600830471409451935, 51, 8112),
-            (6895513584664995901, 51, 8086), (14687947053712624677, 51, 8049), (9071501313197407507, 51, 8124),
-            (15621496039631324829, 51, 8031), (15986881595720509612, 51, 7922),
-        },
-        {
-            (422810725791919527, 52, 4032), (12622076134476617548, 51, 8030), (7719330571160318127, 51, 8111),
-            (8541371069343055917, 51, 8163), (12903917983006795373, 50, 16128), (9043430251962192921, 51, 8152),
-            (13899663438308018222, 51, 8029), (17729079118263804940, 52, 4048),
-        },
-        {
-            (2375375259052879797, 52, 4075), (5282859960444429222, 52, 4077), (6632729918519941395, 51, 8145),
-            (14309767494967493535, 51, 8181), (5802384654335549747, 51, 8183), (9737442206956297341, 51, 8049),
-            (15298108446775858151, 51, 8014), (2245121196303591028, 52, 4055),
-        },
-        {
-            (1135994070023606515, 52, 4064), (11840192513478169277, 51, 8056), (9849103850872819249, 51, 8167),
-            (1100637615539487250, 51, 8101), (9664078870986529468, 51, 8094), (457155995057865357, 51, 8190),
-            (6095578847099914540, 51, 8034), (15061224889371334281, 52, 4076),
-        },
-        {
-            (5282569268177378451, 51, 8064), (4623656666676630103, 51, 8148), (549301761170144047, 51, 7925),
-            (3635188182615645295, 51, 8062), (5855095773901723658, 51, 8042), (8987006949066868257, 51, 8092),
-            (8717171395840914055, 51, 8140), (6959823455506495761, 51, 8047),
-        },
-        {
-            (6664185512371057443, 51, 8032), (7272577353771413239, 52, 4034), (12427289189750288431, 52, 4067),
-            (15950920927182088139, 52, 4084), (16534596722723611745, 52, 4083), (16883911182719067739, 52, 4057),
-            (6166938078603891927, 51, 8043), (5454892221917899163, 51, 8024),
         },
     };
 }
