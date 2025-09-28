@@ -9,7 +9,7 @@ Bitboards.Init();
 //new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: true, dynamicDepth: false).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
-//Perft.Run(6);
+Perft.Run(6);
 
 //Board PinTestBoard = new Board("3b3k/8/8/b2B4/3KR3/2RQ4/3n4/8 w - - 0 1");
 //Match.PrintBitboard(Search.GetPinStates(PinTestBoard, 0).pinned, 0);
@@ -19,7 +19,7 @@ Bitboards.Init();
 
 //match.Print(0);
 
-//Match.PrintBitboard(0x101010100ff, 0);
+//Match.PrintBitboard(Bitboards.GetPossibleEnPassantSquare(5,1), 0);
 //Match.PrintBitboard(Bitboards.PathLookup[4,4,6,3], 0);
 
 //match.SpeedTest();
@@ -30,14 +30,14 @@ Bitboards.Init();
 //Move[] moves = Search.SearchBoard(match.board);
 
 /*
-Console.WriteLine("Block capture lookup");
+Console.WriteLine("Block move lookup");
 Console.WriteLine("{");
 for (int i = 0; i < 8; i++) // for every row in the array
 {
     Console.Write("{");
     for (int j = 0; j < 8; j++) // for every item in row
     {
-        Console.Write(Bitboards.MagicLookup.BlockCaptureNumbers[i, j] + ",");
+        Console.Write(Bitboards.MagicLookup.BlockMoveNumbers[i, j] + ",");
     }
     Console.Write("},\n");
 }

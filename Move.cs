@@ -26,7 +26,7 @@ public class Move
 
     // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
     
-    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false, bool capture = false)
+    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false)
     {
         Source = source;
         Destination = destination;
@@ -207,7 +207,7 @@ public class Move
             notation += GetSquare(Destination);
         }
         
-        Board tempBoard = new Board(board, false);
+        Board tempBoard = new Board(board);
         tempBoard.MakeMove(this);
         Outcome outcome = tempBoard.GetOutcome();
         if (outcome is Outcome.BlackWin or Outcome.WhiteWin)

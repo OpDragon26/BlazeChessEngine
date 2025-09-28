@@ -296,25 +296,51 @@ public static class Search
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
         (ulong pinned, Dictionary<ulong, ulong> pinStates) pinState = GetPinStates(board, board.side);
         (bool attacked, bool doubleAttack, ulong attackLines) kingInCheck = GetAttackLines(board.KingPositions[board.side], board, 1 - board.side);
+        ulong enemyAttacked = GetAttackedBitboard(board, 1 - board.side);
 
         int index = 0;
         // loop through every square
-        for (int rank = 0; rank < 8; rank++)
+        if (!kingInCheck.attacked) // not a check
         {
-            for (int file = 7; file >= 0; file--)
+            for (int rank = 0; rank < 8; rank++)
             {
-                // the square is only worth checking if the searched side has a piece there
-                if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                for (int file = 7; file >= 0; file--)
                 {
-                    // if the piece is pinned, get the pin path
-                    ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? ~pinState.pinStates[Bitboards.GetSquare(file, rank)] : 
-                        (file, rank) == board.KingPositions[board.side] ? GetAttackedBitboard(board, 1 - board.side) : 0; // if the searched piece is the king, don't allow it to move into check
+                    // the square is only worth checking if the searched side has a piece there
+                    if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                    {
+                        // if the piece is pinned, get the pin path
+                        ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? ~pinState.pinStates[Bitboards.GetSquare(file, rank)] : 
+                            (file, rank) == board.KingPositions[board.side] ? enemyAttacked : 0; // if the searched piece is the king, don't allow it to move into check
                     
-                    Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
-                    index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant, blockMoves: blockMoves);
+                        Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
+                        index += SearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant, blockMoves: blockMoves);
+                    }
                 }
             }
         }
+        else if (!kingInCheck.doubleAttack) // not a double check
+        {
+            for (int rank = 0; rank < 8; rank++)
+            {
+                for (int file = 7; file >= 0; file--)
+                {
+                    // the square is only worth checking if the searched side has a piece there
+                    if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                    {
+                        Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
+                        index += SearchPieceCheck(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, kingInCheck.attackLines, enPassant, pinState.pinned, enemyAttacked);
+                    }
+                }
+            }
+        }
+        else // double check -> only the king can move
+        {
+            Span<Move> moveSpan = new(moveArray); // creates a span to fill with moves
+            index += SearchPieceCheck(board, Pieces.WhiteKing, board.KingPositions[board.side], board.side, moveSpan, kingInCheck.attackLines, enPassant, pinState.pinned, enemyAttacked, true);
+        }
+        
+
 
         if (ordering)
         {
@@ -388,12 +414,12 @@ public static class Search
         return priority;
     }
 
-    private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side)
+    private static ulong SearchPieceBitboard(Board board, ulong piece, (int file, int rank) pos, int side) // blockMoves is to avoid moving out of pins
     {
         switch (piece & Pieces.TypeMask)
         {
             case Pieces.WhitePawn:
-                return side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank];
+                return (side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank]);
             case Pieces.WhiteRook:
                 return Bitboards.RookMoveBitboardLookup(pos, board.AllPieces());
             case Pieces.WhiteBishop:
@@ -560,26 +586,67 @@ public static class Search
         return index;
     }
 
-    private static int SearchPieceCheck(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, ulong BlockPath, bool enPassant = false, ulong blockMoves = 0)
+    private static int SearchPieceCheck(Board board, ulong piece, (int file, int rank) pos, int side, Span<Move> moveSpan, ulong blockPath, bool enPassant = false, ulong pinned = 0, ulong enemyAttacked = 0, bool doubleCheck = false)
     {
-        // TODO: magic lookup for checks
-        // magic lookup move bitboard
-        // use AND operations to find the bitboards for captures and regular blocks
-        // use two magic lookups to get the move spans for moves and captures (from any square to any 0-3 squares in a straight or diagonal line)
-        
-        // moves that can block the check (only single checks)
-        ulong pieceBitboard = SearchPieceBitboard(board, piece, pos, side) & BlockPath;
-        ulong captureBitboard = pieceBitboard & board.bitboards[1 - side]; // blocks that land on an enemy piece
-        ulong moveBitboard = pieceBitboard & ~captureBitboard; // blocks that aren't
+        if ((Bitboards.GetSquare(pos) & pinned) != 0) // piece pinned
+            return 0;
+
         int index = 0;
-
-        if (captureBitboard != 0)
-            moveSpan[index++] = Bitboards.BlockCaptureLookup(pos.file, pos.rank, captureBitboard);
-
-        if (moveBitboard != 0)
+        
+        if (doubleCheck || (piece & Pieces.TypeMask) == Pieces.WhiteKing)
         {
-            
+            Span<Move> kingMoves = new(Bitboards.KingLookupMoves(pos, board.AllPieces() | enemyAttacked));
+            kingMoves.CopyTo(moveSpan);
+            index += kingMoves.Length;
+                
+            Span<Move> captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side] & ~enemyAttacked));
+            captures.CopyTo(moveSpan.Slice(index));
+            index += captures.Length;
+
+            return index;
         }
+        
+        if ((piece & Pieces.TypeMask) != Pieces.WhitePawn) // not pawn
+        {
+            // moves that can block the check (only single checks)
+            // get the bitboard for potential moves (piece can be pinned) AND it with the path the king is checked on to see where the piece can block
+            ulong pieceBitboard = SearchPieceBitboard(board, piece, pos, side) & blockPath; 
+            ulong captureBitboard = pieceBitboard & board.bitboards[1 - side]; // blocks that land on an enemy piece
+            ulong moveBitboard = pieceBitboard & ~captureBitboard; // blocks that aren't
+
+            if (captureBitboard != 0)
+                moveSpan[index++] = Bitboards.BlockCaptureLookup(pos, captureBitboard);
+
+            Span<Move> moves = new(Bitboards.BlockLookup(pos, moveBitboard));
+            moves.CopyTo(moveSpan.Slice(index));
+            index += moves.Length;
+        }
+        else // pawn
+        {
+            ulong attacked = side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank];
+            ulong capture = attacked & blockPath & board.bitboards[1 - side];
+            ulong move = (side == 0 ? Bitboards.WhitePawnMoveMasks[pos.file, pos.rank] : Bitboards.BlackPawnMoveMasks[pos.file, pos.rank]) & blockPath & ~board.bitboards[1 - side];
+            
+            if (move != 0)
+            {
+                Span<Move> moves = new(Bitboards.BlockPawnLookup(pos, move));
+                moves.CopyTo(moveSpan.Slice(index));
+                index += moves.Length;
+            }
+            else if (capture != 0)
+            {
+                Span<Move> moves = new(Bitboards.BlockCapturePawnLookup(pos, move));
+                moves.CopyTo(moveSpan.Slice(index));
+                index += moves.Length;
+            }
+            else if (enPassant)
+            {
+                if ((Bitboards.GetPossibleEnPassantSquare(board.enPassant.file, side) & blockPath) != 0 // gets the pawn that can be taken en passant, if it's in the block path, can take it
+                    && (Bitboards.GetSquare(board.enPassant) & attacked) != 0) // if the en passant square is within the attacked squares
+                    moveSpan[index++] = Bitboards.EnPassantLookup(Bitboards.GetSquare(pos) | Bitboards.GetSquare(board.enPassant));
+            }
+        }
+        
 
         return index;
     }
