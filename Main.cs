@@ -9,7 +9,7 @@ Bitboards.Init();
 //new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: true, dynamicDepth: false).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
-Perft.Run(6);
+Perft.Run(6, true);
 
 //Board PinTestBoard = new Board("3b3k/8/8/b2B4/3KR3/2RQ4/3n4/8 w - - 0 1");
 //Match.PrintBitboard(Search.GetPinStates(PinTestBoard, 0).pinned, 0);

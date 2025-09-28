@@ -49,7 +49,7 @@ public class Move
     {
         var item = obj as Move;
         if (item == null) return false;
-        return Source == item.Source && Destination == item.Destination && Promotion == item.Promotion && Type == item.Type;
+        return Source == item.Source && Destination == item.Destination && Promotion == item.Promotion && Type == item.Type && Pawn == item.Pawn;
     }
 
     public override int GetHashCode()
