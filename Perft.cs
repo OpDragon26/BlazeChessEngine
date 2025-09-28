@@ -15,7 +15,7 @@ public static class Perft
         84_998_978_956
     ];
 
-    private static void Run(int depth, Board board, bool testDifference, bool fromStartingPosition = false)
+    private static void Run(int depth, Board board, bool testDifference, bool multiThreaded, bool fromStartingPosition = false)
     {
         PerftResult Result = new(depth);
         Timer timer = new();
@@ -25,16 +25,26 @@ public static class Perft
 
         Move[] moves = Search.SearchBoard(board, false).ToArray();
 
-        Parallel.For(0, moves.Length, i =>
-        {
-            ulong[] threadResults = Result.GetNew();
+        if (multiThreaded)
+            Parallel.For(0, moves.Length, i =>
+            {
+                ulong[] threadResults = Result.GetNew();
 
-            Board moveBoard = new Board(board);
-            moveBoard.MakeMove(moves[i]);
-            threadResults[depth]++;
-            PerftSearch(moveBoard, depth - 1, threadResults, testDifference);
-        });
+                Board moveBoard = new Board(board);
+                moveBoard.MakeMove(moves[i]);
+                threadResults[depth]++;
+                PerftSearch(moveBoard, depth - 1, threadResults, testDifference);
+            });
+        else
+            foreach (Move move in moves)
+            {
+                ulong[] threadResults = Result.GetNew();
 
+                Board moveBoard = new Board(board);
+                moveBoard.MakeMove(move);
+                threadResults[depth]++;
+                PerftSearch(moveBoard, depth - 1, threadResults, testDifference);
+            }
 
         ulong[] perftResult = Result.GetResult();
         if (fromStartingPosition)
@@ -103,9 +113,9 @@ public static class Perft
 
     }
 
-    public static void Run(int depth, bool testDifference = false)
+    public static void Run(int depth, bool multiThreaded = true, bool testDifference = false)
     {
-        Run(depth, new Board(Presets.StartingBoard), testDifference, true);
+        Run(depth, new Board(Presets.StartingBoard), testDifference, multiThreaded, true);
     }
 
     private class PerftResult(int depth)

@@ -3,25 +3,13 @@ using Type = Blaze.Type;
 
 Bitboards.Init();
 
-//Hasher.Init();
-//Book.Init(Books.Test);
+Hasher.Init();
+Book.Init(Books.Standard);
 
-//new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: true, dynamicDepth: false).Play();
+new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 7, debug: false, dynamicDepth: true).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
-Perft.Run(6, true);
-
-// board is rnb1kbnr/ppp1pppp/3q4/1B1p4/8/4PP2/PPPP2PP/RNBQK1NR b KQkq - 0 1
-// issue
-// Blocking the check with the queen is missing: d6d7, d6c6
-
-/*
-Board TestBoard = new("rnb1kbnr/ppp1pppp/3q4/1B1p4/8/4PP2/PPPP2PP/RNBQK1NR b KQkq - 0 1");
-Span<Move> Moves = Search.SearchBoard(TestBoard, false);
-Span<Move> Expected = Search.FilterChecks(Search.PseudolegalSearchBoard(TestBoard), TestBoard);
-Console.WriteLine($"Found: {Moves.Length}");
-Console.WriteLine($"Expected: {Expected.Length}");
-*/
+//Perft.Run(8);
 
 //Board PinTestBoard = new Board("3b3k/8/8/b2B4/3KR3/2RQ4/3n4/8 w - - 0 1");
 //Match.PrintBitboard(Search.GetPinStates(PinTestBoard, 0).pinned, 0);

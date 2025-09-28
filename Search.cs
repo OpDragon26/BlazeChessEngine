@@ -17,7 +17,7 @@ public static class Search
         Timer timer = new Timer();
         timer.Start();
         
-        Move[] moves = FilterChecks(SearchBoard(board), board);
+        Move[] moves = SearchBoard(board).ToArray();
         int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new Exception("No move found");
 
@@ -66,63 +66,55 @@ public static class Search
             // white - maximizing player
             int eval = int.MinValue;
             Span<Move> moves = SearchBoard(board);
-            
-            // denotes whether a legal move has been found - if the king is in check after the move it's not counted, of none are found, the player has no legal moves
-            bool found = false;
+
+            if (moves.Length == 0)
+            {
+                if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check
+                    // black won by checkmate
+                    // the higher the depth, the closer to the origin, the worse for white
+                    return int.MinValue + 100 - depth;
+                return 0; // game is a draw by stalemate
+            }
             
             // for each child
             foreach (Move move in moves)
             {
                 moveBoard = new(board, move.PermaChange);
                 moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[0], moveBoard, 1)) // if the king is in check after the move
-                    continue;
-                found = true; // if a move is legal, set found to true
                 
                 eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 alpha = Math.Max(alpha, eval);
                 if (eval >= beta) break; // beta cutoff
             }
             
-            if (found)
-                return eval;
-            
-            // not found - no legal moves
-            if (Attacked(board.KingPositions[0], board, 1)) // if the king is in check
-                // black won by checkmate
-                // the higher the depth, the closer to the origin, the worse for white
-                return int.MinValue + 100 - depth;
-            return 0; // game is a draw by stalemate
+            return eval;
         }
         else
         {
             // black - minimizing player
             int eval = int.MaxValue;
             Span<Move> moves = SearchBoard(board);
-            
-            bool found = false;
 
+            if (moves.Length == 0)
+            {
+                if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check
+                    // white won by checkmate
+                    // the higher the depth, the closer to the origin, and better for white
+                    return int.MaxValue - 100 + depth;
+                return 0;
+            }
+            
             foreach (Move move in moves)
             {
                 moveBoard = new(board, move.PermaChange);
                 moveBoard.MakeMove(move);
-                if (Attacked(moveBoard.KingPositions[1], moveBoard, 0)) // if the king is in check after the move
-                    continue;
-                found = true;
                 
                 eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
                 if (eval <= alpha) break; // alpha cutoff
             }
             
-            if (found)
-                return eval;
-            
-            if (Attacked(board.KingPositions[1], board, 0)) // if the king is in check
-                // white won by checkmate
-                // the higher the depth, the closer to the origin, and better for white
-                return int.MaxValue - 100 + depth;
-            return 0;
+            return eval;
         }
     }
 
