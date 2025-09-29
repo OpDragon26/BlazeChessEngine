@@ -144,6 +144,21 @@ public static class Perft
         }
     }
 
+    public static void AnalyzeBoard(Board board)
+    {
+        Move[] pseudolegal = Search.FilterChecks(Search.PseudolegalSearchBoard(board), board);
+        Move[] legal = Search.SearchBoard(board, false).ToArray();
+
+        if (pseudolegal.Length != legal.Length)
+            PrintMismatch(CompareResults(pseudolegal,  legal), board);
+        else
+        {
+            Console.WriteLine("Correct moves found:");
+            foreach (Move move in legal)
+                Console.WriteLine(move.Notate(board));
+        }
+    }
+
     private static MismatchedMove[] CompareResults(Move[] pseudolegal, Move[] legal)
     {
         List<MismatchedMove> mismatchedList = new();

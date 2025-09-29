@@ -733,9 +733,22 @@ public static class Search
     {
         Dictionary<ulong, ulong> pinStates = new();
         ulong pinned = 0;
-        
-        ulong rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
-        ulong bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
+
+        ulong rookSelected;
+        ulong bishopSelected;
+
+        // king is on the same file where the pawn is taken
+        if (board.enPassant.file != 8 && board.enPassant.rank + (side * 2 - 1) == board.KingPositions[side].rank)
+        {
+            // the en passant cannot happen if the moving pawn would be pinned if the taken pawn is disregarded
+            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
+            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
+        }
+        else // no en passant -> everything is normal
+        {
+            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
+            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();   
+        }
 
         List<Bitboards.PinSearchResult> rookPinSearch = Bitboards.RookPinSearch(board.KingPositions[side], rookSelected);
         List<Bitboards.PinSearchResult> bishopPinSearch = Bitboards.BishopPinSearch(board.KingPositions[side], bishopSelected);
