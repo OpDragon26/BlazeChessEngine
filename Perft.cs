@@ -2,20 +2,7 @@ namespace Blaze;
 
 public static class Perft
 {
-    private static readonly ulong[] CorrectResults =
-    [
-        1,
-        20,
-        400,
-        8_902,
-        197_281,
-        4_865_609,
-        119_060_324,
-        3_195_901_860,
-        84_998_978_956
-    ];
-
-    private static void Run(int depth, Board board, bool testDifference, bool multiThreaded, bool fromStartingPosition = false)
+    private static void RunSingle(int depth, Board board, bool testDifference, bool multiThreaded, PerftTest? comparison)
     {
         PerftResult Result = new(depth);
         Timer timer = new();
@@ -47,16 +34,19 @@ public static class Perft
             }
 
         ulong[] perftResult = Result.GetResult();
-        if (fromStartingPosition)
-            for (int i = perftResult.Length - 1; i > 0; i--)
-                Console.WriteLine(CorrectResults.Length >= perftResult.Length - i
-                    ? $"Depth {perftResult.Length - i}: {perftResult[i]} {(perftResult[i] == CorrectResults[perftResult.Length - i] ? "✓" : $"✕ - should be {CorrectResults[perftResult.Length - i]}")}"
-                    : $"Depth {perftResult.Length - i}: {perftResult[i]}");
-
+        if (comparison != null)
+            comparison.CompareTo(Result);
         else
             for (int i = perftResult.Length - 1; i > 0; i--)
                 Console.WriteLine($"Depth {perftResult.Length - i}: {perftResult[i]}");
-        Console.WriteLine($"Depth {depth} perft completed in {timer.Stop()}ms");
+        Console.WriteLine(comparison != null ?
+            $"Perft {comparison.name} completed at depth {depth} in {timer.Stop()}ms" : 
+            $"Depth {depth} perft completed in {timer.Stop()}ms");
+    }
+
+    private static void RunSingle(int depth, PerftTest test, bool testDifference, bool multiThreaded)
+    {
+        RunSingle(depth + test.depthOffset, test.board, testDifference, multiThreaded, test);
     }
 
     private static void PerftSearch(Board board, int depth, ulong[] results, bool testDifference = false)
@@ -113,9 +103,21 @@ public static class Perft
 
     }
 
-    public static void Run(int depth, bool multiThreaded = true, bool testDifference = false)
+    public static void RunAll(int depth, bool multiThreaded = true, bool testDifference = false)
     {
-        Run(depth, new Board(Presets.StartingBoard), testDifference, multiThreaded, true);
+        foreach (KeyValuePair<string, PerftTest> test in PerftTests)
+        {
+            RunSingle(depth, test.Value, testDifference, multiThreaded);
+        }
+    }
+
+    public static void Run(int depth, string perft, bool multiThreaded = true, bool testDifference = false)
+    {
+        if (PerftTests.TryGetValue(perft, out var test))
+            RunSingle(depth, test, testDifference, multiThreaded);
+        else
+            Console.WriteLine($"Perft {perft} not found");
+        
     }
 
     private class PerftResult(int depth)
@@ -144,6 +146,59 @@ public static class Perft
         }
     }
 
+    private class PerftTest(string name, Board board, ulong[] expected, int depthOffset)
+    {
+        public readonly Board board = board;
+        public readonly int depthOffset = depthOffset;
+        public readonly string name = name;
+        public void CompareTo(PerftResult result)
+        {
+            ulong[] results = result.GetResult();
+            
+            for (int i = results.Length - 1; i > 0; i--)
+            {
+                if (results.Length - i > expected.Length) // out of bounds
+                    Console.WriteLine($"Depth {results.Length - i}: {results[i]}");
+                else // in bounds
+                {
+                    Console.WriteLine(results[i] == expected[results.Length - i] ? 
+                        $"Depth {results.Length - i}: {results[i]} ✓" : // correct
+                        $"Depth {results.Length - i}: {results[i]} ✕ - should be {expected[results.Length - i]}"); // incorrect
+                }
+            }
+        }
+    }
+    
+    static readonly PerftTest StartingPositionTest = new("Starting Position", new(Presets.StartingBoard), 
+        [
+            1,
+            20,
+            400,
+            8_902,
+            197_281,
+            4_865_609,
+            119_060_324,
+            3_195_901_860,
+            84_998_978_956
+        ], 0);
+    
+    static readonly PerftTest KiwipeteTest = new("Kiwipete", new("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0"), 
+    [
+        1,
+        48,
+        2_039,
+        97_862,
+        4_085_603,
+        193_690_690,
+        8_031_647_685,
+    ], -1);
+
+    private static readonly Dictionary<string, PerftTest> PerftTests = new()
+    {
+        { "start", StartingPositionTest },
+        { "kiwipete", KiwipeteTest },
+    };
+    
     public static void AnalyzeBoard(Board board)
     {
         Move[] pseudolegal = Search.FilterChecks(Search.PseudolegalSearchBoard(board), board);
