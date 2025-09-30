@@ -50,9 +50,9 @@ public static class Bitboards
     private static ulong[]? EnPassantMasks; // contains both the source and the destination
     
     public static readonly ulong WhiteShortCastleMask = 0x6000000000000000;
-    public static readonly ulong WhiteLongCastleMask = 0xE00000000000000;
+    public static readonly ulong WhiteLongCastleMask = 0xC00000000000000;
     public static readonly ulong BlackShortCastleMask = 0x60;
-    public static readonly ulong BlackLongCastleMask = 0xE;
+    public static readonly ulong BlackLongCastleMask = 0xC;
     public static readonly Move WhiteShortCastle = new((4,0), (6,0), type: 0b0010, priority: 6);
     public static readonly Move WhiteLongCastle = new((4,0), (2,0), type: 0b0011, priority: 3);
     public static readonly Move BlackShortCastle = new((4,7), (6,7), type: 0b1010, priority: 6);
