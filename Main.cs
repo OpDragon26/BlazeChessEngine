@@ -9,7 +9,12 @@ Bitboards.Init();
 //new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: true, dynamicDepth: false).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
-Perft.Run(5, "kiwipete", testDifference: true);
+
+Perft.Breakdown(new Board(Presets.StartingBoard), 2);
+
+//new Match(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), Type.Analysis).Play();
+
+//Perft.Run(5, "kiwipete", testDifference: true);
 
 //Board PinTestBoard = new Board("3b3k/8/8/b2B4/3KR3/2RQ4/3n4/8 w - - 0 1");
 //Match.PrintBitboard(Search.GetPinStates(PinTestBoard, 0).pinned, 0);

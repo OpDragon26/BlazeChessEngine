@@ -2,7 +2,7 @@ namespace Blaze;
 
 public static class Perft
 {
-    private static void RunSingle(int depth, Board board, bool testDifference, bool multiThreaded, PerftTest? comparison)
+    private static ulong RunSingle(int depth, Board board, bool testDifference, bool multiThreaded, PerftTest? comparison, bool printResult = true)
     {
         PerftResult Result = new(depth);
         Timer timer = new();
@@ -12,11 +12,14 @@ public static class Perft
 
         Move[] moves = Search.SearchBoard(board, false).ToArray();
 
+        if (depth == 1)
+            return (ulong)moves.Length;
+
         if (multiThreaded)
             Parallel.For(0, moves.Length, i =>
             {
                 ulong[] threadResults = Result.GetNew();
-
+                
                 Board moveBoard = new Board(board);
                 moveBoard.MakeMove(moves[i]);
                 threadResults[depth]++;
@@ -26,13 +29,15 @@ public static class Perft
             foreach (Move move in moves)
             {
                 ulong[] threadResults = Result.GetNew();
-
+                
                 Board moveBoard = new Board(board);
                 moveBoard.MakeMove(move);
                 threadResults[depth]++;
                 PerftSearch(moveBoard, depth - 1, threadResults, testDifference);
             }
 
+        if (!printResult) return Result.GetResult().Aggregate((a, b) => a + b);
+        
         ulong[] perftResult = Result.GetResult();
         if (comparison != null)
             comparison.CompareTo(Result);
@@ -42,6 +47,7 @@ public static class Perft
         Console.WriteLine(comparison != null ?
             $"Perft {comparison.name} completed at depth {depth} in {timer.Stop()}ms" : 
             $"Depth {depth} perft completed in {timer.Stop()}ms");
+        return perftResult.Aggregate((a, b) => a + b);
     }
 
     private static void RunSingle(int depth, PerftTest test, bool testDifference, bool multiThreaded)
@@ -87,7 +93,7 @@ public static class Perft
                 results[1] += (ulong)Search.SearchBoard(board, false).Length;
                 return;
             }
-
+            
             Span<Move> moves = Search.SearchBoard(board, false);
 
             foreach (Move move in moves)
@@ -167,6 +173,24 @@ public static class Perft
                 }
             }
         }
+    }
+
+    public static void Breakdown(Board board, int depth)
+    {
+        Move[] moves = Search.SearchBoard(board).ToArray();
+        Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
+        ulong total = 0;
+
+        foreach (Move move in moves)
+        {
+            Board moveBoard = new Board(board);
+            moveBoard.MakeMove(move);
+            ulong perftResult = RunSingle(depth - 1, moveBoard, false, depth > 3, null, false);
+            Console.WriteLine($"{move.GetUCI()}: {perftResult}");
+            total += perftResult;
+        }
+        
+        Console.WriteLine($"Nodes Searched: {total}");
     }
     
     static readonly PerftTest StartingPositionTest = new("Starting Position", new(Presets.StartingBoard), 
