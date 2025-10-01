@@ -11,19 +11,45 @@ public enum Type
     Autoplay,
 }
 
-public class Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
+public class Match
 {
     private static readonly  Random random = new();
 
-    private readonly Board board = board;
+    private readonly Board board;
     private int movesMade;
     private int ply;
-    private readonly bool WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    private readonly bool WindowsMode;
     private bool inBook = true;
-    private readonly List<PGNNode> game = new();
+    private readonly List<PGNNode> game;
     private string? LasMove;
-    private int depth = depth;
-    private readonly int OriginalDepth = depth;
+    private int depth;
+    private readonly int OriginalDepth;
+    private readonly bool debug;
+    private readonly Type type;
+    private readonly bool alwaysUseUnicode;
+    private readonly int side;
+    private readonly int moves;
+    private readonly bool dynamicDepth;
+
+    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
+    {
+        this.board = board;
+        WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        game = new();
+        this.depth = depth;
+        OriginalDepth = depth;
+    
+        this.debug = debug;
+        this.type = type;
+        this.alwaysUseUnicode = alwaysUseUnicode;
+        this.side = side;
+        this.moves = moves;
+        this.dynamicDepth = dynamicDepth;
+        
+        Hasher.Init();
+        Bitboards.Init();
+        Book.Init(Books.Standard);
+    }
 
     private static readonly int[,] Thresholds = new[,]
     {
@@ -77,7 +103,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = move.Notate(board);
                         board.MakeMove(move);
-                        game.Add(new PGNNode { board = new Board(board, false) , move = move});
+                        game.Add(new PGNNode { board = new Board(board) , move = move});
                         play = CheckOutcome();
                     } 
                     break;
@@ -109,7 +135,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                         LasMove = bestMove.Notate(board);
                         
                         board.MakeMove(bestMove, true);
-                        game.Add(new PGNNode { board = new Board(board, false) , move = bestMove , time = result.time });
+                        game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
                         play = CheckOutcome();
                     }
                     break;
@@ -147,7 +173,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove, true);
-                        game.Add(new PGNNode { board = new Board(board, false), move = botMove , time = result.time });
+                        game.Add(new PGNNode { board = new Board(board), move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -200,7 +226,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
 
                         LasMove = botMove.Notate(board);
                         board.MakeMove(botMove, true);
-                        game.Add(new PGNNode { board = new Board(board, false) , move = botMove , time = result.time });
+                        game.Add(new PGNNode { board = new Board(board) , move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
                         if (!CheckOutcome())
@@ -369,6 +395,24 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
         if (!string.IsNullOrEmpty(playerMoveString))
         {
             if (playerMoveString == "exit") return false;
+            if (playerMoveString.Contains("perft")) 
+                try
+                {
+                    if (!debug) Console.Clear();
+                    int perftDepth = int.Parse(playerMoveString.Split(' ')[1]);
+                    Perft.Breakdown(board, perftDepth);
+                    Console.ReadKey();
+                }
+                catch
+                {
+                    Console.WriteLine("perft error");
+                    Console.ReadKey();
+                }
+            if (playerMoveString == "analyze")
+            {
+                Perft.AnalyzeBoard(board);
+                Console.ReadKey();
+            }
                         
             // if the move is in the correct notation
             try
@@ -383,7 +427,7 @@ public class Match(Board board, Type type, int side = 0, int depth = 2, bool deb
                 {
                     LasMove = move.Notate(board);
                     board.MakeMove(move, true);
-                    game.Add(new PGNNode { board = new Board(board, false) , move = move , time = timer.Stop()});
+                    game.Add(new PGNNode { board = new Board(board) , move = move , time = timer.Stop()});
                     if (!CheckOutcome())
                         return false;
                 }

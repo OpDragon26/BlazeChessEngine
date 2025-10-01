@@ -26,7 +26,7 @@ public class Move
 
     // the castling mask has up to 4 bits. When the move is made, the mask is then AND-ed with the castling rights in the board, removing the bit that is 0
     
-    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false, bool capture = false)
+    public Move((int file, int rank) source, (int file, int rank) destination, uint promotion = 0b111, int type = 0b0000, int priority = 0, byte castlingBan = 0b1111, bool pawn = false)
     {
         Source = source;
         Destination = destination;
@@ -49,7 +49,7 @@ public class Move
     {
         var item = obj as Move;
         if (item == null) return false;
-        return Source == item.Source && Destination == item.Destination && Promotion == item.Promotion && Type == item.Type;
+        return Source == item.Source && Destination == item.Destination && Promotion == item.Promotion && Type == item.Type && Pawn == item.Pawn;
     }
 
     public override int GetHashCode()
@@ -131,7 +131,7 @@ public class Move
         throw new ArgumentException($"Failed to parse square: '{square}' Invalid file: '{square[0]}'");
     }
 
-    private static string GetSquare((int file, int rank) square)
+    public static string GetSquare((int file, int rank) square)
     {
         return Files[square.file] + (square.rank + 1).ToString();
     }
@@ -207,7 +207,7 @@ public class Move
             notation += GetSquare(Destination);
         }
         
-        Board tempBoard = new Board(board, false);
+        Board tempBoard = new Board(board);
         tempBoard.MakeMove(this);
         Outcome outcome = tempBoard.GetOutcome();
         if (outcome is Outcome.BlackWin or Outcome.WhiteWin)

@@ -7,9 +7,13 @@ public static class Hasher
     public static readonly int[] EnPassantFiles = new int[9];
     private static readonly Random random = new();
     public static int BlackToMove;
+    private static bool init;
     
     public static void Init()
     {
+        if (init) return;
+        init = true;
+        
         // for every piece
         for (int i = 0; i < 14; i++)
         {
