@@ -4,7 +4,7 @@ using Type = Blaze.Type;
 Bitboards.Init();
 
 Hasher.Init();
-Book.Init(Books.Test);
+Book.Init(Books.Standard);
 
 new Match(new Board(Presets.StartingBoard), Type.Autoplay, side: 0, depth: 6, debug: false, dynamicDepth: true).Play();
 
