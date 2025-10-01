@@ -140,6 +140,103 @@ public class Board
         this.considerRepetition = considerRepetition;
     }
 
+    public bool CompareTo(Board other)
+    {
+        bool match = true;
+        
+        // piecewise board
+        for (int rank = 0; rank < 8; rank++)
+            match &= board[rank] == other.board[rank];
+        
+
+        if (!match)
+        {
+            Console.WriteLine("Piecewise boards don't match");
+            Console.WriteLine("this");
+            Match.PrintBoard(this, 0);
+            Console.WriteLine("other");
+            Match.PrintBoard(other, 0);
+            return false;
+        }
+        
+        // side
+        if (side != other.side)
+        {
+            Console.WriteLine("Side is opposite");
+            return false;
+        }
+        
+        // en passant
+        if (enPassant != other.enPassant)
+        {
+            Console.WriteLine((enPassant.file == 8, other.enPassant.file == 8) switch
+            {
+                (true, true) => "Erm what?",
+                (true, false) => $"En passant present only on other: {Move.GetSquare(other.enPassant)}",
+                (false, true) => $"En passant present only on this: {Move.GetSquare(enPassant)}",
+                (false, false) => $"En passant doesn't match - this: {Move.GetSquare(enPassant)} other: {Move.GetSquare(other.enPassant)}"
+            });
+            return false;
+        }
+        
+        // bitboards
+        if (AllPieces() != other.AllPieces())
+        {
+            Console.WriteLine("Piece bitboards don't match");
+            Console.WriteLine("this");
+            Match.PrintBitboard(AllPieces(), 0);
+            Console.WriteLine("other");
+            Match.PrintBitboard(other.AllPieces(), 0);
+            Console.WriteLine("difference");
+            Match.PrintBitboard(AllPieces() ^ other.AllPieces(), 1);
+            
+            return false;
+        }
+        // pawn only
+        if (AllPawns() != other.AllPawns())
+        {
+            Console.WriteLine("Pawn bitboards don't match");
+            Console.WriteLine("this");
+            Match.PrintBitboard(AllPawns(), 0);
+            Console.WriteLine("other");
+            Match.PrintBitboard(other.AllPawns(), 0);
+            Console.WriteLine("difference");
+            Match.PrintBitboard(AllPawns() ^ other.AllPawns(), 1);
+            
+            return false;
+        }
+        
+        // castling rights
+        if (castling != other.castling)
+        {
+            Console.WriteLine("Castling rights don't match");
+            Console.WriteLine($"this: {Convert.ToString(castling, 2).PadLeft(4, '0')}");
+            Console.WriteLine($"other: {Convert.ToString(other.castling, 2).PadLeft(4, '0')}");
+            
+            return false;
+        }
+        
+        // king positions
+        if (!KingPositions.Equals(other.KingPositions))
+        {
+            Console.WriteLine("King positions don't match");
+            Console.WriteLine($"this: {KingPositions}");
+            Console.WriteLine($"other: {other.KingPositions}");
+            
+            return false;
+        }
+        
+        // castled
+        if (castled != other.castled)
+        {
+            Console.WriteLine("Castled is inconsistent");
+            Console.WriteLine($"this: {Convert.ToString(castled, 2).PadLeft(2, '0')}");
+            Console.WriteLine($"other: {Convert.ToString(other.castled, 2).PadLeft(2, '0')}");
+        }
+        
+        return true;
+    }
+
     private void AutoFillBitboards()
     {
         for (int rank = 0; rank < 8; rank++)
@@ -474,7 +571,7 @@ public class Board
         board[rank] |= (piece << (file * 4)); // set the square to the given piece
     }
     
-    public struct CoordinatePair((int file, int rank) white, (int file, int rank)  black)
+    public struct CoordinatePair((int file, int rank) white, (int file, int rank)  black) : IEquatable<CoordinatePair>
     {
         private (int file, int rank)  white = white;
         private (int file, int rank)  black = black;
@@ -486,6 +583,16 @@ public class Board
                 if (side == 0) white = value;
                 else black = value;
             }
+        }
+
+        bool IEquatable<CoordinatePair>.Equals(CoordinatePair other)
+        {
+            return white == other.white && black == other.black;
+        }
+
+        public override string ToString()
+        {
+            return $"white: {white}, black: {black}";
         }
     }
     

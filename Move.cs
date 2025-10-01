@@ -131,7 +131,7 @@ public class Move
         throw new ArgumentException($"Failed to parse square: '{square}' Invalid file: '{square[0]}'");
     }
 
-    private static string GetSquare((int file, int rank) square)
+    public static string GetSquare((int file, int rank) square)
     {
         return Files[square.file] + (square.rank + 1).ToString();
     }
