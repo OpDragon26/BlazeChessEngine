@@ -1,15 +1,13 @@
 ﻿using Blaze;
 
 //Book.Init(Books.Test);
-//Bitboards.Init();
-//Hasher.Init();
 
 new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
 //Search.SearchBoard(new(Presets.StartingBoard));
 //new Match(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), Type.Analysis).Play();
 
-//Perft.Run(5, "kiwipete");
+//Perft.Run(5, "start");
 
 //Perft.BreakdownWithExamine(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), 3, [0]);
 

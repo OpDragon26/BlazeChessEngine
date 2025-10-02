@@ -4,6 +4,7 @@ public static class Perft
 {
     private static ulong RunSingle(int depth, Board board, bool testDifference, bool multiThreaded, PerftTest? comparison, bool printResult = true)
     {
+        Bitboards.Init();
         PerftResult Result = new(depth);
         Timer timer = new();
         timer.Start();

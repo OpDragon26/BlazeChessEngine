@@ -777,38 +777,89 @@ public static class Bitboards
         return combinations;
     }
 
-    private static List<ulong> Combinations(ulong blockerMask, ulong limit)
+    private static List<ulong> Combinations(ulong blockerMask, int limit)
     {
-        List<int> indices = new List<int>();
+        List<int> allIndices = new List<int>();
         int l = 0;
         for (int i = 0; i < 64; i++)
         {
             if (((blockerMask << 63 - i) >> 63) != 0)
             {
                 l++;
-                indices.Add(i);
+                allIndices.Add(i);
             }
         }
-
-        List<ulong> combinations = new();
         
-        for (ulong i = 0; i < (ulong)Math.Pow(2, l); i++)
+        List<ulong> combinations = new();
+
+        foreach (ulong i in GetValidCombinations(l, Math.Min(l, limit)))
         {
-            if (ulong.PopCount(i) > limit)
-                continue;
-            
             ulong combination = 0;
 
             // for each index in the mask, push the bits of the combination to the right indices 
             for (int j = 0; j < l; j++)
             {
-                combination ^= ((i << 63 - j) >> 63) << indices[j];
+                combination ^= ((i << 63 - j) >> 63) << allIndices[j];
             }
-
             combinations.Add(combination);
         }
-
+        
         return combinations;
+    }
+
+    private static IEnumerable<ulong> GetValidCombinations(int max, int limit)
+    {
+        if (max < 0 || max > 64)
+            throw new ArgumentOutOfRangeException(nameof(max), "max must be between 0 and 64 inclusive.");
+
+        if (limit < 0 || limit > max)
+            throw new ArgumentOutOfRangeException(nameof(limit), "limit must be between 0 and max inclusive.");
+
+        for (int ones = 0; ones <= limit; ones++)
+        {
+            foreach (ulong combination in GenerateBitCombinations(max, ones))
+            {
+                yield return combination;
+            }
+        }
+    }
+
+    // Generates all ulong numbers with exactly 'ones' bits set within 'max' bit positions
+    private static IEnumerable<ulong> GenerateBitCombinations(int max, int ones)
+    {
+        if (ones == 0)
+        {
+            yield return 0;
+            yield break;
+        }
+
+        int[] indices = new int[ones];
+        for (int i = 0; i < ones; i++)
+            indices[i] = i;
+
+        while (indices[0] <= max - ones)
+        {
+            // Build ulong from bit indices
+            ulong value = 0;
+            foreach (int index in indices)
+            {
+                value |= 1UL << index;
+            }
+
+            yield return value;
+
+            // Generate next combination
+            int pos = ones - 1;
+            while (pos >= 0 && indices[pos] == max - ones + pos)
+                pos--;
+
+            if (pos < 0)
+                break;
+
+            indices[pos]++;
+            for (int i = pos + 1; i < ones; i++)
+                indices[i] = indices[i - 1] + 1;
+        }
     }
 
     private static readonly (int file, int rank)[] RookPattern =
