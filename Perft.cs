@@ -177,7 +177,7 @@ public static class Perft
 
     public static void Breakdown(Board board, int depth)
     {
-        Move[] moves = Search.SearchBoard(board).ToArray();
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
         Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
         ulong total = 0;
 
@@ -191,6 +191,51 @@ public static class Perft
         }
         
         Console.WriteLine($"Nodes Searched: {total}");
+    }
+
+    public static void BreakdownWithExamine(Board board, int depth, int[] examination)
+    {
+        foreach (int examine in examination)
+        {
+            depth--;
+            Move[] initMoves = Search.SearchBoard(board, false).ToArray();
+            Array.Sort(initMoves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
+            board.MakeMove(initMoves[examine]);
+            Console.Write($"{initMoves[examine].GetUCI()}, ");
+        }
+        Console.WriteLine();
+
+        if (depth < 1)
+            Console.WriteLine("Depth too low");
+        if (depth == 1)
+        {
+            Move[] moves = Search.SearchBoard(board, false).ToArray();
+            Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
+            
+            foreach (Move move in moves)
+                Console.WriteLine($"{move.GetUCI()}");
+            
+            Console.WriteLine($"Found: {moves.Length}");
+        }
+        else
+        {
+            Move[] moves = Search.SearchBoard(board, false).ToArray();
+            
+            Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
+            ulong total = 0;
+
+            foreach (Move move in moves)
+            {
+                Board moveBoard = new Board(board);
+                moveBoard.MakeMove(move);
+                ulong perftResult = RunSingle(depth - 1, moveBoard, false, depth > 3, null, false);
+                Console.WriteLine($"{move.GetUCI()}: {perftResult}");
+                total += perftResult;
+            }
+
+            Console.WriteLine($"Nodes Searched: {total}");
+        }
+        
     }
     
     static readonly PerftTest StartingPositionTest = new("Starting Position", new(Presets.StartingBoard), 

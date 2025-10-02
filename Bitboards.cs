@@ -994,7 +994,7 @@ public static class Bitboards
         return bits.ToArray();
     }
     
-    private static Move[] GetBitboardMoves(ulong bitboard, (int file, int rank) pos, int priority, byte castlingBan = 0b1111, bool pawn = false)
+    private static Move[] GetBitboardMoves(ulong bitboard, (int file, int rank) pos, int priority, bool pawn = false)
     {
         List<Move> moves = new List<Move>();
         
@@ -1005,18 +1005,18 @@ public static class Bitboards
                 if ((bitboard & GetSquare(file, rank)) != 0) // if the given square is on
                 {
                     if (!pawn)
-                        moves.Add(new Move(pos, (file,rank), priority: priority + PriorityWeights[file, rank], castlingBan: castlingBan));
+                        moves.Add(new Move(pos, (file,rank), priority: priority + PriorityWeights[file, rank]));
                     else if (pawn)
                     {
                         if (rank == 0 || rank == 7) // promotion
                         {
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteQueen, priority: priority + PriorityWeights[file, rank] + 50, castlingBan: castlingBan, pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteRook, priority: priority + PriorityWeights[file, rank] + 5, castlingBan: castlingBan, pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteBishop, priority: priority + PriorityWeights[file, rank], castlingBan: castlingBan, pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteKnight, priority: priority + PriorityWeights[file, rank], castlingBan: castlingBan, pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteQueen, priority: priority + PriorityWeights[file, rank] + 50, pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteRook, priority: priority + PriorityWeights[file, rank] + 5, pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteBishop, priority: priority + PriorityWeights[file, rank], pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteKnight, priority: priority + PriorityWeights[file, rank], pawn: pawn));
                         }
                         else
-                            moves.Add(new Move(pos, (file,rank), priority: priority + PriorityWeights[file, rank] + 20, castlingBan: castlingBan, pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), priority: priority + PriorityWeights[file, rank] + 20, pawn: pawn));
 
                     }
                 }

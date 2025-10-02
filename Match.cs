@@ -46,8 +46,8 @@ public class Match
         this.moves = moves;
         this.dynamicDepth = dynamicDepth;
         
-        Hasher.Init();
         Bitboards.Init();
+        Hasher.Init();
         Book.Init(Books.Standard);
     }
 
