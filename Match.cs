@@ -11,6 +11,12 @@ public enum Type
     Autoplay,
 }
 
+public enum Side
+{
+    White,
+    Black
+}
+
 public class Match
 {
     private static readonly  Random random = new();
@@ -31,7 +37,7 @@ public class Match
     private readonly int moves;
     private readonly bool dynamicDepth;
 
-    public Match(Board board, Type type, int side = 0, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
+    public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
     {
         this.board = board;
         WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -42,7 +48,7 @@ public class Match
         this.debug = debug;
         this.type = type;
         this.alwaysUseUnicode = alwaysUseUnicode;
-        this.side = side;
+        this.side = (int)side;
         this.moves = moves;
         this.dynamicDepth = dynamicDepth;
         
@@ -117,25 +123,7 @@ public class Match
                         play = PlayerTurn();
                     else
                     {
-                        // make the top choice of the engine on the board
-                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
-                        Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
-
-                        if (dynamicDepth)
-                        {
-                            if (result.time < increaseThreshold && !result.bookMove) depth++;
-                            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth = Math.Max(OriginalDepth, depth - 1);
-                            if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
-                                depth--;   
-                        }
-
-                        inBook = result.bookMove;
-                        Move bestMove = result.move;
-
-                        LasMove = bestMove.Notate(board);
-                        
-                        board.MakeMove(bestMove, true);
-                        game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
+                        BotMove();
                         play = CheckOutcome();
                     }
                     break;
@@ -442,6 +430,35 @@ public class Match
         }
 
         return true;
+    }
+
+    public Outcome GetOutcome()
+    {
+        return board.GetOutcome();
+    }
+    
+    public void BotMove()
+    {
+        // make the top choice of the engine on the board
+        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+        Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
+
+        if (dynamicDepth)
+        {
+            if (result.time < increaseThreshold && !result.bookMove) depth++;
+            else if (result.time > (board.IsEndgame() ? endgameDecreaseThreshold : decreaseThreshold)) depth = Math.Max(OriginalDepth, depth - 1);
+            if ((result.move.Promotion & Pieces.TypeMask) == Pieces.WhiteQueen)
+                depth--;   
+        }
+
+        inBook = result.bookMove;
+        Move bestMove = result.move;
+
+        LasMove = bestMove.Notate(board);
+                        
+        board.MakeMove(bestMove, true);
+        game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
+        ply++;
     }
 
     // if the game has ended, return false to break the Play() loop
