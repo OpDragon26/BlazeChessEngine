@@ -62,6 +62,9 @@ public static class Bitboards
     public static readonly ulong[] NeighbourMasks = new ulong[8];
     public static readonly ulong[,,,] PathLookup =  new ulong[8,8,8,8];
     
+    public const ulong RightSidePawns = 0x1f1f1f1f1f1f00;
+    public const ulong LeftSidePawns = 0xf8f8f8f8f8f800;
+    
     private static readonly int[,] PriorityWeights =
     {
         {0,1,2,3,3,2,1,0},
@@ -805,6 +808,66 @@ public static class Bitboards
         }
         
         return combinations;
+    }
+
+    private readonly struct EvalPair(PawnEvaluation white, PawnEvaluation black)
+    {
+        public PawnEvaluation this[int index] => index == 0 ? white : black;
+    }
+    
+    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, int side, float materialMultiplier = 0)
+    {
+        PawnEvaluation eval = new();
+        uint pawn = side == 0 ? Pieces.WhitePawn : Pieces.BlackPawn;
+        List<PassedBonus> passedBonuses = new();
+
+        for (int file = 0; file < 8; file++)
+        for (int rank = 0; rank < 8; rank++)
+        {
+            if ((GetSquare(file, rank) & pawnCombination) != 0)
+            {
+                // material and weight at the square
+                eval.eval += (int)(Pieces.Value[pawn] * materialMultiplier + Weights.Pieces[pawn, file, rank]);
+                // protected
+                eval.eval += (side == 0 ? 1 : -1) * Weights.ProtectedPawnBonus * 
+                             (int)ulong.PopCount(pawnCombination & (side == 0 ? BlackPawnCaptureMasks[file, rank] : WhitePawnCaptureMasks[file, rank])); 
+                // passed masks
+                passedBonuses.Add(side == 0 
+                    ? new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.WhitePassedPawnBonuses[rank]) 
+                    : new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.BlackPassedPawnBonuses[rank]));
+
+                if ((NeighbourMasks[file] & pawnCombination) == 0)
+                    eval.eval += (side == 0 ? 1 : -1) * Weights.IsolatedPawnPenalty;
+            }
+        }
+        
+        eval.passedPawnChecks = passedBonuses.ToArray();
+        return eval;
+    }
+    
+    private class PawnEvaluation
+    {
+        public int eval;
+        public PassedBonus[] passedPawnChecks;
+
+        public int GetFinal(ulong enemyPawns)
+        {
+            int final = eval;
+            foreach (PassedBonus p in passedPawnChecks)
+                if (p.Test(enemyPawns)) final += p.bonus;
+            
+            return final;
+        }
+    }
+
+    private readonly struct PassedBonus(ulong mask, int bonus)
+    {
+        public readonly int bonus = bonus;
+
+        public bool Test(ulong enemyPawns)
+        {
+            return (mask & enemyPawns) == 0;
+        }
     }
 
     private static IEnumerable<ulong> GetValidCombinations(int max, int limit)
