@@ -41,6 +41,8 @@ public static class Bitboards
     
     private static readonly ulong[,][] BlockCaptures = new ulong[8,8][];
     private static ulong[]? BlockMoves;
+
+    private static readonly List<ulong> PawnEvalCombinations = new();
     
     private const ulong Frame = 0xFF818181818181FF;
 
@@ -62,8 +64,8 @@ public static class Bitboards
     public static readonly ulong[] NeighbourMasks = new ulong[8];
     public static readonly ulong[,,,] PathLookup =  new ulong[8,8,8,8];
     
-    public const ulong RightSidePawns = 0x1f1f1f1f1f1f00;
-    public const ulong LeftSidePawns = 0xf8f8f8f8f8f800;
+    private const ulong RightSidePawns = 0x1f1f1f1f1f1f00;
+    private const ulong LeftSidePawns = 0xf8f8f8f8f8f800;
     
     private static readonly int[,] PriorityWeights =
     {
@@ -96,6 +98,7 @@ public static class Bitboards
         public static (ulong magicNumber, int push, int highest) EnPassantNumbers;
         public static readonly (ulong magicNumber, int push, int highest)[,] BlockCaptureNumbers = new (ulong magicNumber, int push, int highest)[8,8];
         public static (ulong magicNumber, int push, int highest) BlockMoveNumber;
+        public static (ulong magicNumber, int push, int highest) PawnEvalNumber;
         
         public static readonly (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
         public static readonly (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
@@ -124,6 +127,9 @@ public static class Bitboards
         public static readonly ulong[,][] BishopPinLineBitboardLookup = new ulong[8,8][];
         public static readonly List<PinSearchResult>[,][] RookPinLookup = new List<PinSearchResult>[8,8][];
         public static readonly List<PinSearchResult>[,][] BishopPinLookup = new List<PinSearchResult>[8,8][];
+
+        public static PawnEvaluation[] WhitePawnEvalLookup = [];
+        public static PawnEvaluation[] BlackPawnEvalLookup = [];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -299,6 +305,26 @@ public static class Bitboards
     {
         return MagicLookup.BlockMovePawnLookup[pos.file, pos.rank]
             [(squares * MagicLookup.BlockMoveNumber.magicNumber) >> MagicLookup.BlockMoveNumber.push];
+    }
+
+    public static PawnEvaluation WhitePawnEvaluationLookupRight((int file, int rank) pos, ulong pawns)
+    {
+        return MagicLookup.WhitePawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
+    }
+    
+    public static PawnEvaluation BlackPawnEvaluationLookupRight((int file, int rank) pos, ulong pawns)
+    {
+        return MagicLookup.BlackPawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
+    }
+    
+    public static PawnEvaluation WhitePawnEvaluationLookupLeft((int file, int rank) pos, ulong pawns)
+    {
+        return MagicLookup.WhitePawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
+    }
+    
+    public static PawnEvaluation BlackPawnEvaluationLookupLeft((int file, int rank) pos, ulong pawns)
+    {
+        return MagicLookup.BlackPawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
     }
 
     public static void Init()
@@ -486,6 +512,20 @@ public static class Bitboards
         foreach (ulong mask in EnPassantMasks) // for each possible en passant
         {
             MagicLookup.EnPassantLookupArray[(mask * MagicLookup.EnPassantNumbers.magicNumber) >> MagicLookup.EnPassantNumbers.push] = GetEnPassantMoves(mask);
+        }
+        
+        // pawn eval combinations
+        PawnEvalCombinations.AddRange(Combinations(RightSidePawns, 8));
+        PawnEvalCombinations.AddRange(Combinations(LeftSidePawns, 8));
+        MagicLookup.PawnEvalNumber = MagicNumbers.GenerateRepeat(PawnEvalCombinations.ToArray(), 1000, 40);
+        Console.WriteLine(MagicLookup.PawnEvalNumber);
+
+        MagicLookup.WhitePawnEvalLookup = new PawnEvaluation[MagicLookup.PawnEvalNumber.highest];
+        MagicLookup.BlackPawnEvalLookup = new PawnEvaluation[MagicLookup.PawnEvalNumber.highest];
+        foreach (ulong combination in PawnEvalCombinations)
+        {
+            MagicLookup.WhitePawnEvalLookup[(combination * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push] = GeneratePawnEval(combination, 0, Weights.MaterialMultiplier);
+            MagicLookup.BlackPawnEvalLookup[(combination * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push] = GeneratePawnEval(combination, 1, Weights.MaterialMultiplier);
         }
         
         //Console.WriteLine("Generating Magic Numbers");
@@ -809,12 +849,8 @@ public static class Bitboards
         
         return combinations;
     }
-
-    private readonly struct EvalPair(PawnEvaluation white, PawnEvaluation black)
-    {
-        public PawnEvaluation this[int index] => index == 0 ? white : black;
-    }
     
+    // TODO: skip necessary files to avoid double counting
     private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, int side, float materialMultiplier = 0)
     {
         PawnEvaluation eval = new();
@@ -845,10 +881,10 @@ public static class Bitboards
         return eval;
     }
     
-    private class PawnEvaluation
+    public class PawnEvaluation
     {
         public int eval;
-        public PassedBonus[] passedPawnChecks;
+        public PassedBonus[] passedPawnChecks = [];
 
         public int GetFinal(ulong enemyPawns)
         {
@@ -860,7 +896,7 @@ public static class Bitboards
         }
     }
 
-    private readonly struct PassedBonus(ulong mask, int bonus)
+    public readonly struct PassedBonus(ulong mask, int bonus)
     {
         public readonly int bonus = bonus;
 
