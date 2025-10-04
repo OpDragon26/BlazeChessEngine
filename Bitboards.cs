@@ -41,8 +41,6 @@ public static class Bitboards
     
     private static readonly ulong[,][] BlockCaptures = new ulong[8,8][];
     private static ulong[]? BlockMoves;
-
-    private static readonly List<ulong> PawnEvalCombinations = new();
     
     private const ulong Frame = 0xFF818181818181FF;
 
@@ -64,8 +62,10 @@ public static class Bitboards
     public static readonly ulong[] NeighbourMasks = new ulong[8];
     public static readonly ulong[,,,] PathLookup =  new ulong[8,8,8,8];
     
-    private const ulong RightSidePawns = 0x1f1f1f1f1f1f00;
-    private const ulong LeftSidePawns = 0xf8f8f8f8f8f800;
+    private const ulong LeftSidePawns = 0x1f1f1f1f1f1f00;
+    private const ulong RightSidePawns = 0xf8f8f8f8f8f800;
+    private const ulong LeftSidePawnsExcl = 0xf0f0f0f0f0f00;
+    private const ulong RightSidePawnsExcl = 0xf0f0f0f0f0f000;
     
     private static readonly int[,] PriorityWeights =
     {
@@ -98,7 +98,8 @@ public static class Bitboards
         public static (ulong magicNumber, int push, int highest) EnPassantNumbers;
         public static readonly (ulong magicNumber, int push, int highest)[,] BlockCaptureNumbers = new (ulong magicNumber, int push, int highest)[8,8];
         public static (ulong magicNumber, int push, int highest) BlockMoveNumber;
-        public static (ulong magicNumber, int push, int highest) PawnEvalNumber;
+        public static (ulong magicNumber, int push, int highest) RightPawnEvalNumber;
+        public static (ulong magicNumber, int push, int highest) LeftPawnEvalNumber;
         
         public static readonly (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
         public static readonly (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
@@ -128,8 +129,8 @@ public static class Bitboards
         public static readonly List<PinSearchResult>[,][] RookPinLookup = new List<PinSearchResult>[8,8][];
         public static readonly List<PinSearchResult>[,][] BishopPinLookup = new List<PinSearchResult>[8,8][];
 
-        public static PawnEvaluation[] WhitePawnEvalLookup = [];
-        public static PawnEvaluation[] BlackPawnEvalLookup = [];
+        public static PawnEvaluation[] RightPawnEvalLookup = [];
+        public static PawnEvaluation[] LeftPawnEvalLookup = [];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -307,24 +308,14 @@ public static class Bitboards
             [(squares * MagicLookup.BlockMoveNumber.magicNumber) >> MagicLookup.BlockMoveNumber.push];
     }
 
-    public static PawnEvaluation WhitePawnEvaluationLookupRight((int file, int rank) pos, ulong pawns)
+    public static PawnEvaluation PawnEvaluationLookupRight(ulong pawns)
     {
-        return MagicLookup.WhitePawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
+        return MagicLookup.RightPawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push];
     }
     
-    public static PawnEvaluation BlackPawnEvaluationLookupRight((int file, int rank) pos, ulong pawns)
+    public static PawnEvaluation PawnEvaluationLookupLeft(ulong pawns)
     {
-        return MagicLookup.BlackPawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
-    }
-    
-    public static PawnEvaluation WhitePawnEvaluationLookupLeft((int file, int rank) pos, ulong pawns)
-    {
-        return MagicLookup.WhitePawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
-    }
-    
-    public static PawnEvaluation BlackPawnEvaluationLookupLeft((int file, int rank) pos, ulong pawns)
-    {
-        return MagicLookup.BlackPawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push];
+        return MagicLookup.LeftPawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push];
     }
 
     public static void Init()
@@ -333,7 +324,9 @@ public static class Bitboards
         init = true;
         List<ulong> enPassantBitboards = new List<ulong>();
         List<ulong> blockMoveList = new();
-
+        Timer t = new Timer();
+        t.Start();
+        
         // Create the masks for every square on the board
         for (int rank = 0; rank < 8; rank++)
         {
@@ -515,17 +508,21 @@ public static class Bitboards
         }
         
         // pawn eval combinations
-        PawnEvalCombinations.AddRange(Combinations(RightSidePawns, 8));
-        PawnEvalCombinations.AddRange(Combinations(LeftSidePawns, 8));
-        MagicLookup.PawnEvalNumber = MagicNumbers.GenerateRepeat(PawnEvalCombinations.ToArray(), 1000, 40);
-        Console.WriteLine(MagicLookup.PawnEvalNumber);
-
-        MagicLookup.WhitePawnEvalLookup = new PawnEvaluation[MagicLookup.PawnEvalNumber.highest];
-        MagicLookup.BlackPawnEvalLookup = new PawnEvaluation[MagicLookup.PawnEvalNumber.highest];
-        foreach (ulong combination in PawnEvalCombinations)
+        List<ulong> rightSidePawns = Combinations(RightSidePawns, 8);
+        List<ulong> leftSidePawns = Combinations(LeftSidePawns, 8);
+        
+        // MagicLookup.PawnEvalNumber = MagicNumbers.GenerateRepeat(PawnEvalCombinations.Distinct().ToArray(), 1, 33, false, true);
+        MagicLookup.RightPawnEvalNumber = MagicNumbers.GenerateMagicNumberParallel(rightSidePawns.Distinct().ToArray(), 33, 7);
+        MagicLookup.LeftPawnEvalNumber = MagicNumbers.GenerateMagicNumberParallel(leftSidePawns.Distinct().ToArray(), 33, 7);
+        MagicLookup.RightPawnEvalLookup = new PawnEvaluation[MagicLookup.RightPawnEvalNumber.highest];
+        MagicLookup.LeftPawnEvalLookup = new PawnEvaluation[MagicLookup.LeftPawnEvalNumber.highest];
+        foreach (ulong combination in rightSidePawns)
         {
-            MagicLookup.WhitePawnEvalLookup[(combination * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push] = GeneratePawnEval(combination, 0, Weights.MaterialMultiplier);
-            MagicLookup.BlackPawnEvalLookup[(combination * MagicLookup.PawnEvalNumber.magicNumber) >> MagicLookup.PawnEvalNumber.push] = GeneratePawnEval(combination, 1, Weights.MaterialMultiplier);
+            MagicLookup.RightPawnEvalLookup[(combination * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push] = GeneratePawnEval(combination, ActualSide.Right, Weights.MaterialMultiplier);
+        }
+        foreach (ulong combination in leftSidePawns)
+        {
+            MagicLookup.LeftPawnEvalLookup[(combination * MagicLookup.LeftPawnEvalNumber.magicNumber) >> MagicLookup.LeftPawnEvalNumber.push] = GeneratePawnEval(combination, ActualSide.Left, Weights.MaterialMultiplier);
         }
         
         //Console.WriteLine("Generating Magic Numbers");
@@ -784,6 +781,8 @@ public static class Bitboards
             
             PathLookup[startFile, startRank, endFile, endRank] = path;
         }
+
+        Console.WriteLine($"Bitboards initialized in {t.Stop()}ms");
     }
     
     // reused code from my previous attempt
@@ -849,48 +848,76 @@ public static class Bitboards
         
         return combinations;
     }
+
+    enum ActualSide
+    {
+        Right, Left
+    }
     
-    // TODO: skip necessary files to avoid double counting
-    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, int side, float materialMultiplier = 0)
+    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, ActualSide boardSide, float materialMultiplier = 0)
     {
         PawnEvaluation eval = new();
-        uint pawn = side == 0 ? Pieces.WhitePawn : Pieces.BlackPawn;
-        List<PassedBonus> passedBonuses = new();
+        List<PassedBonus> wPassedBonuses = new();
+        List<PassedBonus> bPassedBonuses = new();
 
-        for (int file = 0; file < 8; file++)
-        for (int rank = 0; rank < 8; rank++)
+        ulong relevantPawns = pawnCombination & (boardSide == ActualSide.Right ? RightSidePawnsExcl : LeftSidePawnsExcl);
+        int startAtFile = boardSide == ActualSide.Right ? 4 : 0;
+        int endAtFile = boardSide == ActualSide.Right ? 8 : 4;
+
+        for (int file = startAtFile; file < endAtFile; file++)
         {
-            if ((GetSquare(file, rank) & pawnCombination) != 0)
+            if ((GetFile(file) & relevantPawns) == 0)
+                continue;
+            
+            for (int rank = 1; rank < 7; rank++)
             {
-                // material and weight at the square
-                eval.eval += (int)(Pieces.Value[pawn] * materialMultiplier + Weights.Pieces[pawn, file, rank]);
-                // protected
-                eval.eval += (side == 0 ? 1 : -1) * Weights.ProtectedPawnBonus * 
-                             (int)ulong.PopCount(pawnCombination & (side == 0 ? BlackPawnCaptureMasks[file, rank] : WhitePawnCaptureMasks[file, rank])); 
-                // passed masks
-                passedBonuses.Add(side == 0 
-                    ? new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.WhitePassedPawnBonuses[rank]) 
-                    : new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.BlackPassedPawnBonuses[rank]));
-
-                if ((NeighbourMasks[file] & pawnCombination) == 0)
-                    eval.eval += (side == 0 ? 1 : -1) * Weights.IsolatedPawnPenalty;
+                if ((GetSquare(file, rank) & relevantPawns) != 0)
+                {
+                    // material and weight at the square
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * materialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier + Weights.Pieces[Pieces.BlackPawn, file, rank]);
+                    // protected
+                    eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & WhitePawnCaptureMasks[file, rank]);
+                    eval.bEval -= Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & BlackPawnCaptureMasks[file, rank]);
+                    // passed masks
+                    wPassedBonuses.Add(new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.WhitePassedPawnBonuses[rank]));
+                    bPassedBonuses.Add(new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.BlackPassedPawnBonuses[rank]));
+                    
+                    {
+                        eval.wEval += Weights.IsolatedPawnPenalty;
+                        eval.bEval -= Weights.IsolatedPawnPenalty;
+                    }
+                }
             }
         }
         
-        eval.passedPawnChecks = passedBonuses.ToArray();
+        eval.wPassedPawnChecks = wPassedBonuses.ToArray();
+        eval.bPassedPawnChecks = bPassedBonuses.ToArray();
         return eval;
     }
     
     public class PawnEvaluation
     {
-        public int eval;
-        public PassedBonus[] passedPawnChecks = [];
+        public int wEval;
+        public int bEval;
+        public PassedBonus[] wPassedPawnChecks = [];
+        public PassedBonus[] bPassedPawnChecks = [];
 
-        public int GetFinal(ulong enemyPawns)
+        public int GetFinal(ulong enemyPawns, int side)
         {
-            int final = eval;
-            foreach (PassedBonus p in passedPawnChecks)
-                if (p.Test(enemyPawns)) final += p.bonus;
+            int final;
+            if (side == 0)
+            {
+                final = wEval;
+                foreach (PassedBonus p in wPassedPawnChecks)
+                    if (p.Test(enemyPawns)) final += p.bonus;
+            }
+            else
+            {
+                final = bEval;
+                foreach (PassedBonus p in bPassedPawnChecks)
+                    if (p.Test(enemyPawns)) final += p.bonus;
+            }
             
             return final;
         }
@@ -913,7 +940,7 @@ public static class Bitboards
 
         if (limit < 0 || limit > max)
             throw new ArgumentOutOfRangeException(nameof(limit), "limit must be between 0 and max inclusive.");
-
+        
         for (int ones = 0; ones <= limit; ones++)
         {
             foreach (ulong combination in GenerateBitCombinations(max, ones))

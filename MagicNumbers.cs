@@ -4,10 +4,13 @@ public static class MagicNumbers
 {
     // generate a magic number with a push of at least 48
     // reused code from my previous attempt
-    private static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations, int minPush)
+    private static (ulong magicNumber, int push, int highest) GenerateMagicNumber(ulong[] combinations, int minPush, bool tryImprove, bool log)
     {
+        Console.WriteLine($"Generating magic numbers for {combinations.Length} combinations");
+        
         ulong magicNumber;
         int push = 0;
+        int attempts = 0;
 
         ulong[] results = new ulong[combinations.Length];
 
@@ -15,47 +18,51 @@ public static class MagicNumbers
         {
             // generate random ulong
             ulong candidateNumber = RandomUlong();
-
-            // multiply every combination with the magic number and push them right by 48, only leaving the leftmost 16 bits
+            // multiply every combination with the magic number and push them right by minPush, only leaving the leftmost 64 - minPush bits
             for (int i = 0; i < combinations.Length; i++)
-            {
                 results[i] = (combinations[i] * candidateNumber) >> minPush;
-            }
+            
 
             // if the result array contains duplicates, the number isn't magic, so don't bother checking it for further pushes
-            if (!results.GroupBy(x => x).Any(g => g.Count() > 1))
+            if (!results.GroupBy(x => x).Any(x => x.Count() > 1))
             {
-                ulong[] temp = (ulong[])results.Clone();
-
-                for (int i = 0; i < 16; i++)
+                if (tryImprove)
                 {
-                    // push further right by a certain amount, and check for duplicates again
-                    for (int j = 0; j < temp.Length; j++)
-                    {
-                        temp[j] >>= 1;
-                    }
+                    ulong[] temp = (ulong[])results.Clone();
 
-                    // if there are no duplicates in temp
-                    if (!temp.GroupBy(x => x).Any(g => g.Count() > 1))
+                    for (int i = 0; i < 16; i++)
                     {
-                        if (i == 0)
-                            continue;
-                        for (int j = 0; j < results.Length; j++)
+                        // push further right by a certain amount, and check for duplicates again
+                        for (int j = 0; j < temp.Length; j++)
                         {
-                            results[j] >>= 1;
+                            temp[j] >>= 1;
                         }
 
-                        push++;
-                    }
-                    else break;
+                        // if there are no duplicates in temp
+                        if (!temp.GroupBy(x => x).Any(g => g.Count() > 1))
+                        {
+                            if (i == 0)
+                                continue;
+                            for (int j = 0; j < results.Length; j++)
+                            {
+                                results[j] >>= 1;
+                            }
 
+                            push++;
+                        }
+                        else break;
+                    }
                 }
 
                 magicNumber = candidateNumber;
                 break;
             }
+
+            attempts++;
+            if (log) Console.WriteLine($"attempts: {attempts}");
         }
 
+        Console.WriteLine($"magic number found in {attempts} attempts");
         return (magicNumber, push + minPush, (int)results.Max());
     }
 
@@ -64,18 +71,74 @@ public static class MagicNumbers
         return type == "rook" ? RookNumbers : BishopNumbers;
     }
 
-    public static (ulong magicNumber, int push, int highest) GenerateRepeat(ulong[] combinations, int iterations, int minPush = 48)
+    public static (ulong magicNumber, int push, int highest) GenerateRepeat(ulong[] combinations, int iterations, int minPush = 48, bool tryImprove = true, bool log = false)
     {
         (ulong magicNumber, int push, int highest) magicNumber = (0, 0, 0);
         
         for (int i = 0; i < iterations; i++)
         {
-            (ulong magicNumber, int push, int highest) New = GenerateMagicNumber(combinations, minPush);
+            (ulong magicNumber, int push, int highest) New = GenerateMagicNumber(combinations, minPush, tryImprove, log);
             if (New.push > magicNumber.push || (New.push == magicNumber.push && New.highest < magicNumber.highest))
                 magicNumber = New;
         }
         
         return magicNumber;
+    }
+
+    public static (ulong magicNumber, int push, int highest) GenerateMagicNumberParallel(ulong[] combinations, int push, int threads = 5, bool log = true)
+    {
+        Mutex mut = new();
+        bool found = false;
+        ulong magicNumber = 0;
+        int highest = 0;
+        int totalAttempts = 0;
+
+        if (log) Console.WriteLine($"Generating magic numbers parallel for {combinations.Length} combinations");
+        
+        Parallel.For(1, threads + 1, (i, state) =>
+        {
+            int attempts = 0;
+            
+            while (true)
+            {
+                mut.WaitOne();
+                if (found)
+                    state.Break();
+                ulong candidateNumber = RandomUlong();
+                attempts++;
+                totalAttempts++;
+                if (log) 
+                {
+                    if (totalAttempts % 100 == 0) Console.WriteLine($"Total attempts: {totalAttempts}");
+                    Console.WriteLine($"Attempt {attempts} on thread {i}");
+                }
+                mut.ReleaseMutex();
+
+                (bool isMagic, int highest) result = IsMagic(candidateNumber, push, combinations);
+                
+                if (result.isMagic)
+                {
+                    mut.WaitOne();
+                    Console.WriteLine($"Magic number found: {(candidateNumber, push, result.highest)} in a total of {totalAttempts} attempts on thread {i}");
+                    found = true;
+                    magicNumber = candidateNumber;
+                    highest = result.highest;
+                    state.Break();
+                    mut.ReleaseMutex();
+                    return;
+                }
+            }
+        });
+        
+        return (magicNumber, push, highest);
+    }
+
+    private static (bool isMagic, int highest) IsMagic(ulong number, int push, ulong[] combinations)
+    {
+        ulong[] results = new ulong[combinations.Length];
+        for (int i = 0; i < combinations.Length; i++)
+            results[i] = (combinations[i] * number) >> push;
+        return (!results.GroupBy(x => x).Any(x => x.Count() > 1), (int)results.Max());
     }
     
     private static readonly Random RandGen = new();
