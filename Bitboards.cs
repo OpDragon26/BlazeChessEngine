@@ -920,7 +920,7 @@ public static class Bitboards
                 {
                     // material and weight at the square
                     eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * materialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
                     // protected
                     eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & WhitePawnCaptureMasks[file, rank]);
                     eval.bEval -= Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & BlackPawnCaptureMasks[file, rank]);
