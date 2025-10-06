@@ -4,7 +4,8 @@
 //Bitboards.Init();
 //Hasher.Init();
 
-new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+//new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: true, dynamicDepth: false).Play();
+Perft.TestGameSpeed(15, 6);
 
 //Search.SearchBoard(new(Presets.StartingBoard));
 //new Match(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), Type.Analysis).Play();

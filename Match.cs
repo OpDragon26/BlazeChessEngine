@@ -73,7 +73,7 @@ public class Match
     private static int decreaseThreshold = 9000;
     private static int endgameDecreaseThreshold = 6000;
 
-    public void Play()
+    public List<PGNNode> Play()
     {
         movesMade = 0;
         ply = 0;
@@ -245,6 +245,8 @@ public class Match
         CheckOutcome();
         if (!WindowsMode) Print(side); else Print(side, IHateWindows);
         Console.WriteLine($"Full game:\n{GetPGN()}");
+        
+        return game;
     }
 
     private void PrintLastMove()
