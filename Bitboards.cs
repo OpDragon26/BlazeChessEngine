@@ -62,10 +62,12 @@ public static class Bitboards
     public static readonly ulong[] NeighbourMasks = new ulong[8];
     public static readonly ulong[,,,] PathLookup =  new ulong[8,8,8,8];
     
-    private const ulong LeftSidePawns = 0x1f1f1f1f1f1f00;
-    private const ulong RightSidePawns = 0xf8f8f8f8f8f800;
-    private const ulong LeftSidePawnsExcl = 0xf0f0f0f0f0f00;
-    private const ulong RightSidePawnsExcl = 0xf0f0f0f0f0f000;
+    private const ulong RightPawns = 0xf0f0f0f0f0f000;
+    private const ulong LeftPawns = 0xf0f0f0f0f0f00;
+    private const ulong CenterPawns = 0x3c3c3c3c3c3c00;
+    private const ulong LeftPawnMask = 0x7070707070700;
+    private const ulong RightPawnMask = 0xe0e0e0e0e0e000;
+    private const ulong CenterPawnMask = 0x18181818181800;
     
     private static readonly int[,] PriorityWeights =
     {
@@ -100,6 +102,7 @@ public static class Bitboards
         public static (ulong magicNumber, int push, int highest) BlockMoveNumber;
         public static (ulong magicNumber, int push, int highest) RightPawnEvalNumber;
         public static (ulong magicNumber, int push, int highest) LeftPawnEvalNumber;
+        public static (ulong magicNumber, int push, int highest) CenterPawnEvalNumber;
         
         public static readonly (Move[] moves, ulong captures)[,][] RookLookup = new (Move[] moves, ulong captures)[8,8][];
         public static readonly (Move[] moves, ulong captures)[,][] BishopLookup = new (Move[] moves, ulong captures)[8,8][];
@@ -131,6 +134,7 @@ public static class Bitboards
 
         public static PawnEvaluation[] RightPawnEvalLookup = [];
         public static PawnEvaluation[] LeftPawnEvalLookup = [];
+        public static PawnEvaluation[] CenterPawnEvalLookup = [];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -310,12 +314,17 @@ public static class Bitboards
 
     public static PawnEvaluation PawnEvaluationLookupRight(ulong pawns)
     {
-        return MagicLookup.RightPawnEvalLookup[((pawns & RightSidePawns) * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push];
+        return MagicLookup.RightPawnEvalLookup[((pawns & RightPawns) * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push];
     }
     
     public static PawnEvaluation PawnEvaluationLookupLeft(ulong pawns)
     {
-        return MagicLookup.LeftPawnEvalLookup[((pawns & LeftSidePawns) * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push];
+        return MagicLookup.LeftPawnEvalLookup[((pawns & LeftPawns) * MagicLookup.LeftPawnEvalNumber.magicNumber) >> MagicLookup.LeftPawnEvalNumber.push];
+    }
+    
+    public static PawnEvaluation PawnEvaluationLookupCenter(ulong pawns)
+    {
+        return MagicLookup.CenterPawnEvalLookup[((pawns & CenterPawns) * MagicLookup.CenterPawnEvalNumber.magicNumber) >> MagicLookup.CenterPawnEvalNumber.push];
     }
 
     public static void Init()
@@ -326,6 +335,8 @@ public static class Bitboards
         List<ulong> blockMoveList = new();
         Timer t = new Timer();
         t.Start();
+        
+        Console.WriteLine("Initializing magic bitboards. This should take approximately 10-20 seconds");
         
         // Create the masks for every square on the board
         for (int rank = 0; rank < 8; rank++)
@@ -508,22 +519,39 @@ public static class Bitboards
         }
         
         // pawn eval combinations
-        List<ulong> rightSidePawns = Combinations(RightSidePawns, 8);
-        List<ulong> leftSidePawns = Combinations(LeftSidePawns, 8);
+        List<ulong> rightPawns = Combinations(RightPawns, 8);
+        List<ulong> leftPawns = Combinations(LeftPawns, 8);
+        List<ulong> centerPawns = Combinations(CenterPawns, 8);
         
-        // MagicLookup.PawnEvalNumber = MagicNumbers.GenerateRepeat(PawnEvalCombinations.Distinct().ToArray(), 1, 33, false, true);
-        MagicLookup.RightPawnEvalNumber = MagicNumbers.GenerateMagicNumberParallel(rightSidePawns.Distinct().ToArray(), 33, 7);
-        MagicLookup.LeftPawnEvalNumber = MagicNumbers.GenerateMagicNumberParallel(leftSidePawns.Distinct().ToArray(), 33, 7);
-        MagicLookup.RightPawnEvalLookup = new PawnEvaluation[MagicLookup.RightPawnEvalNumber.highest];
-        MagicLookup.LeftPawnEvalLookup = new PawnEvaluation[MagicLookup.LeftPawnEvalNumber.highest];
-        foreach (ulong combination in rightSidePawns)
+        MagicLookup.RightPawnEvalNumber = (17067507152026048335, 37, 134217725); // MagicNumbers.GenerateMagicNumberParallel(rightPawns.Distinct().ToArray(),37 ,7, false);
+        MagicLookup.LeftPawnEvalNumber = (615594976254142229, 37, 134217609); // MagicNumbers.GenerateMagicNumberParallel(leftPawns.Distinct().ToArray(), 37, 7, false);
+        MagicLookup.CenterPawnEvalNumber = (15570990422680516493, 37, 134217566); // MagicNumbers.GenerateMagicNumberParallel(centerPawns.Distinct().ToArray(), 37, 7, false);
+        
+        MagicLookup.RightPawnEvalLookup = new PawnEvaluation[MagicLookup.RightPawnEvalNumber.highest+ 1];
+        MagicLookup.LeftPawnEvalLookup = new PawnEvaluation[MagicLookup.LeftPawnEvalNumber.highest + 1];
+        MagicLookup.CenterPawnEvalLookup = new PawnEvaluation[MagicLookup.CenterPawnEvalNumber.highest + 1];
+
+        Parallel.For(0, 3, e =>
         {
-            MagicLookup.RightPawnEvalLookup[(combination * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push] = GeneratePawnEval(combination, ActualSide.Right, Weights.MaterialMultiplier);
-        }
-        foreach (ulong combination in leftSidePawns)
-        {
-            MagicLookup.LeftPawnEvalLookup[(combination * MagicLookup.LeftPawnEvalNumber.magicNumber) >> MagicLookup.LeftPawnEvalNumber.push] = GeneratePawnEval(combination, ActualSide.Left, Weights.MaterialMultiplier);
-        }
+            switch (e)
+            {
+                case 0:
+                    foreach (ulong combination in rightPawns)
+                        MagicLookup.RightPawnEvalLookup[(combination * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push] = 
+                            GeneratePawnEval(combination, Section.Right, Weights.MaterialMultiplier);
+                    break;
+                case 1:
+                    foreach (ulong combination in leftPawns)
+                        MagicLookup.LeftPawnEvalLookup[(combination * MagicLookup.LeftPawnEvalNumber.magicNumber) >> MagicLookup.LeftPawnEvalNumber.push] = 
+                            GeneratePawnEval(combination, Section.Left, Weights.MaterialMultiplier);
+                    break;
+                case 2:
+                    foreach (ulong combination in centerPawns)
+                        MagicLookup.CenterPawnEvalLookup[(combination * MagicLookup.CenterPawnEvalNumber.magicNumber) >> MagicLookup.CenterPawnEvalNumber.push] = 
+                            GeneratePawnEval(combination, Section.Center, Weights.MaterialMultiplier);
+                    break;
+            }
+        });
         
         //Console.WriteLine("Generating Magic Numbers");
         
@@ -849,20 +877,37 @@ public static class Bitboards
         return combinations;
     }
 
-    enum ActualSide
+    enum Section
     {
-        Right, Left
+        Right, Left, Center
     }
     
-    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, ActualSide boardSide, float materialMultiplier = 0)
+    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, Section boardSide, float materialMultiplier = 0)
     {
         PawnEvaluation eval = new();
         List<PassedBonus> wPassedBonuses = new();
         List<PassedBonus> bPassedBonuses = new();
 
-        ulong relevantPawns = pawnCombination & (boardSide == ActualSide.Right ? RightSidePawnsExcl : LeftSidePawnsExcl);
-        int startAtFile = boardSide == ActualSide.Right ? 4 : 0;
-        int endAtFile = boardSide == ActualSide.Right ? 8 : 4;
+        ulong relevantPawns = pawnCombination & boardSide switch
+        {
+            Section.Right => RightPawnMask,
+            Section.Left => LeftPawnMask,
+            Section.Center => CenterPawnMask,
+            _ => throw new Exception("no")
+        };
+        int startAtFile = boardSide switch
+        {
+            Section.Left => 0,
+            Section.Center => 3,
+            Section.Right => 5,
+            _ => throw new Exception("no")
+        };
+        int endAtFile = boardSide switch {
+            Section.Left => 3,
+            Section.Center => 5,
+            Section.Right => 8,
+            _ => throw new Exception("no")
+        };
 
         for (int file = startAtFile; file < endAtFile; file++)
         {
@@ -875,7 +920,7 @@ public static class Bitboards
                 {
                     // material and weight at the square
                     eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * materialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier + Weights.Pieces[Pieces.BlackPawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, rank]);
                     // protected
                     eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & WhitePawnCaptureMasks[file, rank]);
                     eval.bEval -= Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & BlackPawnCaptureMasks[file, rank]);
@@ -883,6 +928,7 @@ public static class Bitboards
                     wPassedBonuses.Add(new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.WhitePassedPawnBonuses[rank]));
                     bPassedBonuses.Add(new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.BlackPassedPawnBonuses[rank]));
                     
+                    if ((NeighbourMasks[file] & pawnCombination) == 0)
                     {
                         eval.wEval += Weights.IsolatedPawnPenalty;
                         eval.bEval -= Weights.IsolatedPawnPenalty;

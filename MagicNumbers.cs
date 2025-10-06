@@ -24,7 +24,7 @@ public static class MagicNumbers
             
 
             // if the result array contains duplicates, the number isn't magic, so don't bother checking it for further pushes
-            if (!results.GroupBy(x => x).Any(x => x.Count() > 1))
+            if (results.Length == new HashSet<ulong>(results).Count)
             {
                 if (tryImprove)
                 {
@@ -59,7 +59,7 @@ public static class MagicNumbers
             }
 
             attempts++;
-            if (log) Console.WriteLine($"attempts: {attempts}");
+            if (log || attempts % 1000 == 0) Console.WriteLine($"attempts: {attempts}");
         }
 
         Console.WriteLine($"magic number found in {attempts} attempts");
@@ -93,9 +93,9 @@ public static class MagicNumbers
         int highest = 0;
         int totalAttempts = 0;
 
-        if (log) Console.WriteLine($"Generating magic numbers parallel for {combinations.Length} combinations");
+        Console.WriteLine($"Generating magic numbers parallel for {combinations.Length} combinations");
         
-        Parallel.For(1, threads + 1, (i, state) =>
+        Parallel.For(1, threads + 1, (i) =>
         {
             int attempts = 0;
             
@@ -103,15 +103,15 @@ public static class MagicNumbers
             {
                 mut.WaitOne();
                 if (found)
-                    state.Break();
+                    break;
                 ulong candidateNumber = RandomUlong();
                 attempts++;
                 totalAttempts++;
-                if (log) 
-                {
-                    if (totalAttempts % 100 == 0) Console.WriteLine($"Total attempts: {totalAttempts}");
+                if (log)
                     Console.WriteLine($"Attempt {attempts} on thread {i}");
-                }
+                if (totalAttempts % 1000 == 0) 
+                    Console.WriteLine($"Total attempts: {totalAttempts}");
+
                 mut.ReleaseMutex();
 
                 (bool isMagic, int highest) result = IsMagic(candidateNumber, push, combinations);
@@ -123,9 +123,8 @@ public static class MagicNumbers
                     found = true;
                     magicNumber = candidateNumber;
                     highest = result.highest;
-                    state.Break();
                     mut.ReleaseMutex();
-                    return;
+                    break;
                 }
             }
         });
@@ -136,9 +135,12 @@ public static class MagicNumbers
     private static (bool isMagic, int highest) IsMagic(ulong number, int push, ulong[] combinations)
     {
         ulong[] results = new ulong[combinations.Length];
-        for (int i = 0; i < combinations.Length; i++)
+        for (int i = 0; i < results.Length; i++)
             results[i] = (combinations[i] * number) >> push;
-        return (!results.GroupBy(x => x).Any(x => x.Count() > 1), (int)results.Max());
+        
+        if (results.Length == new HashSet<ulong>(results).Count)
+            return (true, (int)results.Max());
+        return (false, 0);
     }
     
     private static readonly Random RandGen = new();
