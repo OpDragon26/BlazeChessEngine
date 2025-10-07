@@ -4,7 +4,6 @@
 //Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
-
 new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
 //Perft.TestGameSpeed(15, 6, false);

@@ -59,7 +59,7 @@ public static class Bitboards
     public static readonly Move BlackLongCastle = new((4,7), (2,7), type: 0b1011, priority: 3);
     
     private static readonly ulong[] PassedPawnMasks = new ulong[8];
-    public static readonly ulong[] NeighbourMasks = new ulong[8];
+    private static readonly ulong[] NeighbourMasks = new ulong[8];
     public static readonly ulong[,,,] PathLookup =  new ulong[8,8,8,8];
     
     private const ulong RightPawns = 0xf0f0f0f0f0f000;
@@ -68,6 +68,11 @@ public static class Bitboards
     private const ulong LeftPawnMask = 0x7070707070700;
     private const ulong RightPawnMask = 0xe0e0e0e0e0e000;
     private const ulong CenterPawnMask = 0x18181818181800;
+
+    private const ulong FirstSlice =  0xffff;
+    private const ulong SecondSlice = 0xffff0000;
+    private const ulong ThirdSlice =  0xffff00000000;
+    private const ulong FourthSlice = 0xffff000000000000;
     
     private static readonly int[,] PriorityWeights =
     {
@@ -538,17 +543,17 @@ public static class Bitboards
                 case 0:
                     foreach (ulong combination in rightPawns)
                         MagicLookup.RightPawnEvalLookup[(combination * MagicLookup.RightPawnEvalNumber.magicNumber) >> MagicLookup.RightPawnEvalNumber.push] = 
-                            GeneratePawnEval(combination, Section.Right, Weights.MaterialMultiplier);
+                            GeneratePawnEval(combination, Section.Right);
                     break;
                 case 1:
                     foreach (ulong combination in leftPawns)
                         MagicLookup.LeftPawnEvalLookup[(combination * MagicLookup.LeftPawnEvalNumber.magicNumber) >> MagicLookup.LeftPawnEvalNumber.push] = 
-                            GeneratePawnEval(combination, Section.Left, Weights.MaterialMultiplier);
+                            GeneratePawnEval(combination, Section.Left);
                     break;
                 case 2:
                     foreach (ulong combination in centerPawns)
                         MagicLookup.CenterPawnEvalLookup[(combination * MagicLookup.CenterPawnEvalNumber.magicNumber) >> MagicLookup.CenterPawnEvalNumber.push] = 
-                            GeneratePawnEval(combination, Section.Center, Weights.MaterialMultiplier);
+                            GeneratePawnEval(combination, Section.Center);
                     break;
             }
         });
@@ -882,11 +887,13 @@ public static class Bitboards
         Right, Left, Center
     }
     
-    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, Section boardSide, float materialMultiplier = 0)
+    private static PawnEvaluation GeneratePawnEval(ulong pawnCombination, Section boardSide)
     {
         PawnEvaluation eval = new();
         List<PassedBonus> wPassedBonuses = new();
         List<PassedBonus> bPassedBonuses = new();
+        List<PassedBonus> wPassedBonusesEndgame = new();
+        List<PassedBonus> bPassedBonusesEndgame = new();
 
         ulong relevantPawns = pawnCombination & boardSide switch
         {
@@ -919,19 +926,33 @@ public static class Bitboards
                 if ((GetSquare(file, rank) & relevantPawns) != 0)
                 {
                     // material and weight at the square
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * materialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * materialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
+                    
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier + Weights.EndgamePieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier - Weights.EndgamePieces[Pieces.WhitePawn, file, 7-rank]);
+                    
                     // protected
                     eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & WhitePawnCaptureMasks[file, rank]);
                     eval.bEval -= Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & BlackPawnCaptureMasks[file, rank]);
+                    
+                    eval.wEvalEndgame += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & WhitePawnCaptureMasks[file, rank]);
+                    eval.bEvalEndgame -= Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & BlackPawnCaptureMasks[file, rank]);
+                    
                     // passed masks
                     wPassedBonuses.Add(new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.WhitePassedPawnBonuses[rank]));
                     bPassedBonuses.Add(new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.BlackPassedPawnBonuses[rank]));
+                    
+                    wPassedBonusesEndgame.Add(new PassedBonus(GetWhitePassedPawnMask(file, rank), Weights.EndgameWhitePassedPawnBonuses[rank]));
+                    bPassedBonusesEndgame.Add(new PassedBonus(GetBlackPassedPawnMask(file, rank), Weights.EndgameBlackPassedPawnBonuses[rank]));
                     
                     if ((NeighbourMasks[file] & pawnCombination) == 0)
                     {
                         eval.wEval += Weights.IsolatedPawnPenalty;
                         eval.bEval -= Weights.IsolatedPawnPenalty;
+                        
+                        eval.wEvalEndgame += Weights.IsolatedPawnPenalty;
+                        eval.bEvalEndgame -= Weights.IsolatedPawnPenalty;
                     }
                 }
             }
@@ -939,6 +960,9 @@ public static class Bitboards
         
         eval.wPassedPawnChecks = wPassedBonuses.ToArray();
         eval.bPassedPawnChecks = bPassedBonuses.ToArray();
+        eval.wPassedPawnChecksEndgame = wPassedBonusesEndgame.ToArray();
+        eval.bPassedPawnChecksEndgame = bPassedBonusesEndgame.ToArray();
+        
         return eval;
     }
     
@@ -946,8 +970,12 @@ public static class Bitboards
     {
         public int wEval;
         public int bEval;
+        public int wEvalEndgame;
+        public int bEvalEndgame;
         public PassedBonus[] wPassedPawnChecks = [];
         public PassedBonus[] bPassedPawnChecks = [];
+        public PassedBonus[] wPassedPawnChecksEndgame = [];
+        public PassedBonus[] bPassedPawnChecksEndgame = [];
 
         public int GetFinal(ulong enemyPawns, int side)
         {
@@ -967,8 +995,116 @@ public static class Bitboards
             
             return final;
         }
+        
+        public int GetFinalEndgame(ulong enemyPawns, int side)
+        {
+            int final;
+            if (side == 0)
+            {
+                final = wEvalEndgame;
+                foreach (PassedBonus p in wPassedPawnChecksEndgame)
+                    if (p.Test(enemyPawns)) final += p.bonus;
+            }
+            else
+            {
+                final = bEvalEndgame;
+                foreach (PassedBonus p in bPassedPawnChecksEndgame)
+                    if (p.Test(enemyPawns)) final += p.bonus;
+            }
+            
+            return final;
+        }
     }
 
+    enum Slice
+    {
+        First,
+        Second,
+        Third,
+        Fourth,
+    }
+
+    private static RookEvaluation GenerateRookEval(ulong combination, Slice slice)
+    {
+        RookEvaluation eval = new();
+
+        int startRank = slice switch
+        {
+            Slice.First => 6,
+            Slice.Second => 4,
+            Slice.Third => 2,
+            Slice.Fourth => 0,
+            _ => throw new Exception("no")
+        };
+
+        List<OpenFileCheck> fileChecks = new();
+
+        for (int rank = startRank; rank < startRank + 2; rank++)
+        {
+            if ((GetRank(rank) & combination) == 0)
+                continue;
+            
+            for (int file = 0; file < 8; file++)
+            {
+                // square occupied
+                if ((combination & GetSquare(file, rank)) != 0)
+                {
+                    // material and weight multiplier
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.Pieces[Pieces.WhiteRook, file, rank];
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.Pieces[Pieces.BlackRook, file, 7-rank];
+                    
+                    eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.EndgamePieces[Pieces.WhiteRook, file, rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.EndgamePieces[Pieces.BlackRook, file, 7-rank];
+                    
+                    // open files
+                    fileChecks.Add(new(GetFile(file)));
+                }
+            }
+        }
+        
+        eval.fileChecks = fileChecks.ToArray();
+
+        return eval;
+    }
+
+    public class RookEvaluation
+    {
+        public int wEval;
+        public int bEval;
+        public int wEvalEndgame;
+        public int bEvalEndgame;
+        public OpenFileCheck[] fileChecks = [];
+
+        public int GetFinal(ulong enemyPawns, ulong friendlyPawns, int side)
+        {
+            int final;
+            if (side == 0)
+            {
+                final = wEval;
+                foreach (OpenFileCheck f in fileChecks)
+                    final += f.Test(enemyPawns, friendlyPawns);
+            }
+            else
+            {
+                final = bEval;
+                foreach (OpenFileCheck f in fileChecks)
+                    final -= f.Test(enemyPawns, friendlyPawns);
+            }
+            
+            return final;
+        }
+    }
+
+    public readonly struct OpenFileCheck(ulong file)
+    {
+        public int Test(ulong enemy, ulong friendly)
+        {
+            if ((file & friendly) == 0) // at least semi open
+                return (file & enemy) == 0 ? Weights.OpenFileAdvantage : Weights.SemiOpenFileAdvantage;
+            return 0;
+        }
+    }
+    
     public readonly struct PassedBonus(ulong mask, int bonus)
     {
         public readonly int bonus = bonus;
@@ -1439,11 +1575,16 @@ public static class Bitboards
         return File >> (7 - file);
     }
 
-    public static ulong GetWhitePassedPawnMask(int file, int rank)
+    private static ulong GetRank(int rank)
+    {
+        return Rank >> (8 * rank);
+    }
+
+    private static ulong GetWhitePassedPawnMask(int file, int rank)
     {
         return PassedPawnMasks[file] >> (rank * 8 + 8);
     }
-    public static ulong GetBlackPassedPawnMask(int file, int rank)
+    private static ulong GetBlackPassedPawnMask(int file, int rank)
     {
         return PassedPawnMasks[file] << ((8 - rank) * 8);
     }

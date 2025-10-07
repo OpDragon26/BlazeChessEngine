@@ -123,18 +123,18 @@ public static class Search
     {
         int eval = 0;
 
+        ulong whitePieces = board.WhitePieces() ^ board.bitboards[Pieces.WhitePawn];
+        ulong blackPieces = board.BlackPieces() ^ board.bitboards[Pieces.BlackPawn];
+
+        Bitboards.PawnEvaluation wRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation wLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation wCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation bRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]);
+        Bitboards.PawnEvaluation bLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]);
+        Bitboards.PawnEvaluation bCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]);
+        
         if (!board.IsEndgame())
         {
-            ulong whitePieces = board.WhitePieces() ^ board.bitboards[Pieces.WhitePawn];
-            ulong blackPieces = board.BlackPieces() ^ board.bitboards[Pieces.BlackPawn];
-
-            Bitboards.PawnEvaluation wRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]);
-            Bitboards.PawnEvaluation wLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]);
-            Bitboards.PawnEvaluation wCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]);
-            Bitboards.PawnEvaluation bRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]);
-            Bitboards.PawnEvaluation bLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]);
-            Bitboards.PawnEvaluation bCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]);
-            
             eval += wRightEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
             eval += wLeftEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
             eval += wCenterEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
@@ -223,6 +223,13 @@ public static class Search
         }
         else
         {
+            eval += wRightEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wLeftEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wCenterEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += bRightEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bLeftEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bCenterEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            
             for (int file = 0; file < 8; file++)
             {
                 // counts pawns on the file and applies a penalty for multiple on one file
@@ -232,20 +239,11 @@ public static class Search
                 for (int rank = 7; rank >= 0; rank--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.WhitePieces() & Bitboards.GetSquare(file, rank)) != 0) // white piece
+                    if ((whitePieces & Bitboards.GetSquare(file, rank)) != 0) // white piece
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
                         
-                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[Pieces.WhitePawn]) != 0)
-                        {
-                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[Pieces.BlackPawn]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.EndgameWhitePassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[Pieces.WhitePawn]) == 0) // if the pawns are doubled
-                                eval -= 30;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[Pieces.WhitePawn]) == 0) // if the pawn has no neighbours
-                                eval -= 35;
-                        }
-                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval += 40;
@@ -253,24 +251,16 @@ public static class Search
                         
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
-                    else if ((board.BlackPieces() & Bitboards.GetSquare(file, rank)) != 0)
+                    else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.EndgamePieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-
-                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[Pieces.BlackPawn]) != 0)
-                        {
-                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[Pieces.WhitePawn]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.EndgameBlackPassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[Pieces.BlackPawn]) == 0) // if the pawns are doubled
-                                eval += 30;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[Pieces.BlackPawn]) == 0) // if the pawn has no neighbours
-                                eval += 35;
-                        }
-                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
+                        
+                        if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
+                        
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
                 }

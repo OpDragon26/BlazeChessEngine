@@ -9,6 +9,8 @@ public static class Weights
     public const float MobilityMultiplier = 2;
     public const int ProtectedPawnBonus = 10;
     public const int IsolatedPawnPenalty = -20;
+    public const int OpenFileAdvantage = 40;
+    public const int SemiOpenFileAdvantage = 15;
     
     public static readonly int[,,] Pieces = new[,,]
     {
