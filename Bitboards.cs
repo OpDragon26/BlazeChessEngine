@@ -105,6 +105,7 @@ public static class Bitboards
         public static (ulong magicNumber, int push, int highest) EnPassantNumbers;
         public static readonly (ulong magicNumber, int push, int highest)[,] BlockCaptureNumbers = new (ulong magicNumber, int push, int highest)[8,8];
         public static (ulong magicNumber, int push, int highest) BlockMoveNumber;
+        
         public static (ulong magicNumber, int push, int highest) RightPawnEvalNumber;
         public static (ulong magicNumber, int push, int highest) LeftPawnEvalNumber;
         public static (ulong magicNumber, int push, int highest) CenterPawnEvalNumber;
@@ -140,6 +141,11 @@ public static class Bitboards
         public static PawnEvaluation[] RightPawnEvalLookup = [];
         public static PawnEvaluation[] LeftPawnEvalLookup = [];
         public static PawnEvaluation[] CenterPawnEvalLookup = [];
+        
+        public static RookEvaluation[] FirstRookEvalLookup = [];
+        public static RookEvaluation[] SecondRookEvalLookup = [];
+        public static RookEvaluation[] ThirdRookEvalLookup = [];
+        public static RookEvaluation[] FourthRookEvalLookup = [];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -330,6 +336,26 @@ public static class Bitboards
     public static PawnEvaluation PawnEvaluationLookupCenter(ulong pawns)
     {
         return MagicLookup.CenterPawnEvalLookup[((pawns & CenterPawns) * MagicLookup.CenterPawnEvalNumber.magicNumber) >> MagicLookup.CenterPawnEvalNumber.push];
+    }
+
+    public static RookEvaluation FirstRookEvalLookup(ulong rooks)
+    {
+        return MagicLookup.FirstRookEvalLookup[rooks & FirstSlice];
+    }
+
+    public static RookEvaluation SecondRookEvalLookup(ulong rooks)
+    {
+        return MagicLookup.SecondRookEvalLookup[(rooks & SecondSlice) >> 16];
+    }
+
+    public static RookEvaluation ThirdRookEvalLookup(ulong rooks)
+    {
+        return MagicLookup.ThirdRookEvalLookup[(rooks & ThirdSlice) >> 32];
+    }
+
+    public static RookEvaluation FourthRookEvalLookup(ulong rooks)
+    {
+        return MagicLookup.FourthRookEvalLookup[(rooks & FourthSlice) >> 48];
     }
 
     public static void Init()
@@ -554,6 +580,39 @@ public static class Bitboards
                     foreach (ulong combination in centerPawns)
                         MagicLookup.CenterPawnEvalLookup[(combination * MagicLookup.CenterPawnEvalNumber.magicNumber) >> MagicLookup.CenterPawnEvalNumber.push] = 
                             GeneratePawnEval(combination, Section.Center);
+                    break;
+            }
+        });
+        
+        List<ulong> firstSlice = Combinations(FirstSlice, 9);
+        List<ulong> secondSlice = Combinations(SecondSlice, 9);
+        List<ulong> thirdSlice = Combinations(ThirdSlice, 9);
+        List<ulong> fourthSlice = Combinations(FourthSlice, 9);
+        
+        MagicLookup.FirstRookEvalLookup = new RookEvaluation[firstSlice.Max() + 1];
+        MagicLookup.SecondRookEvalLookup = new RookEvaluation[secondSlice.Max(n => n >> 16) + 1];
+        MagicLookup.ThirdRookEvalLookup = new RookEvaluation[thirdSlice.Max(n => n >> 32) + 1];
+        MagicLookup.FourthRookEvalLookup = new RookEvaluation[fourthSlice.Max(n => n >> 48) + 1];
+        
+        Parallel.For(0, 4, e =>
+        {
+            switch (e)
+            {
+                case 0:
+                    foreach (ulong combination in firstSlice)
+                        MagicLookup.FirstRookEvalLookup[combination] = GenerateRookEval(combination, Slice.First);
+                    break;
+                case 1:
+                    foreach (ulong combination in secondSlice)
+                        MagicLookup.SecondRookEvalLookup[combination >> 16] = GenerateRookEval(combination, Slice.Second);
+                    break;
+                case 2:
+                    foreach (ulong combination in thirdSlice)
+                        MagicLookup.ThirdRookEvalLookup[combination >> 32] = GenerateRookEval(combination, Slice.Third);
+                    break;
+                case 3:
+                    foreach (ulong combination in fourthSlice)
+                        MagicLookup.FourthRookEvalLookup[combination >> 48] = GenerateRookEval(combination, Slice.Fourth);
                     break;
             }
         });
@@ -1051,10 +1110,10 @@ public static class Bitboards
                 {
                     // material and weight multiplier
                     eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.Pieces[Pieces.WhiteRook, file, rank];
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.Pieces[Pieces.BlackRook, file, 7-rank];
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.Pieces[Pieces.WhiteRook, file, 7-rank];
                     
                     eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.EndgamePieces[Pieces.WhiteRook, file, rank];
-                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.EndgamePieces[Pieces.BlackRook, file, 7-rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.EndgamePieces[Pieces.WhiteRook, file, 7-rank];
                     
                     // open files
                     fileChecks.Add(new(GetFile(file)));

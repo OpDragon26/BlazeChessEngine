@@ -125,22 +125,28 @@ public static class Search
 
         ulong whitePieces = board.WhitePieces() ^ board.bitboards[Pieces.WhitePawn];
         ulong blackPieces = board.BlackPieces() ^ board.bitboards[Pieces.BlackPawn];
-
-        Bitboards.PawnEvaluation wRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]);
-        Bitboards.PawnEvaluation wLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]);
-        Bitboards.PawnEvaluation wCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]);
-        Bitboards.PawnEvaluation bRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]);
-        Bitboards.PawnEvaluation bLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]);
-        Bitboards.PawnEvaluation bCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]);
         
         if (!board.IsEndgame())
         {
-            eval += wRightEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
-            eval += wLeftEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
-            eval += wCenterEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
-            eval += bRightEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
-            eval += bLeftEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
-            eval += bCenterEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            // pawns
+            eval += Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]).GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            eval += Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]).GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]).GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            
+            eval += Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]).GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            eval += Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]).GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]).GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            
+            // rooks
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
+            
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
             
             for (int file = 0; file < 8; file++)
             {
@@ -155,19 +161,11 @@ public static class Search
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.Pieces[board.GetPiece(file, rank), file, rank];
                         
-                        if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval += 30;
-                        
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
                     else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.Pieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-                        
-                        if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval -= 30;
                         
                         eval -= (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
@@ -223,12 +221,25 @@ public static class Search
         }
         else
         {
-            eval += wRightEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
-            eval += wLeftEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
-            eval += wCenterEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
-            eval += bRightEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
-            eval += bLeftEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
-            eval += bCenterEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            // pawns
+            eval += Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]).GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]).GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]).GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            
+            eval += Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]).GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]).GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]).GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            
+            // rooks
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
+            
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
             
             for (int file = 0; file < 8; file++)
             {
@@ -243,23 +254,11 @@ public static class Search
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
                         
-                        if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
-                        {
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval += 40;
-                        }
-                        
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
                     else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.EndgamePieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-                        
-                        if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
-                        {
-                            if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
-                                eval -= 40;
-                        }
                         
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
