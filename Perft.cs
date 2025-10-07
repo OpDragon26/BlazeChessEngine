@@ -269,6 +269,17 @@ public static class Perft
         { "kiwipete", KiwipeteTest },
     };
     
+    public static void TestGameSpeed(int games, int depth, bool printGames = true)
+    {
+        List<PGNNode> allMoves = new();
+        for (int i = 0; i < games; i++)
+        {
+            allMoves.AddRange(new Match(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
+            Console.WriteLine($"Game {i + 1}/{games}");
+        }
+        Console.WriteLine($"Average time per move: {allMoves.Average(node => node.time)}ms");
+    }
+    
     public static void AnalyzeBoard(Board board)
     {
         Move[] pseudolegal = Search.FilterChecks(Search.PseudolegalSearchBoard(board), board);

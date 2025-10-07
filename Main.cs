@@ -1,11 +1,13 @@
 ﻿using Blaze;
 
 //Bitboards.Init();
-Book.Init(Books.Test);
+//Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
 
-new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: true, dynamicDepth: false).Play();
+new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+
+//Perft.TestGameSpeed(15, 6, false);
 
 //Search.SearchBoard(new(Presets.StartingBoard));
 //new Match(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), Type.Analysis).Play();

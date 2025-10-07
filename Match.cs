@@ -36,8 +36,9 @@ public class Match
     private readonly int side;
     private readonly int moves;
     private readonly bool dynamicDepth;
+    private readonly bool printBoard;
 
-    public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true)
+    public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
     {
         this.board = board;
         WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -51,6 +52,7 @@ public class Match
         this.side = (int)side;
         this.moves = moves;
         this.dynamicDepth = dynamicDepth;
+        this.printBoard = printBoard;
         
         Bitboards.Init();
         Hasher.Init();
@@ -73,7 +75,7 @@ public class Match
     private static int decreaseThreshold = 9000;
     private static int endgameDecreaseThreshold = 6000;
 
-    public void Play()
+    public List<PGNNode> Play()
     {
         movesMade = 0;
         ply = 0;
@@ -90,7 +92,8 @@ public class Match
             {
                 case Type.Analysis:
                     PrintLastMove();
-                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                    if (printBoard) 
+                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     play = PlayerTurn();
                 break;
                 
@@ -98,7 +101,8 @@ public class Match
                     Console.WriteLine($"Depth: {depth}");
                     if (!debug) Console.Clear();
                     PrintLastMove();
-                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                    if (printBoard) 
+                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -118,7 +122,8 @@ public class Match
                     Console.WriteLine($"Depth: {depth}");
                     if (!debug) Console.Clear();
                     PrintLastMove();
-                    if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                    if (printBoard) 
+                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                     if (board.side == side)
                         play = PlayerTurn();
                     else
@@ -141,7 +146,8 @@ public class Match
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
                         PrintLastMove();
-                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                        if (printBoard) 
+                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
@@ -168,7 +174,8 @@ public class Match
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                            if (printBoard) 
+                                if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
 
@@ -194,7 +201,8 @@ public class Match
                         Console.WriteLine($"Move {movesMade} - {movingSide}");
                         
                         PrintLastMove();
-                        if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                        if (printBoard) 
+                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
                         Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
@@ -221,7 +229,8 @@ public class Match
                         {
                             if (!debug) Console.Clear();
                             CheckOutcome();
-                            if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
+                            if (printBoard) 
+                                if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                             break;
                         }
 
@@ -243,8 +252,11 @@ public class Match
         
         if (!debug) Console.Clear();
         CheckOutcome();
-        if (!WindowsMode) Print(side); else Print(side, IHateWindows);
+        if (printBoard) 
+            if (!WindowsMode) Print(side); else Print(side, IHateWindows);
         Console.WriteLine($"Full game:\n{GetPGN()}");
+        
+        return game;
     }
 
     private void PrintLastMove()
