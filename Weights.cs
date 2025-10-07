@@ -8,7 +8,7 @@ public static class Weights
     public const int NoCastlingPenalty = -15;
     public const float MobilityMultiplier = 0.2f;
     public const int ProtectedPawnBonus = 2;
-    public const int IsolatedPawnPenalty = -5;
+    public const int IsolatedPawnPenalty = -2;
     public const int OpenFileAdvantage = 20;
     public const int SemiOpenFileAdvantage = 10;
     
