@@ -123,30 +123,30 @@ public static class Search
     {
         int eval = 0;
 
+        ulong whitePieces = board.WhitePieces() ^ board.bitboards[Pieces.WhitePawn];
+        ulong blackPieces = board.BlackPieces() ^ board.bitboards[Pieces.BlackPawn];
+
+        Bitboards.PawnEvaluation wRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation wLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation wCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.WhitePawn]);
+        Bitboards.PawnEvaluation bRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[Pieces.BlackPawn]);
+        Bitboards.PawnEvaluation bLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[Pieces.BlackPawn]);
+        Bitboards.PawnEvaluation bCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]);
+        
         if (!board.IsEndgame())
         {
-            ulong whitePieces = board.bitboards[0] ^ board.bitboards[2];
-            ulong blackPieces = board.bitboards[1] ^ board.bitboards[3];
-
-            Bitboards.PawnEvaluation wRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[2]);
-            Bitboards.PawnEvaluation wLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[2]);
-            Bitboards.PawnEvaluation wCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[2]);
-            Bitboards.PawnEvaluation bRightEval = Bitboards.PawnEvaluationLookupRight(board.bitboards[3]);
-            Bitboards.PawnEvaluation bLeftEval = Bitboards.PawnEvaluationLookupLeft(board.bitboards[3]);
-            Bitboards.PawnEvaluation bCenterEval = Bitboards.PawnEvaluationLookupCenter(board.bitboards[3]);
-            
-            eval += wRightEval.GetFinal(board.bitboards[3], 0);
-            eval += wLeftEval.GetFinal(board.bitboards[3], 0);
-            eval += wCenterEval.GetFinal(board.bitboards[3], 0);
-            eval += bRightEval.GetFinal(board.bitboards[2], 1);
-            eval += bLeftEval.GetFinal(board.bitboards[2], 1);
-            eval += bCenterEval.GetFinal(board.bitboards[2], 1);
+            eval += wRightEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wLeftEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wCenterEval.GetFinal(board.bitboards[Pieces.BlackPawn], 0);
+            eval += bRightEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bLeftEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bCenterEval.GetFinal(board.bitboards[Pieces.WhitePawn], 1);
             
             for (int file = 0; file < 8; file++)
             {
                 // counts pawns on the file and applies a penalty for multiple on one file
-                eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[2])];
-                eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[3])];
+                eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.WhitePawn])];
+                eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.BlackPawn])];
                 
                 for (int rank = 7; rank >= 0; rank--)
                 {
@@ -200,52 +200,50 @@ public static class Search
             if ((Bitboards.KingSafetyAppliesWhite & Bitboards.GetSquare(board.KingPositions[0])) != 0)
             {
                 // add to the eval based on the safety of white's king
-                eval += Bitboards.KingSafetyBonusLookup(board.KingPositions[0], board.bitboards[0]);
-                if ((Bitboards.KingMasks[board.KingPositions[0].file, board.KingPositions[0].rank] & board.bitboards[1]) != 0) // if there is an enemy piece adjacent to the king
+                eval += Bitboards.KingSafetyBonusLookup(board.KingPositions[0], board.WhitePieces());
+                if ((Bitboards.KingMasks[board.KingPositions[0].file, board.KingPositions[0].rank] & board.BlackPieces()) != 0) // if there is an enemy piece adjacent to the king
                     eval -= 50;
             
                 // take from eval if the pawns in front of the king are missing
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[0].file])
-                    if ((Bitboards.GetFile(file) & board.bitboards[2]) == 0)
+                    if ((Bitboards.GetFile(file) & board.bitboards[Pieces.WhitePawn]) == 0)
                         eval -= 25;
             }
 
             if ((Bitboards.KingSafetyAppliesBlack & Bitboards.GetSquare(board.KingPositions[1])) != 0)
             {
-                eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.bitboards[1]);
-                if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.bitboards[0]) != 0) // if there is an enemy piece adjacent to the king
+                eval -= Bitboards.KingSafetyBonusLookup(board.KingPositions[1], board.BlackPieces());
+                if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.WhitePieces()) != 0) // if there is an enemy piece adjacent to the king
                     eval += 50;
             
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[1].file])
-                    if ((Bitboards.GetFile(file) & board.bitboards[3]) == 0)
+                    if ((Bitboards.GetFile(file) & board.bitboards[Pieces.BlackPawn]) == 0)
                         eval += 25;
             }
         }
         else
         {
+            eval += wRightEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wLeftEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += wCenterEval.GetFinalEndgame(board.bitboards[Pieces.BlackPawn], 0);
+            eval += bRightEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bLeftEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            eval += bCenterEval.GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
+            
             for (int file = 0; file < 8; file++)
             {
                 // counts pawns on the file and applies a penalty for multiple on one file
-                eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[2])];
-                eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[3])];
+                eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.WhitePawn])];
+                eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.BlackPawn])];
                 
                 for (int rank = 7; rank >= 0; rank--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.bitboards[0] & Bitboards.GetSquare(file, rank)) != 0) // white piece
+                    if ((whitePieces & Bitboards.GetSquare(file, rank)) != 0) // white piece
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
                         
-                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[2]) != 0)
-                        {
-                            if ((Bitboards.GetWhitePassedPawnMask(file, rank) & board.bitboards[3]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.EndgameWhitePassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank + 1) & board.bitboards[2]) == 0) // if the pawns are doubled
-                                eval -= 30;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[2]) == 0) // if the pawn has no neighbours
-                                eval -= 35;
-                        }
-                        else if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
+                        if (rank == 0 && board.GetPiece(file, rank) == Pieces.WhiteRook) // rook on white's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval += 40;
@@ -253,24 +251,16 @@ public static class Search
                         
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
                     }
-                    else if ((board.bitboards[1] & Bitboards.GetSquare(file, rank)) != 0)
+                    else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.EndgamePieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-
-                        if ((Bitboards.GetSquare(file, rank) & board.bitboards[3]) != 0)
-                        {
-                            if ((Bitboards.GetBlackPassedPawnMask(file, rank) & board.bitboards[2]) == 0) // if the pawn is a passed pawn
-                                eval += Weights.EndgameBlackPassedPawnBonuses[rank];
-                            if ((Bitboards.GetSquare(file, rank - 1) & board.bitboards[3]) == 0) // if the pawns are doubled
-                                eval += 30;
-                            if ((Bitboards.NeighbourMasks[file] & board.bitboards[3]) == 0) // if the pawn has no neighbours
-                                eval += 35;
-                        }
-                        else if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
+                        
+                        if (rank == 7 && board.GetPiece(file, rank) == Pieces.BlackRook) // rook on black's back rank
                         {
                             if ((Bitboards.GetFile(file) & board.AllPawns()) == 0) // on an open file
                                 eval -= 40;
                         }
+                        
                         eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
                     }
                 }
@@ -298,7 +288,7 @@ public static class Search
                 for (int file = 7; file >= 0; file--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                    if ((board.GetBitboard(board.side) & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         // if the piece is pinned, get the pin path
                         ulong blockMoves = (pinState.pinned & Bitboards.GetSquare(file, rank)) != 0 ? ~pinState.pinStates[Bitboards.GetSquare(file, rank)] : 
@@ -317,7 +307,7 @@ public static class Search
                 for (int file = 7; file >= 0; file--)
                 {
                     // the square is only worth checking if the searched side has a piece there
-                    if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                    if ((board.GetBitboard(board.side) & Bitboards.GetSquare(file, rank)) != 0)
                     {
                         Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
                         index += SearchPieceCheck(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, kingInCheck.attackLines, enPassant, pinState.pinned, enemyAttacked);
@@ -365,11 +355,11 @@ public static class Search
                     priority += 50;
                 break;
             case Pieces.WhiteRook:
-                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.BlackPieces()) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
                     priority += 50;
                 break;
             case Pieces.BlackRook:
-                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                if ((Bitboards.RookLookupCaptureBitboards(move.Destination, board.WhitePieces()) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
                     priority += 50;
                 break;
             case Pieces.WhiteKnight:
@@ -381,20 +371,20 @@ public static class Search
                     priority += 50;
                 break;
             case Pieces.WhiteBishop:
-                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
+                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.BlackPieces()) & Bitboards.GetSquare(board.KingPositions[1])) != 0)
                     priority += 50;
                 break;
             case Pieces.BlackBishop:
-                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
+                if ((Bitboards.BishopLookupCaptureBitboards(move.Destination, board.WhitePieces()) & Bitboards.GetSquare(board.KingPositions[0])) != 0)
                     priority += 50;
                 break;
             case Pieces.WhiteQueen:
-                ulong wCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[1]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[1]);
+                ulong wCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.BlackPieces()) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.BlackPieces());
                 if ((wCaptures & Bitboards.GetSquare(board.KingPositions[1])) != 0)
                     priority += 50;
                 break;
             case Pieces.BlackQueen:
-                ulong bCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.bitboards[0]) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.bitboards[0]);
+                ulong bCaptures = Bitboards.BishopLookupCaptureBitboards(move.Destination, board.WhitePieces()) | Bitboards.RookLookupCaptureBitboards(move.Destination, board.WhitePieces());
                 if ((bCaptures & Bitboards.GetSquare(board.KingPositions[0])) != 0)
                     priority += 50;
                 break;
@@ -458,7 +448,7 @@ public static class Search
                     Span<Move> WPawnMoves = new(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces() | blockMoves));
                     WPawnMoves.CopyTo(moveSpan);
                     index += WPawnMoves.Length;
-                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1] & ~blockMoves));
+                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.BlackPieces() & ~blockMoves));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -472,7 +462,7 @@ public static class Search
                     Span<Move> BPawnMoves = new(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces() | blockMoves));
                     BPawnMoves.CopyTo(moveSpan);
                     index += BPawnMoves.Length;                                                                 
-                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0] & ~blockMoves));
+                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.WhitePieces() & ~blockMoves));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -491,7 +481,7 @@ public static class Search
 
                 // magic lookup of only captures
                 // form a slice out of the span to ensure that none of the already added moves are overwritten
-                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -501,7 +491,7 @@ public static class Search
                 new Span<Move>(bMoves.moves).CopyTo(moveSpan);
                 index += bMoves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -512,7 +502,7 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -521,7 +511,7 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan.Slice(index));
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -533,7 +523,7 @@ public static class Search
                 index += knightMoves.Length;
                 
                 // find only captures
-                captures = new(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.KnightLookupCaptures(pos, board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -543,7 +533,7 @@ public static class Search
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
                 
-                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side] & ~blockMoves));
+                captures = new(Bitboards.KingLookupCaptures(pos, board.GetBitboard(1-side) & ~blockMoves));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -583,7 +573,7 @@ public static class Search
             kingMoves.CopyTo(moveSpan);
             index += kingMoves.Length;
                 
-            Span<Move> captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side] & ~enemyAttacked));
+            Span<Move> captures = new(Bitboards.KingLookupCaptures(pos, board.GetBitboard(1-side) & ~enemyAttacked));
             captures.CopyTo(moveSpan.Slice(index));
             index += captures.Length;
 
@@ -595,7 +585,7 @@ public static class Search
             // moves that can block the check (only single checks)
             // get the bitboard for potential moves (piece can be pinned) AND it with the path the king is checked on to see where the piece can block
             ulong pieceBitboard = SearchPieceBitboard(board, piece, pos, side) & blockPath; 
-            ulong captureBitboard = pieceBitboard & board.bitboards[1 - side]; // blocks that land on an enemy piece
+            ulong captureBitboard = pieceBitboard & board.GetBitboard(1-side); // blocks that land on an enemy piece
             ulong moveBitboard = pieceBitboard & ~captureBitboard; // blocks that aren't
             
             if (captureBitboard != 0)
@@ -608,8 +598,8 @@ public static class Search
         else // pawn
         {
             ulong attacked = side == 0 ? Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] : Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank];
-            ulong capture = attacked & blockPath & board.bitboards[1 - side];
-            ulong move = (side == 0 ? Bitboards.WhitePawnMoveMasks[pos.file, pos.rank] : Bitboards.BlackPawnMoveMasks[pos.file, pos.rank]) & blockPath & ~board.bitboards[1 - side];
+            ulong capture = attacked & blockPath & board.GetBitboard(1-side);
+            ulong move = (side == 0 ? Bitboards.WhitePawnMoveMasks[pos.file, pos.rank] : Bitboards.BlackPawnMoveMasks[pos.file, pos.rank]) & blockPath & ~board.GetBitboard(1-side);
             
             if (move != 0)
             {
@@ -637,11 +627,11 @@ public static class Search
 
     public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
     {
-        ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
-        ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
-        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.bitboards[side];
-        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[2] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[3];
-        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.bitboards[side];
+        ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
+        ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
+        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.GetBitboard(side);
+        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.WhitePawn] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.BlackPawn];
+        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.GetBitboard(side);
         
         if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
             return false;
@@ -668,11 +658,11 @@ public static class Search
 
     private static (bool attacked, bool doubleAttack, ulong attackLines) GetAttackLines((int file, int rank) pos, Board board, int side) // side is attacker side
     {
-        ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
-        ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.bitboards[side];
-        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.bitboards[side];
-        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[2] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[3];
-        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.bitboards[side];
+        ulong rookAttack = Bitboards.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
+        ulong bishopAttack = Bitboards.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
+        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.GetBitboard(side);
+        ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.WhitePawn] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.BlackPawn];
+        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.GetBitboard(side);
         
         if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
             return (false, false, 0);
@@ -725,7 +715,7 @@ public static class Search
 
         for (int rank = 0; rank < 8; rank++)
         for (int file = 7; file >= 0; file--)
-            if ((board.bitboards[side] & Bitboards.GetSquare(file, rank)) != 0)
+            if ((board.GetBitboard(side) & Bitboards.GetSquare(file, rank)) != 0)
                 attacked |= SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), side, skipSquare);
         
         return attacked;
@@ -743,13 +733,13 @@ public static class Search
         if (board.enPassant.file != 8 && board.enPassant.rank + (side * 2 - 1) == board.KingPositions[side].rank)
         {
             // the en passant cannot happen if the moving pawn would be pinned if the taken pawn is disregarded
-            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
-            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
+            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.GetBitboard(1-side)) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
+            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.GetBitboard(1-side)) & board.AllPieces() & ~Bitboards.GetSquare(board.enPassant.file, board.enPassant.rank + (side * 2 - 1));
         }
         else // no en passant -> everything is normal
         {
-            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();
-            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.bitboards[1 - side]) & board.AllPieces();   
+            rookSelected = Bitboards.RookPinLineLookup(board.KingPositions[side], board.GetBitboard(1-side)) & board.AllPieces();
+            bishopSelected = Bitboards.BishopPinLineLookup(board.KingPositions[side], board.GetBitboard(1-side)) & board.AllPieces();   
         }
 
         List<Bitboards.PinSearchResult> rookPinSearch = Bitboards.RookPinSearch(board.KingPositions[side], rookSelected);
@@ -821,7 +811,7 @@ public static class Search
             for (int file = 7; file >= 0; file--)
             {
                 // the square is only worth checking if the searched side has a piece there
-                if ((board.bitboards[board.side] & Bitboards.GetSquare(file, rank)) != 0)
+                if ((board.GetBitboard(board.side) & Bitboards.GetSquare(file, rank)) != 0)
                 {
                     Span<Move> moveSpan = new Span<Move>(moveArray, index, moveArray.Length - index); // creates a span to fill with moves
                     index += PseudolegalSearchPiece(board, board.GetPiece(file, rank), (file, rank), board.side, moveSpan, enPassant);
@@ -845,7 +835,7 @@ public static class Search
                     Span<Move> WPawnMoves = new(Bitboards.WhitePawnLookupMoves(pos, board.AllPieces()));
                     WPawnMoves.CopyTo(moveSpan);
                     index += WPawnMoves.Length;
-                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.bitboards[1]));
+                    captures = new(Bitboards.WhitePawnLookupCaptures(pos, board.BlackPieces()));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -859,7 +849,7 @@ public static class Search
                     Span<Move> BPawnMoves = new(Bitboards.BlackPawnLookupMoves(pos, board.AllPieces()));
                     BPawnMoves.CopyTo(moveSpan);
                     index += BPawnMoves.Length;                                                                 
-                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.bitboards[0]));
+                    captures = new(Bitboards.BlackPawnLookupCaptures(pos, board.WhitePieces()));
                     captures.CopyTo(moveSpan.Slice(index));
                     index += captures.Length;
                     
@@ -878,7 +868,7 @@ public static class Search
 
                 // magic lookup of only captures
                 // form a slice out of the span to ensure that none of the already added moves are overwritten
-                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, rMoves.captures & board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -888,7 +878,7 @@ public static class Search
                 new Span<Move>(bMoves.moves).CopyTo(moveSpan);
                 index += bMoves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, bMoves.captures & board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -899,7 +889,7 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan);
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.RookLookupCaptures(pos, moves.captures & board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 
@@ -908,7 +898,7 @@ public static class Search
                 new Span<Move>(moves.moves).CopyTo(moveSpan.Slice(index));
                 index += moves.moves.Length;
                 
-                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.bitboards[1-side]));
+                captures = new(Bitboards.BishopLookupCaptures(pos, moves.captures & board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -920,7 +910,7 @@ public static class Search
                 index += knightMoves.Length;
                 
                 // find only captures
-                captures = new(Bitboards.KnightLookupCaptures(pos, board.bitboards[1-side]));
+                captures = new(Bitboards.KnightLookupCaptures(pos, board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
             break;
@@ -930,7 +920,7 @@ public static class Search
                 kingMoves.CopyTo(moveSpan);
                 index += kingMoves.Length;
                 
-                captures = new(Bitboards.KingLookupCaptures(pos, board.bitboards[1-side]));
+                captures = new(Bitboards.KingLookupCaptures(pos, board.GetBitboard(1-side)));
                 captures.CopyTo(moveSpan.Slice(index));
                 index += captures.Length;
                 

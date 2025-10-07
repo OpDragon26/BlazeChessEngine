@@ -32,7 +32,7 @@ public class Board
     public (int file, int rank) enPassant = (8, 8);
     
     // bitboards
-    public readonly ulong[] bitboards = new ulong[4];
+    public readonly ulong[] bitboards = new ulong[14];
     // white pieces
     // black pieces
     // white pawns only
@@ -72,7 +72,7 @@ public class Board
     {
         this.board = [board.board[0], board.board[1], board.board[2], board.board[3], board.board[4], board.board[5], board.board[6], board.board[7]];
         side = board.side;
-        bitboards = [board.bitboards[0], board.bitboards[1], board.bitboards[2], board.bitboards[3]];
+        bitboards = (ulong[])board.bitboards.Clone();
         enPassant = board.enPassant;
         castling = board.castling;
         KingPositions = board.KingPositions;
@@ -192,19 +192,6 @@ public class Board
             
             return false;
         }
-        // pawn only
-        if (AllPawns() != other.AllPawns())
-        {
-            Console.WriteLine("Pawn bitboards don't match");
-            Console.WriteLine("this");
-            Match.PrintBitboard(AllPawns(), 0);
-            Console.WriteLine("other");
-            Match.PrintBitboard(other.AllPawns(), 0);
-            Console.WriteLine("difference");
-            Match.PrintBitboard(AllPawns() ^ other.AllPawns(), 1);
-            
-            return false;
-        }
         
         // castling rights
         if (castling != other.castling)
@@ -245,17 +232,13 @@ public class Board
             {
                 if (GetPiece(file, rank) != Pieces.Empty)
                 {
-                    bitboards[GetPiece(file, rank) >> 3] |= Bitboards.GetSquare(file, rank);
+                    bitboards[GetPiece(file, rank)] |= Bitboards.GetSquare(file, rank);
                     values[GetPiece(file, rank) >> 3] += Pieces.Value[GetPiece(file, rank)];
                     
                     if (GetPiece(file, rank) == Pieces.WhiteKing)
                         KingPositions[0] = (file, rank);
                     else if (GetPiece(file, rank) == Pieces.BlackKing)
                         KingPositions[1] = (file, rank);
-                    else if (GetPiece(file, rank) == Pieces.WhitePawn)
-                        bitboards[2] |= Bitboards.GetSquare(file, rank);
-                    else if (GetPiece(file, rank) == Pieces.BlackPawn)
-                        bitboards[3] |= Bitboards.GetSquare(file, rank);
                 }
             }
         }
@@ -283,37 +266,32 @@ public class Board
         halfMoveClock++;
         if (side == 1 && considerRepetition)
             hashKey ^= Hasher.BlackToMove;
-
-        // if the moved piece is a pawn, remove the source from the bitboard
-        if (move.Pawn)
-            bitboards[2 + side] ^= Bitboards.GetSquare(move.Source);
+        
+        // update bitboards
+        bitboards[GetPiece(move.Source)] ^= Bitboards.GetSquare(move.Source);
 
         if (GetPiece(move.Destination) != Pieces.Empty) // if the move is a capture
         {
             values[1-side] -= Pieces.Value[GetPiece(move.Destination)]; // subtract the value of the piece from the opponent
-            bitboards[1-side] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
+            bitboards[GetPiece(move.Destination)] ^= Bitboards.GetSquare(move.Destination); // switch the square on the other side's bitboard
             halfMoveClock = 0;
             if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the taken piece was a pawn
-            {
                 pawns--;
-                bitboards[3 - side] ^= Bitboards.GetSquare(move.Destination); // remove the square from the opponent's pawn bitboard
-            }
         }
         
         if (move.Promotion == 0b111) // move is not a promotion
         {
+            bitboards[GetPiece(move.Source)] ^= Bitboards.GetSquare(move.Destination);
             SetPiece(move.Destination, GetPiece(move.Source));
             
-            if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
-                KingPositions[side] = move.Destination;
-            else if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the moved piece is a pawn
-            {
+            if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhitePawn) // if the moved piece is a pawn
                 halfMoveClock = 0;
-                bitboards[2 + side] ^= Bitboards.GetSquare(move.Destination); // add the destination to the pawn bitboard
-            }
+            else if ((GetPiece(move.Destination) & Pieces.TypeMask) == Pieces.WhiteKing) // if the moved piece is a king
+                KingPositions[side] = move.Destination;
         }
         else // move is a promotion
         {
+            bitboards[((uint)side << 3) | move.Promotion] ^= Bitboards.GetSquare(move.Destination);
             SetPiece(move.Destination, ((uint)side << 3) | move.Promotion);
             halfMoveClock = 0; // the piece moved is definitely a pawn
             pawns--;
@@ -336,10 +314,6 @@ public class Board
         castling &= move.CastlingBan;
         
         if (considerRepetition) hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
-        
-        // update bitboards
-        bitboards[side] ^= Bitboards.GetSquare(move.Source);
-        bitboards[side] ^= Bitboards.GetSquare(move.Destination);
 
         switch (move.Type)
         {
@@ -357,8 +331,8 @@ public class Board
             case 0b0010: // white short castle
                 Clear(7, 0);
                 SetPiece(5,0, Pieces.WhiteRook);
-                bitboards[0] ^= Bitboards.GetSquare(7,0);
-                bitboards[0] ^= Bitboards.GetSquare(5,0);
+                bitboards[Pieces.WhiteRook] ^= Bitboards.GetSquare(7,0);
+                bitboards[Pieces.WhiteRook] ^= Bitboards.GetSquare(5,0);
                 // update the hash key
                 if (considerRepetition)
                 { 
@@ -372,8 +346,8 @@ public class Board
             case 0b0011: // white long castle
                 Clear(0, 0);
                 SetPiece(3,0, Pieces.WhiteRook);
-                bitboards[0] ^= Bitboards.GetSquare(0,0);
-                bitboards[0] ^= Bitboards.GetSquare(3,0);
+                bitboards[Pieces.WhiteRook] ^= Bitboards.GetSquare(0,0);
+                bitboards[Pieces.WhiteRook] ^= Bitboards.GetSquare(3,0);
                 // update the hash key
                 if (considerRepetition)
                 {
@@ -387,8 +361,8 @@ public class Board
             case 0b1010: // black short castle
                 Clear(7, 7);
                 SetPiece(5,7, Pieces.BlackRook);
-                bitboards[1] ^= Bitboards.GetSquare(7,7);
-                bitboards[1] ^= Bitboards.GetSquare(5,7);
+                bitboards[Pieces.BlackRook] ^= Bitboards.GetSquare(7,7);
+                bitboards[Pieces.BlackRook] ^= Bitboards.GetSquare(5,7);
                 // update the hash key
                 if (considerRepetition)
                 {
@@ -402,8 +376,8 @@ public class Board
             case 0b1011: // black long castle
                 Clear(0, 7);
                 SetPiece(3,7, Pieces.BlackRook);
-                bitboards[1] ^= Bitboards.GetSquare(0,7);
-                bitboards[1] ^= Bitboards.GetSquare(3,7);
+                bitboards[Pieces.BlackRook] ^= Bitboards.GetSquare(0,7);
+                bitboards[Pieces.BlackRook] ^= Bitboards.GetSquare(3,7);
                 // update the hash key
                 if (considerRepetition)
                 {
@@ -416,8 +390,7 @@ public class Board
             
             case 0b0100: // white en passant
                 Clear(move.Destination.file, 4);
-                bitboards[1] ^= Bitboards.GetSquare(move.Destination.file,4);
-                bitboards[3] ^= Bitboards.GetSquare(move.Destination.file,4);
+                bitboards[Pieces.BlackPawn] ^= Bitboards.GetSquare(move.Destination.file,4);
                 values.black += 100;
                 // update the hash key
                 if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.BlackPawn, move.Destination.file, 4];
@@ -425,8 +398,7 @@ public class Board
             
             case 0b1100: // black en passant
                 Clear(move.Destination.file, 3);
-                bitboards[0] ^= Bitboards.GetSquare(move.Destination.file,3);
-                bitboards[2] ^= Bitboards.GetSquare(move.Destination.file,3);
+                bitboards[Pieces.WhitePawn] ^= Bitboards.GetSquare(move.Destination.file,3);
                 values.white -= 100;
                 // update the hash key
                 if (considerRepetition) hashKey ^= Hasher.PieceNumbers[Pieces.WhitePawn, move.Destination.file, 3];
@@ -529,12 +501,29 @@ public class Board
 
     public ulong AllPieces()
     {
-        return bitboards[0] | bitboards[1];
+        return bitboards[Pieces.WhitePawn] | bitboards[Pieces.BlackPawn] | bitboards[Pieces.WhiteRook] | bitboards[Pieces.BlackRook]
+            | bitboards[Pieces.WhiteKnight] | bitboards[Pieces.BlackKnight] | bitboards[Pieces.WhiteBishop] | bitboards[Pieces.BlackBishop]
+            | bitboards[Pieces.WhiteQueen] | bitboards[Pieces.BlackQueen] | bitboards[Pieces.WhiteKing] | bitboards[Pieces.BlackKing];
     }
 
     public ulong AllPawns()
     {
-        return bitboards[2] | bitboards[3];
+        return bitboards[Pieces.WhitePawn] | bitboards[Pieces.BlackPawn];
+    }
+
+    public ulong WhitePieces()
+    {
+        return bitboards[Pieces.WhitePawn] | bitboards[Pieces.WhiteRook] | bitboards[Pieces.WhiteKnight] | bitboards[Pieces.WhiteBishop] | bitboards[Pieces.WhiteQueen] | bitboards[Pieces.WhiteKing];
+    }
+
+    public ulong BlackPieces()
+    {
+        return bitboards[Pieces.BlackPawn] | bitboards[Pieces.BlackRook] | bitboards[Pieces.BlackKnight] | bitboards[Pieces.BlackBishop] | bitboards[Pieces.BlackQueen] | bitboards[Pieces.BlackKing];
+    }
+
+    public ulong GetBitboard(int color)
+    {
+        return color == 0 ? WhitePieces() : BlackPieces();
     }
     
     private readonly uint PieceMask = 0xF; // covers the last 4 bits
