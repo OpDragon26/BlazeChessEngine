@@ -4,6 +4,7 @@ public static class Perft
 {
     private static ulong RunSingle(int depth, Board board, bool testDifference, bool multiThreaded, PerftTest? comparison, bool printResult = true)
     {
+        Bitboards.Init();
         PerftResult Result = new(depth);
         Timer timer = new();
         timer.Start();
@@ -274,6 +275,17 @@ public static class Perft
         for (int i = 0; i < games; i++)
         {
             allMoves.AddRange(new Match(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false).Play());
+            Console.WriteLine($"Game {i + 1}/{games}");
+        }
+        Console.WriteLine($"Average time per move: {allMoves.Average(node => node.time)}ms");
+    }
+    
+    public static void TestGameSpeed(int games, int depth, bool printGames = true)
+    {
+        List<PGNNode> allMoves = new();
+        for (int i = 0; i < games; i++)
+        {
+            allMoves.AddRange(new Match(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
             Console.WriteLine($"Game {i + 1}/{games}");
         }
         Console.WriteLine($"Average time per move: {allMoves.Average(node => node.time)}ms");
