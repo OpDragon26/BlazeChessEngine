@@ -4,13 +4,13 @@ public static class Weights
 {
     // files and ranks are reversed, files go from a to h on the y-axis
     public const float MaterialMultiplier = 1.4f;
-    public const int CastlingBonus = 50;
-    public const int NoCastlingPenalty = -25;
-    public const float MobilityMultiplier = 1.5f;
-    public const int ProtectedPawnBonus = 20;
-    public const int IsolatedPawnPenalty = -20;
-    public const int OpenFileAdvantage = 50;
-    public const int SemiOpenFileAdvantage = 20;
+    public const int CastlingBonus = 30;
+    public const int NoCastlingPenalty = -15;
+    public const float MobilityMultiplier = 0.2f;
+    public const int ProtectedPawnBonus = 2;
+    public const int IsolatedPawnPenalty = -5;
+    public const int OpenFileAdvantage = 20;
+    public const int SemiOpenFileAdvantage = 10;
     
     public static readonly int[,,] Pieces = new[,,]
     {
@@ -139,10 +139,10 @@ public static class Weights
         }
     };
 
-    public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,200,300,0];
-    public static readonly int[] BlackPassedPawnBonuses = [0,-300,-200,-50,-20,-11,-10,0];
-    public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,80,150,250,0];
-    public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-250,-150,-80,-50,-40,-30,0];
-    public static readonly int[] DoublePawnPenalties = [0, 0, -10, -15, -20, -20, -20];
+    public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,700,100,0];
+    public static readonly int[] BlackPassedPawnBonuses = [0,-100,-70,-50,-20,-11,-10,0];
+    public static readonly int[] EndgameWhitePassedPawnBonuses = [0,30,40,50,80,100,150,0];
+    public static readonly int[] EndgameBlackPassedPawnBonuses = [0,-150,-100,-80,-50,-40,-30,0];
+    public static readonly int[] DoublePawnPenalties = [0, 0, -5, -10, -10, -10, -10];
     public static readonly int[] KingSafetyBonuses = [10,30,30,20,10,0,-20,-20,-20];
 }

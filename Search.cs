@@ -188,23 +188,23 @@ public static class Search
                 // add to the eval based on the safety of white's king
                 eval += MagicLookup.KingSafetyBonusLookup(board.KingPositions[0], board.WhitePieces());
                 if ((Bitboards.KingMasks[board.KingPositions[0].file, board.KingPositions[0].rank] & board.BlackPieces()) != 0) // if there is an enemy piece adjacent to the king
-                    eval -= 50;
+                    eval -= 30;
             
                 // take from eval if the pawns in front of the king are missing
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[0].file])
                     if ((BitboardUtils.GetFile(file) & board.bitboards[Pieces.WhitePawn]) == 0)
-                        eval -= 25;
+                        eval -= 15;
             }
 
             if ((Bitboards.KingSafetyAppliesBlack & BitboardUtils.GetSquare(board.KingPositions[1])) != 0)
             {
                 eval -= MagicLookup.KingSafetyBonusLookup(board.KingPositions[1], board.BlackPieces());
                 if ((Bitboards.KingMasks[board.KingPositions[1].file, board.KingPositions[1].rank] & board.WhitePieces()) != 0) // if there is an enemy piece adjacent to the king
-                    eval += 50;
+                    eval += 30;
             
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[1].file])
                     if ((BitboardUtils.GetFile(file) & board.bitboards[Pieces.BlackPawn]) == 0)
-                        eval += 25;
+                        eval += 15;
             }
         }
         else
