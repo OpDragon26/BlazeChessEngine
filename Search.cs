@@ -148,28 +148,48 @@ public static class Search
             eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
             eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
             
+            // queens
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
+            
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
+            
+            // knight
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
+            
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
+            
+            // bishop
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
+            
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
+            
+            // king
+            eval += Bitboards.KingEvalLookup(board.KingPositions[0]).wEval;
+            eval += Bitboards.KingEvalLookup(board.KingPositions[1]).bEval;
+            
             for (int file = 0; file < 8; file++)
             {
                 // counts pawns on the file and applies a penalty for multiple on one file
                 eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.WhitePawn])];
                 eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.BlackPawn])];
-                
-                for (int rank = 7; rank >= 0; rank--)
-                {
-                    // the square is only worth checking if the searched side has a piece there
-                    if ((whitePieces & Bitboards.GetSquare(file, rank)) != 0) // white piece
-                    {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.Pieces[board.GetPiece(file, rank), file, rank];
-                        
-                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
-                    }
-                    else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
-                    {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.Pieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-                        
-                        eval -= (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
-                    }
-                }
             }
 
             // add or take eval according to which side has castled
@@ -236,33 +256,53 @@ public static class Search
             eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
             eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
             
-            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
-            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
-            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
-            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).bEvalEndgame;
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
+            
+            // queens
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
+            
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
+            
+            // knights
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
+            
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
+            
+            // bishops
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
+            
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
+            
+            // king
+            eval += Bitboards.KingEvalLookup(board.KingPositions[0]).wEvalEndgame;
+            eval += Bitboards.KingEvalLookup(board.KingPositions[1]).bEvalEndgame;
             
             for (int file = 0; file < 8; file++)
             {
                 // counts pawns on the file and applies a penalty for multiple on one file
                 eval += Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.WhitePawn])];
                 eval -= Weights.DoublePawnPenalties[UInt64.PopCount(Bitboards.GetFile(file) & board.bitboards[Pieces.BlackPawn])];
-                
-                for (int rank = 7; rank >= 0; rank--)
-                {
-                    // the square is only worth checking if the searched side has a piece there
-                    if ((whitePieces & Bitboards.GetSquare(file, rank)) != 0) // white piece
-                    {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) + Weights.EndgamePieces[board.GetPiece(file, rank), file, rank];
-                        
-                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 0)) * Weights.MobilityMultiplier);
-                    }
-                    else if ((blackPieces & Bitboards.GetSquare(file, rank)) != 0)
-                    {
-                        eval += (int)(Weights.MaterialMultiplier * Pieces.Value[board.GetPiece(file, rank)]) - Weights.EndgamePieces[board.GetPiece(file, rank) & Pieces.TypeMask, file, 7-rank];
-                        
-                        eval += (int)(UInt64.PopCount(SearchPieceBitboard(board, board.GetPiece(file, rank), (file, rank), 1)) * Weights.MobilityMultiplier);
-                    }
-                }
             }
         }
 
