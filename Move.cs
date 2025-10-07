@@ -8,7 +8,7 @@ public class Move
     public readonly int Type;
     public readonly int Priority;
     public readonly byte CastlingBan;
-    public readonly bool Pawn;
+    private readonly bool Pawn;
     public readonly bool PermaChange;
     
     /*
@@ -240,9 +240,9 @@ public class Move
         return c switch
         {
             'N' => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
-            'B' => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
-            'Q' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
-            'R' => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
+            'B' => new Finder(MagicLookup.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
+            'Q' => new Finder(MagicLookup.RookLookupMoves((file, rank), board.AllPieces()).captures | MagicLookup.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
+            'R' => new Finder(MagicLookup.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
             'K' => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
             _ => throw new NotationParsingException($"Unknown piece: {c}")
         };
@@ -253,9 +253,9 @@ public class Move
         return piece switch
         {
             Pieces.WhiteKnight => new Finder(Bitboards.KnightMasks[file, rank], Pieces.WhiteKnight, Pieces.BlackKnight),
-            Pieces.WhiteBishop => new Finder(Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
-            Pieces.WhiteQueen => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures | Bitboards.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
-            Pieces.WhiteRook => new Finder(Bitboards.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
+            Pieces.WhiteBishop => new Finder(MagicLookup.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteBishop, Pieces.BlackBishop),
+            Pieces.WhiteQueen => new Finder(MagicLookup.RookLookupMoves((file, rank), board.AllPieces()).captures | MagicLookup.BishopLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteQueen, Pieces.BlackQueen),
+            Pieces.WhiteRook => new Finder(MagicLookup.RookLookupMoves((file, rank), board.AllPieces()).captures, Pieces.WhiteRook, Pieces.BlackRook),
             Pieces.WhiteKing => new Finder(Bitboards.KingMasks[file, rank], Pieces.WhiteKing, Pieces.BlackKing),
             _ => throw new NotationParsingException($"Unknown piece: {piece}")
         };
@@ -424,7 +424,7 @@ public class Move
             for (int file = 0; file < 8; file++)
             {
                 if (disambiguation == Disambiguation.File && file != d) continue;
-                if ((finder.mask & Bitboards.GetSquare(file, rank)) != 0 && board.GetPiece(file, rank) == finder.GetPiece(board.side)) 
+                if ((finder.mask & BitboardUtils.GetSquare(file, rank)) != 0 && board.GetPiece(file, rank) == finder.GetPiece(board.side)) 
                 {
                     if (moves.Contains(new Move((file, rank), dest)))
                     {

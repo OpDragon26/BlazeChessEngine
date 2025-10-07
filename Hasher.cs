@@ -54,7 +54,7 @@ public static class Hasher
         {
             for (int file = 7; file >= 0; file--)
             {
-                if ((board.AllPieces() & Bitboards.GetSquare(file, rank)) != 0) // if there is a piece on the square
+                if ((board.AllPieces() & BitboardUtils.GetSquare(file, rank)) != 0) // if there is a piece on the square
                 {
                     hash ^= PieceNumbers[board.GetPiece(file, rank), file, rank];
                 }
