@@ -123,8 +123,7 @@ public static class Search
     {
         int eval = 0;
 
-        ulong whitePieces = board.WhitePieces() ^ board.bitboards[Pieces.WhitePawn];
-        ulong blackPieces = board.BlackPieces() ^ board.bitboards[Pieces.BlackPawn];
+        ulong all = board.AllPieces();
         
         if (!board.IsEndgame())
         {
@@ -138,48 +137,56 @@ public static class Search
             eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]).GetFinal(board.bitboards[Pieces.WhitePawn], 1);
             
             // rooks
-            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
-            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
-            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
-            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinal(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], 0);
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook])
+                .GetResult(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], all, 0);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook])
+                .GetResult(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], all, 0);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook])
+                .GetResult(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], all, 0);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook])
+                .GetResult(board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn], all, 0);
             
-            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
-            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
-            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
-            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinal(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], 1);
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook])
+                .GetResult(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], all, 1);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook])
+                .GetResult(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], all, 1);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook])
+                .GetResult(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], all, 1);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook])
+                .GetResult(board.bitboards[Pieces.WhitePawn], board.bitboards[Pieces.BlackPawn], all, 1);
             
             // queens
-            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
-            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
-            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
-            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEval;
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinal(all, 0);
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinal(all, 0);
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinal(all, 0);
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinal(all, 0);
             
-            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
-            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
-            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
-            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEval;
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinal(all, 1);
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinal(all, 1);
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinal(all, 1);
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinal(all, 1);
             
             // knight
-            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
-            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
-            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
-            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEval;
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinal(all, 0);
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinal(all, 0);
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinal(all, 0);
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinal(all, 0);
             
-            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
-            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
-            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
-            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEval;
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinal(all, 1);
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinal(all, 1);
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinal(all, 1);
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinal(all, 1);
             
             // bishop
-            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
-            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
-            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
-            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEval;
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinal(all, 0);
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinal(all, 0);
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinal(all, 0);
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinal(all, 0);
             
-            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
-            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
-            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
-            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEval;
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinal(all, 1);
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinal(all, 1);
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinal(all, 1);
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinal(all, 1);
             
             // king
             eval += Bitboards.KingEvalLookup(board.KingPositions[0]).wEval;
@@ -251,48 +258,48 @@ public static class Search
             eval += Bitboards.PawnEvaluationLookupCenter(board.bitboards[Pieces.BlackPawn]).GetFinalEndgame(board.bitboards[Pieces.WhitePawn], 1);
             
             // rooks
-            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
-            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
-            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
-            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).wEvalEndgame;
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinalEndgame(all, 0);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinalEndgame(all, 0);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinalEndgame(all, 0);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.WhiteRook]).GetFinalEndgame(all, 0);
             
-            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
-            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
-            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
-            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).bEvalEndgame;
+            eval += Bitboards.FirstRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinalEndgame(all, 1);
+            eval += Bitboards.SecondRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinalEndgame(all, 1);
+            eval += Bitboards.ThirdRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinalEndgame(all, 1);
+            eval += Bitboards.FourthRookEvalLookup(board.bitboards[Pieces.BlackRook]).GetFinalEndgame(all, 1);
             
             // queens
-            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
-            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
-            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
-            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).wEvalEndgame;
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinalEndgame(all, 0);
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinalEndgame(all, 0);
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinalEndgame(all, 0);
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.WhiteQueen]).GetFinalEndgame(all, 0);
             
-            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
-            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
-            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
-            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).bEvalEndgame;
+            eval += Bitboards.FirstQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinalEndgame(all, 1);
+            eval += Bitboards.SecondQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinalEndgame(all, 1);
+            eval += Bitboards.ThirdQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinalEndgame(all, 1);
+            eval += Bitboards.FourthQueenEvalLookup(board.bitboards[Pieces.BlackQueen]).GetFinalEndgame(all, 1);
             
             // knights
-            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
-            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
-            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
-            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).wEvalEndgame;
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinalEndgame(all, 0);
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinalEndgame(all, 0);
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinalEndgame(all, 0);
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.WhiteKnight]).GetFinalEndgame(all, 0);
             
-            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
-            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
-            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
-            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).bEvalEndgame;
+            eval += Bitboards.FirstKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinalEndgame(all, 1);
+            eval += Bitboards.SecondKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinalEndgame(all, 1);
+            eval += Bitboards.ThirdKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinalEndgame(all, 1);
+            eval += Bitboards.FourthKnightEvalLookup(board.bitboards[Pieces.BlackKnight]).GetFinalEndgame(all, 1);
             
             // bishops
-            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
-            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
-            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
-            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).wEvalEndgame;
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinalEndgame(all, 0);
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinalEndgame(all, 0);
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinalEndgame(all, 0);
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.WhiteBishop]).GetFinalEndgame(all, 0);
             
-            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
-            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
-            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
-            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).bEvalEndgame;
+            eval += Bitboards.FirstBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinalEndgame(all, 1);
+            eval += Bitboards.SecondBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinalEndgame(all, 1);
+            eval += Bitboards.ThirdBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinalEndgame(all, 1);
+            eval += Bitboards.FourthBishopEvalLookup(board.bitboards[Pieces.BlackBishop]).GetFinalEndgame(all, 1);
             
             // king
             eval += Bitboards.KingEvalLookup(board.KingPositions[0]).wEvalEndgame;

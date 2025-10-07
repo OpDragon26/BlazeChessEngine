@@ -126,6 +126,9 @@ public static class Bitboards
         public static readonly Move[,][][] BlackPawnCaptureLookup = new Move[8,8][][];
         public static readonly ulong[,][] RookBitboardLookup = new ulong[8,8][];
         public static readonly ulong[,][] BishopBitboardLookup = new ulong[8,8][];
+        public static readonly int[,][] RookMobilityLookupArray = new int[8,8][];
+        public static readonly int[,][] BishopMobilityLookupArray = new int[8,8][];
+        public static readonly int[,] KnightMobilityLookup = new int[8,8];
         public static Move[] EnPassantLookupArray = [];
         public static readonly int[,][] KingSafetyLookup = new int[8,8][];
         public static readonly Move[,][] BlockCaptureMoveLookup = new Move[8,8][];
@@ -147,21 +150,21 @@ public static class Bitboards
         public static RookEvaluation[] ThirdRookEvaluationLookup = [];
         public static RookEvaluation[] FourthRookEvaluationLookup = [];
         
-        public static StandardEvaluation[] FirstQueenEvaluationLookup = [];
-        public static StandardEvaluation[] SecondQueenEvaluationLookup = [];
-        public static StandardEvaluation[] ThirdQueenEvaluationLookup = [];
-        public static StandardEvaluation[] FourthQueenEvaluationLookup = [];
+        public static QueenEvaluation[] FirstQueenEvaluationLookup = [];
+        public static QueenEvaluation[] SecondQueenEvaluationLookup = [];
+        public static QueenEvaluation[] ThirdQueenEvaluationLookup = [];
+        public static QueenEvaluation[] FourthQueenEvaluationLookup = [];
         
-        public static StandardEvaluation[] FirstKnightEvaluationLookup = [];
-        public static StandardEvaluation[] SecondKnightEvaluationLookup = [];
-        public static StandardEvaluation[] ThirdKnightEvaluationLookup = [];
-        public static StandardEvaluation[] FourthKnightEvaluationLookup = [];
+        public static KnightEvaluation[] FirstKnightEvaluationLookup = [];
+        public static KnightEvaluation[] SecondKnightEvaluationLookup = [];
+        public static KnightEvaluation[] ThirdKnightEvaluationLookup = [];
+        public static KnightEvaluation[] FourthKnightEvaluationLookup = [];
         
-        public static StandardEvaluation[] FirstBishopEvaluationLookup = [];
-        public static StandardEvaluation[] SecondBishopEvaluationLookup = [];
-        public static StandardEvaluation[] ThirdBishopEvaluationLookup = [];
-        public static StandardEvaluation[] FourthBishopEvaluationLookup = [];
-        public static readonly StandardEvaluation[,] KingEvaluation = new StandardEvaluation[8,8];
+        public static BishopEvaluation[] FirstBishopEvaluationLookup = [];
+        public static BishopEvaluation[] SecondBishopEvaluationLookup = [];
+        public static BishopEvaluation[] ThirdBishopEvaluationLookup = [];
+        public static BishopEvaluation[] FourthBishopEvaluationLookup = [];
+        public static readonly KingEvaluation[,] KingEvaluationLookup = new KingEvaluation[8,8];
     }
 
     private const ulong File = 0x8080808080808080;
@@ -285,9 +288,21 @@ public static class Bitboards
             [((blockers & SmallRookMasks[pos.file, pos.rank]) * MagicLookup.RookBitboardNumbers[pos.file, pos.rank].magicNumber) >> MagicLookup.RookBitboardNumbers[pos.file, pos.rank].push];
     }
     
+    private static int RookMobilityLookup((int file, int rank) pos, ulong blockers)
+    {
+        return MagicLookup.RookMobilityLookupArray[pos.file, pos.rank]
+            [((blockers & SmallRookMasks[pos.file, pos.rank]) * MagicLookup.RookBitboardNumbers[pos.file, pos.rank].magicNumber) >> MagicLookup.RookBitboardNumbers[pos.file, pos.rank].push];
+    }
+    
     public static ulong BishopMoveBitboardLookup((int file, int rank) pos, ulong blockers)
     {
         return MagicLookup.BishopBitboardLookup[pos.file, pos.rank]
+            [((blockers & SmallBishopMasks[pos.file, pos.rank]) * MagicLookup.BishopBitboardNumbers[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopBitboardNumbers[pos.file, pos.rank].push];
+    }
+    
+    private static int BishopMobilityLookup((int file, int rank) pos, ulong blockers)
+    {
+        return MagicLookup.BishopMobilityLookupArray[pos.file, pos.rank]
             [((blockers & SmallBishopMasks[pos.file, pos.rank]) * MagicLookup.BishopBitboardNumbers[pos.file, pos.rank].magicNumber) >> MagicLookup.BishopBitboardNumbers[pos.file, pos.rank].push];
     }
 
@@ -375,69 +390,69 @@ public static class Bitboards
     }
     
     
-    public static StandardEvaluation FirstQueenEvalLookup(ulong rooks)
+    public static QueenEvaluation FirstQueenEvalLookup(ulong rooks)
     {
         return MagicLookup.FirstQueenEvaluationLookup[rooks & FirstSlice];
     }
 
-    public static StandardEvaluation SecondQueenEvalLookup(ulong rooks)
+    public static QueenEvaluation SecondQueenEvalLookup(ulong rooks)
     {
         return MagicLookup.SecondQueenEvaluationLookup[(rooks & SecondSlice) >> 16];
     }
 
-    public static StandardEvaluation ThirdQueenEvalLookup(ulong rooks)
+    public static QueenEvaluation ThirdQueenEvalLookup(ulong rooks)
     {
         return MagicLookup.ThirdQueenEvaluationLookup[(rooks & ThirdSlice) >> 32];
     }
 
-    public static StandardEvaluation FourthQueenEvalLookup(ulong rooks)
+    public static QueenEvaluation FourthQueenEvalLookup(ulong rooks)
     {
         return MagicLookup.FourthQueenEvaluationLookup[(rooks & FourthSlice) >> 48];
     }
     
-    public static StandardEvaluation FirstKnightEvalLookup(ulong rooks)
+    public static KnightEvaluation FirstKnightEvalLookup(ulong rooks)
     {
         return MagicLookup.FirstKnightEvaluationLookup[rooks & FirstSlice];
     }
 
-    public static StandardEvaluation SecondKnightEvalLookup(ulong rooks)
+    public static KnightEvaluation SecondKnightEvalLookup(ulong rooks)
     {
         return MagicLookup.SecondKnightEvaluationLookup[(rooks & SecondSlice) >> 16];
     }
 
-    public static StandardEvaluation ThirdKnightEvalLookup(ulong rooks)
+    public static KnightEvaluation ThirdKnightEvalLookup(ulong rooks)
     {
         return MagicLookup.ThirdKnightEvaluationLookup[(rooks & ThirdSlice) >> 32];
     }
 
-    public static StandardEvaluation FourthKnightEvalLookup(ulong rooks)
+    public static KnightEvaluation FourthKnightEvalLookup(ulong rooks)
     {
         return MagicLookup.FourthKnightEvaluationLookup[(rooks & FourthSlice) >> 48];
     }
     
-    public static StandardEvaluation FirstBishopEvalLookup(ulong rooks)
+    public static BishopEvaluation FirstBishopEvalLookup(ulong rooks)
     {
         return MagicLookup.FirstBishopEvaluationLookup[rooks & FirstSlice];
     }
 
-    public static StandardEvaluation SecondBishopEvalLookup(ulong rooks)
+    public static BishopEvaluation SecondBishopEvalLookup(ulong rooks)
     {
         return MagicLookup.SecondBishopEvaluationLookup[(rooks & SecondSlice) >> 16];
     }
 
-    public static StandardEvaluation ThirdBishopEvalLookup(ulong rooks)
+    public static BishopEvaluation ThirdBishopEvalLookup(ulong rooks)
     {
         return MagicLookup.ThirdBishopEvaluationLookup[(rooks & ThirdSlice) >> 32];
     }
 
-    public static StandardEvaluation FourthBishopEvalLookup(ulong rooks)
+    public static BishopEvaluation FourthBishopEvalLookup(ulong rooks)
     {
         return MagicLookup.FourthBishopEvaluationLookup[(rooks & FourthSlice) >> 48];
     }
 
-    public static StandardEvaluation KingEvalLookup((int file, int rank) pos)
+    public static KingEvaluation KingEvalLookup((int file, int rank) pos)
     {
-        return MagicLookup.KingEvaluation[pos.file, pos.rank];
+        return MagicLookup.KingEvaluationLookup[pos.file, pos.rank];
     }
 
     public static void Init()
@@ -513,6 +528,7 @@ public static class Bitboards
                 
                 // knight masks
                 KnightMasks[file, rank] = GetMask((file, rank), KnightPattern);
+                MagicLookup.KnightMobilityLookup[file, rank] = (int)(ulong.PopCount(KnightMasks[file, rank]) * Weights.MobilityMultiplier);
                 KnightCombinations[file, rank] = Combinations(KnightMasks[file, rank]);
                 
                 // king masks
@@ -676,20 +692,20 @@ public static class Bitboards
         MagicLookup.ThirdRookEvaluationLookup = new RookEvaluation[thirdSlice.Max(n => n >> 32) + 1];
         MagicLookup.FourthRookEvaluationLookup = new RookEvaluation[fourthSlice.Max(n => n >> 48) + 1];
         
-        MagicLookup.FirstQueenEvaluationLookup = new StandardEvaluation[firstSlice.Max() + 1];
-        MagicLookup.SecondQueenEvaluationLookup = new StandardEvaluation[secondSlice.Max(n => n >> 16) + 1];
-        MagicLookup.ThirdQueenEvaluationLookup = new StandardEvaluation[thirdSlice.Max(n => n >> 32) + 1];
-        MagicLookup.FourthQueenEvaluationLookup = new StandardEvaluation[fourthSlice.Max(n => n >> 48) + 1];
+        MagicLookup.FirstQueenEvaluationLookup = new QueenEvaluation[firstSlice.Max() + 1];
+        MagicLookup.SecondQueenEvaluationLookup = new QueenEvaluation[secondSlice.Max(n => n >> 16) + 1];
+        MagicLookup.ThirdQueenEvaluationLookup = new QueenEvaluation[thirdSlice.Max(n => n >> 32) + 1];
+        MagicLookup.FourthQueenEvaluationLookup = new QueenEvaluation[fourthSlice.Max(n => n >> 48) + 1];
         
-        MagicLookup.FirstKnightEvaluationLookup = new StandardEvaluation[firstSlice.Max() + 1];
-        MagicLookup.SecondKnightEvaluationLookup = new StandardEvaluation[secondSlice.Max(n => n >> 16) + 1];
-        MagicLookup.ThirdKnightEvaluationLookup = new StandardEvaluation[thirdSlice.Max(n => n >> 32) + 1];
-        MagicLookup.FourthKnightEvaluationLookup = new StandardEvaluation[fourthSlice.Max(n => n >> 48) + 1];
+        MagicLookup.FirstKnightEvaluationLookup = new KnightEvaluation[firstSlice.Max() + 1];
+        MagicLookup.SecondKnightEvaluationLookup = new KnightEvaluation[secondSlice.Max(n => n >> 16) + 1];
+        MagicLookup.ThirdKnightEvaluationLookup = new KnightEvaluation[thirdSlice.Max(n => n >> 32) + 1];
+        MagicLookup.FourthKnightEvaluationLookup = new KnightEvaluation[fourthSlice.Max(n => n >> 48) + 1];
         
-        MagicLookup.FirstBishopEvaluationLookup = new StandardEvaluation[firstSlice.Max() + 1];
-        MagicLookup.SecondBishopEvaluationLookup = new StandardEvaluation[secondSlice.Max(n => n >> 16) + 1];
-        MagicLookup.ThirdBishopEvaluationLookup = new StandardEvaluation[thirdSlice.Max(n => n >> 32) + 1];
-        MagicLookup.FourthBishopEvaluationLookup = new StandardEvaluation[fourthSlice.Max(n => n >> 48) + 1];
+        MagicLookup.FirstBishopEvaluationLookup = new BishopEvaluation[firstSlice.Max() + 1];
+        MagicLookup.SecondBishopEvaluationLookup = new BishopEvaluation[secondSlice.Max(n => n >> 16) + 1];
+        MagicLookup.ThirdBishopEvaluationLookup = new BishopEvaluation[thirdSlice.Max(n => n >> 32) + 1];
+        MagicLookup.FourthBishopEvaluationLookup = new BishopEvaluation[fourthSlice.Max(n => n >> 48) + 1];
         
         Parallel.For(0, 4, e =>
         {
@@ -699,9 +715,9 @@ public static class Bitboards
                     foreach (ulong combination in firstSlice)
                     {
                         MagicLookup.FirstRookEvaluationLookup[combination] = GenerateRookEval(combination, Slice.First);
-                        MagicLookup.FirstQueenEvaluationLookup[combination] = GenerateStandardEval(combination, Slice.First, Pieces.WhiteQueen, Pieces.BlackQueen);
-                        MagicLookup.FirstKnightEvaluationLookup[combination] = GenerateStandardEval(combination, Slice.First, Pieces.WhiteKnight, Pieces.BlackKnight);
-                        MagicLookup.FirstBishopEvaluationLookup[combination] = GenerateStandardEval(combination, Slice.First, Pieces.WhiteBishop, Pieces.BlackBishop);
+                        MagicLookup.FirstQueenEvaluationLookup[combination] = GenerateStandardEval<QueenEvaluation>(combination, Slice.First, Pieces.WhiteQueen, Pieces.BlackQueen);
+                        MagicLookup.FirstKnightEvaluationLookup[combination] = GenerateStandardEval<KnightEvaluation>(combination, Slice.First, Pieces.WhiteKnight, Pieces.BlackKnight);
+                        MagicLookup.FirstBishopEvaluationLookup[combination] = GenerateStandardEval<BishopEvaluation>(combination, Slice.First, Pieces.WhiteBishop, Pieces.BlackBishop);
                     }
 
                     break;
@@ -709,9 +725,9 @@ public static class Bitboards
                     foreach (ulong combination in secondSlice)
                     {
                         MagicLookup.SecondRookEvaluationLookup[combination >> 16] = GenerateRookEval(combination, Slice.Second);
-                        MagicLookup.SecondQueenEvaluationLookup[combination >> 16] = GenerateStandardEval(combination, Slice.Second, Pieces.WhiteQueen, Pieces.BlackQueen);
-                        MagicLookup.SecondKnightEvaluationLookup[combination >> 16] = GenerateStandardEval(combination, Slice.Second, Pieces.WhiteKnight, Pieces.BlackKnight);
-                        MagicLookup.SecondBishopEvaluationLookup[combination >> 16] = GenerateStandardEval(combination, Slice.Second, Pieces.WhiteBishop, Pieces.BlackBishop);
+                        MagicLookup.SecondQueenEvaluationLookup[combination >> 16] = GenerateStandardEval<QueenEvaluation>(combination, Slice.Second, Pieces.WhiteQueen, Pieces.BlackQueen);
+                        MagicLookup.SecondKnightEvaluationLookup[combination >> 16] = GenerateStandardEval<KnightEvaluation>(combination, Slice.Second, Pieces.WhiteKnight, Pieces.BlackKnight);
+                        MagicLookup.SecondBishopEvaluationLookup[combination >> 16] = GenerateStandardEval<BishopEvaluation>(combination, Slice.Second, Pieces.WhiteBishop, Pieces.BlackBishop);
                     }
 
                     break;
@@ -719,18 +735,18 @@ public static class Bitboards
                     foreach (ulong combination in thirdSlice)
                     {
                         MagicLookup.ThirdRookEvaluationLookup[combination >> 32] = GenerateRookEval(combination, Slice.Third);
-                        MagicLookup.ThirdQueenEvaluationLookup[combination >> 32] = GenerateStandardEval(combination, Slice.Third, Pieces.WhiteQueen, Pieces.BlackQueen);
-                        MagicLookup.ThirdKnightEvaluationLookup[combination >> 32] = GenerateStandardEval(combination, Slice.Third, Pieces.WhiteKnight, Pieces.BlackKnight);
-                        MagicLookup.ThirdBishopEvaluationLookup[combination >> 32] = GenerateStandardEval(combination, Slice.Third, Pieces.WhiteBishop, Pieces.BlackBishop);
+                        MagicLookup.ThirdQueenEvaluationLookup[combination >> 32] = GenerateStandardEval<QueenEvaluation>(combination, Slice.Third, Pieces.WhiteQueen, Pieces.BlackQueen);
+                        MagicLookup.ThirdKnightEvaluationLookup[combination >> 32] = GenerateStandardEval<KnightEvaluation>(combination, Slice.Third, Pieces.WhiteKnight, Pieces.BlackKnight);
+                        MagicLookup.ThirdBishopEvaluationLookup[combination >> 32] = GenerateStandardEval<BishopEvaluation>(combination, Slice.Third, Pieces.WhiteBishop, Pieces.BlackBishop);
                     }
                     break;
                 case 3:
                     foreach (ulong combination in fourthSlice)
                     {
                         MagicLookup.FourthRookEvaluationLookup[combination >> 48] = GenerateRookEval(combination, Slice.Fourth);
-                        MagicLookup.FourthQueenEvaluationLookup[combination >> 48] = GenerateStandardEval(combination, Slice.Fourth, Pieces.WhiteQueen, Pieces.BlackQueen);
-                        MagicLookup.FourthKnightEvaluationLookup[combination >> 48] = GenerateStandardEval(combination, Slice.Fourth, Pieces.WhiteKnight, Pieces.BlackKnight);
-                        MagicLookup.FourthBishopEvaluationLookup[combination >> 48] = GenerateStandardEval(combination, Slice.Fourth, Pieces.WhiteBishop, Pieces.BlackBishop);
+                        MagicLookup.FourthQueenEvaluationLookup[combination >> 48] = GenerateStandardEval<QueenEvaluation>(combination, Slice.Fourth, Pieces.WhiteQueen, Pieces.BlackQueen);
+                        MagicLookup.FourthKnightEvaluationLookup[combination >> 48] = GenerateStandardEval<KnightEvaluation>(combination, Slice.Fourth, Pieces.WhiteKnight, Pieces.BlackKnight);
+                        MagicLookup.FourthBishopEvaluationLookup[combination >> 48] = GenerateStandardEval<BishopEvaluation>(combination, Slice.Fourth, Pieces.WhiteBishop, Pieces.BlackBishop);
                     }
                     break;
             }
@@ -786,18 +802,22 @@ public static class Bitboards
                 
                 MagicLookup.RookBitboardNumbers[file, rank] = MagicNumbers.RookBitboardNumbers[file, rank];
                 MagicLookup.RookBitboardLookup[file, rank] = new ulong[MagicLookup.RookBitboardNumbers[file, rank].highest + 1];
+                MagicLookup.RookMobilityLookupArray[file, rank] = new int[MagicLookup.RookBitboardNumbers[file, rank].highest + 1];
 
                 for (int i = 0; i < SmallRookCombinations[file, rank].Length; i++) // for each blocker
                 {
                     MagicLookup.RookBitboardLookup[file, rank][(SmallRookCombinations[file, rank][i] * MagicLookup.RookBitboardNumbers[file, rank].magicNumber) >> MagicLookup.RookBitboardNumbers[file, rank].push] = SmallRookBitboards[file, rank][i];
+                    MagicLookup.RookMobilityLookupArray[file, rank][(SmallRookCombinations[file, rank][i] * MagicLookup.RookBitboardNumbers[file, rank].magicNumber) >> MagicLookup.RookBitboardNumbers[file, rank].push] = (int)(ulong.PopCount(SmallRookBitboards[file, rank][i]) * Weights.MobilityMultiplier);
                 }
                 
                 MagicLookup.BishopBitboardNumbers[file, rank] = MagicNumbers.BishopBitboardNumbers[file, rank];
                 MagicLookup.BishopBitboardLookup[file, rank] = new ulong[MagicLookup.BishopBitboardNumbers[file, rank].highest + 1];
+                MagicLookup.BishopMobilityLookupArray[file, rank] = new int[MagicLookup.BishopBitboardNumbers[file, rank].highest + 1];
                 
                 for (int i = 0; i < SmallBishopCombinations[file, rank].Length; i++) // for each blocker
                 {
                     MagicLookup.BishopBitboardLookup[file, rank][(SmallBishopCombinations[file, rank][i] * MagicLookup.BishopBitboardNumbers[file, rank].magicNumber) >> MagicLookup.BishopBitboardNumbers[file, rank].push] = SmallBishopBitboards[file, rank][i];
+                    MagicLookup.BishopMobilityLookupArray[file, rank][(SmallBishopCombinations[file, rank][i] * MagicLookup.BishopBitboardNumbers[file, rank].magicNumber) >> MagicLookup.BishopBitboardNumbers[file, rank].push] = (int)(ulong.PopCount(SmallBishopBitboards[file, rank][i]) * Weights.MobilityMultiplier);
                 }
                 
                 // knight moves
@@ -881,7 +901,7 @@ public static class Bitboards
                         MagicLookup.BlockMovePawnLookup[file, rank][(move * MagicLookup.BlockMoveNumber.magicNumber) >> MagicLookup.BlockMoveNumber.push] = GetBitboardMoves(move, (file, rank), 5, pawn: true);
                 }
 
-                MagicLookup.KingEvaluation[file, rank] = new StandardEvaluation
+                MagicLookup.KingEvaluationLookup[file, rank] = new KingEvaluation
                 {
                     wEval = (int)(Pieces.Value[Pieces.WhiteKing] * Weights.MaterialMultiplier) + Weights.Pieces[Pieces.WhiteKing, file, rank],
                     bEval = (int)(Pieces.Value[Pieces.BlackKing] * Weights.MaterialMultiplier) - Weights.Pieces[Pieces.WhiteKing, file, 7-rank],
@@ -1224,6 +1244,7 @@ public static class Bitboards
         };
 
         List<OpenFileCheck> fileChecks = new();
+        List<(int file, int rank)> coords = new();
 
         for (int rank = startRank; rank < startRank + 2; rank++)
         {
@@ -1244,18 +1265,21 @@ public static class Bitboards
                     
                     // open files
                     fileChecks.Add(new(GetFile(file)));
+                    coords.Add((file, rank));
                 }
             }
         }
         
         eval.fileChecks = fileChecks.ToArray();
-
+        eval.coords = coords.ToArray();
+        
         return eval;
     }
 
-    private static StandardEvaluation GenerateStandardEval(ulong combination, Slice slice, uint wPiece, uint bPiece)
+    private static T GenerateStandardEval<T>(ulong combination, Slice slice, uint wPiece, uint bPiece) where T : StandardEvaluation, new()
     {
-        StandardEvaluation eval = new();
+        T eval = new T();
+        List<(int File, int rank)> coords = new();
         
         int startRank = slice switch
         {
@@ -1276,6 +1300,8 @@ public static class Bitboards
                 // square occupied
                 if ((combination & GetSquare(file, rank)) != 0)
                 {
+                    coords.Add((file,rank));
+                    
                     eval.wEval += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier) + Weights.Pieces[wPiece, file, rank];
                     eval.bEval += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier) - Weights.Pieces[wPiece, file, 7-rank];
                     
@@ -1285,18 +1311,25 @@ public static class Bitboards
             }
         }
 
+        eval.coords = coords.ToArray();
         return eval;
     }
 
-    public class RookEvaluation
+    public class RookEvaluation : StandardEvaluation
     {
-        public int wEval;
-        public int bEval;
-        public int wEvalEndgame;
-        public int bEvalEndgame;
         public OpenFileCheck[] fileChecks = [];
 
-        public int GetFinal(ulong enemyPawns, ulong friendlyPawns, int side)
+        public override int MobilityLookup(ulong blockers)
+        {
+            int mobility = 0;
+
+            foreach ((int file, int rank) pos in coords)
+                mobility += BishopMobilityLookup(pos, blockers);
+            
+            return mobility;
+        }
+
+        public int GetResult(ulong enemyPawns, ulong friendlyPawns, ulong blockers, int side)
         {
             int final;
             if (side == 0)
@@ -1312,16 +1345,121 @@ public static class Bitboards
                     final -= f.Test(enemyPawns, friendlyPawns);
             }
             
-            return final;
+            return final + MobilityLookup(blockers);
+        }
+
+        public override int GetFinalEndgame(ulong blockers, int side)
+        {
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
+        }
+
+        public override int GetFinal(ulong blockers, int side)
+        {
+            throw new NotImplementedException();
         }
     }
 
-    public class StandardEvaluation
+    public abstract class StandardEvaluation
     {
         public int wEval;
         public int bEval;
         public int wEvalEndgame;
         public int bEvalEndgame;
+        public (int file, int rank)[] coords = [];
+
+        public abstract int MobilityLookup(ulong blockers);
+        public abstract int GetFinal(ulong blockers, int side);
+        public abstract int GetFinalEndgame(ulong blockers, int side);
+    }
+
+    public class QueenEvaluation : StandardEvaluation
+    {
+        public override int MobilityLookup(ulong blockers)
+        {
+            int mobility = 0;
+
+            foreach ((int file, int rank) pos in coords)
+            {
+                mobility += RookMobilityLookup(pos, blockers);
+                mobility += BishopMobilityLookup(pos, blockers);
+            }
+
+            return mobility;
+        }
+
+        public override int GetFinal(ulong blockers, int side)
+        {
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
+        }
+
+        public override int GetFinalEndgame(ulong blockers, int side)
+        {
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
+        }
+    }
+    
+    public class BishopEvaluation : StandardEvaluation
+    {
+        public override int MobilityLookup(ulong blockers)
+        {
+            int mobility = 0;
+
+            foreach ((int file, int rank) pos in coords)
+                mobility += BishopMobilityLookup(pos, blockers);
+            
+            return mobility;
+        }
+
+        public override int GetFinal(ulong blockers, int side)
+        {
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
+        }
+
+        public override int GetFinalEndgame(ulong blockers, int side)
+        {
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
+        }
+    }
+    
+    public class KnightEvaluation : StandardEvaluation
+    {
+        public override int MobilityLookup(ulong blockers)
+        {
+            int mobility = 0;
+
+            foreach ((int file, int rank) pos in coords)
+                mobility += MagicLookup.KnightMobilityLookup[pos.file, pos.rank];
+            
+            return mobility;
+        }
+
+        public override int GetFinal(ulong blockers, int side)
+        {
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
+        }
+
+        public override int GetFinalEndgame(ulong blockers, int side)
+        {
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
+        }
+    }
+    
+    public class KingEvaluation : StandardEvaluation
+    {
+        public override int MobilityLookup(ulong blockers)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetFinal(ulong blockers, int side)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetFinalEndgame(ulong blockers, int side)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public readonly struct OpenFileCheck(ulong file)
