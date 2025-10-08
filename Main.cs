@@ -1,9 +1,21 @@
 ﻿using Blaze;
 
-//Bitboards.Init();
+Bitboards.Init();
 //Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
+
+/*
+Board board = new("r1bq1rk1/1p1p1ppp/p1n1pn2/2b5/N3P3/PP1B4/1BPQ1PPP/R3K1NR b KQ - 2 10");
+
+Perft.BreakdownEval(board, 5);
+
+Search.SearchResult s = Search.BestMove(board, 6, false, 0);
+Console.WriteLine(s.eval);
+board.MakeMove(s.move);
+Match.PrintBoard(board,0);
+*/
+
 new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
 //Perft.TestGameSpeed(15, 6, false);

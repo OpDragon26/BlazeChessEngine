@@ -3,14 +3,15 @@ namespace Blaze;
 public static class Weights
 {
     // files and ranks are reversed, files go from a to h on the y-axis
-    public const float MaterialMultiplier = 1.4f;
-    public const int CastlingBonus = 30;
-    public const int NoCastlingPenalty = -15;
-    public const float MobilityMultiplier = 0.2f;
-    public const int ProtectedPawnBonus = 2;
-    public const int IsolatedPawnPenalty = -2;
-    public const int OpenFileAdvantage = 20;
+    public const float MaterialMultiplier = 3f;
+    public const int CastlingBonus = 30; // 30
+    public const int NoCastlingPenalty = -15; // -15
+    public const float MobilityMultiplier = 1.5f;
+    public const int ProtectedPawnBonus = 2; // 2
+    public const int IsolatedPawnPenalty = -20; // -20
+    public const int OpenFileAdvantage = 30;
     public const int SemiOpenFileAdvantage = 10;
+    public const int AttackedPenalty = -10;
     
     public static readonly int[,,] Pieces = new[,,]
     {
@@ -78,14 +79,14 @@ public static class Weights
         public static readonly int[,,] EndgamePieces = new[,,]
     {
         { // white pawn
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
-            {0,5,5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
+            {0,-5,-5,10,20,50,110,0},
         },
         { // white rook
             {25,5,5,5,5,5,35,50},
@@ -138,6 +139,8 @@ public static class Weights
             {-15,-5,5,15,15,5,-5,-15},
         }
     };
+
+    public static readonly float[] WeightMultipliers = [1f, 5f, 5f, 5f, 1f, 1f];
 
     public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,700,100,0];
     public static readonly int[] BlackPassedPawnBonuses = [0,-100,-70,-50,-20,-11,-10,0];

@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    private static int Minimax(Board board, int depth, int alpha, int beta)
+    public static int Minimax(Board board, int depth, int alpha, int beta)
     {
         if (board.IsDraw())
             return 0;
@@ -138,16 +138,16 @@ public static class Search
                 board.bitboards[Pieces.BlackPawn], board.bitboards[Pieces.WhitePawn]);
             
             // queens
-            eval += Evaluation.Lookup.QueenRegular(0, board.bitboards[Pieces.WhiteQueen], all);
-            eval += Evaluation.Lookup.QueenRegular(1, board.bitboards[Pieces.BlackQueen], all);
+            eval += Evaluation.Lookup.QueenRegular(0, board.bitboards[Pieces.WhiteQueen], all, board.bitboards[Pieces.BlackPawn]);
+            eval += Evaluation.Lookup.QueenRegular(1, board.bitboards[Pieces.BlackQueen], all, board.bitboards[Pieces.WhitePawn]);
             
             // knight
-            eval += Evaluation.Lookup.KnightRegular(0, board.bitboards[Pieces.WhiteKnight], all);
-            eval += Evaluation.Lookup.KnightRegular(1, board.bitboards[Pieces.BlackKnight], all);
+            eval += Evaluation.Lookup.KnightRegular(0, board.bitboards[Pieces.WhiteKnight], all, board.bitboards[Pieces.BlackPawn]);
+            eval += Evaluation.Lookup.KnightRegular(1, board.bitboards[Pieces.BlackKnight], all, board.bitboards[Pieces.WhitePawn]);
             
             // bishop
-            eval += Evaluation.Lookup.BishopRegular(0, board.bitboards[Pieces.WhiteBishop], all);
-            eval += Evaluation.Lookup.BishopRegular(1, board.bitboards[Pieces.BlackBishop], all);
+            eval += Evaluation.Lookup.BishopRegular(0, board.bitboards[Pieces.WhiteBishop], all, board.bitboards[Pieces.BlackPawn]);
+            eval += Evaluation.Lookup.BishopRegular(1, board.bitboards[Pieces.BlackBishop], all, board.bitboards[Pieces.WhitePawn]);
             
             // king
             eval += MagicLookup.KingEvalLookup(board.KingPositions[0]).wEval;
