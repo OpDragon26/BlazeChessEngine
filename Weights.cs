@@ -6,7 +6,7 @@ public static class Weights
     public const float MaterialMultiplier = 1.4f;
     public const int CastlingBonus = 30;
     public const int NoCastlingPenalty = -15;
-    public const float MobilityMultiplier = 0.2f;
+    public const float MobilityMultiplier = 1.5f;
     public const int ProtectedPawnBonus = 2;
     public const int IsolatedPawnPenalty = -2;
     public const int OpenFileAdvantage = 20;
@@ -138,6 +138,8 @@ public static class Weights
             {-15,-5,5,15,15,5,-5,-15},
         }
     };
+
+    public static readonly float[] PiecewiseMaterialWeights = [0.7f, 1.2f, 1.2f, 1.2f, 1f, 1f];
 
     public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,700,100,0];
     public static readonly int[] BlackPassedPawnBonuses = [0,-100,-70,-50,-20,-11,-10,0];

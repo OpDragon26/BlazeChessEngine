@@ -299,6 +299,11 @@ public class Match
 
     public static void PrintBoard(Board board, int perspective, int imbalance = 0)
     {
+        PrintBoard(board, perspective, PieceStrings, imbalance);
+    }
+    
+    public static void PrintBoard(Board board, int perspective, string[] pieceStrings, int imbalance = 0)
+    {
         if (perspective == 1)
         {
             // black's perspective
@@ -309,7 +314,7 @@ public class Match
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 7; file >= 0; file--)
-                    rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
+                    rankStr += pieceStrings[board.GetPiece(file, rank)] + " ";
                 
                 if (imbalance < 0 && rank == 7) // black advantage
                     rankStr += $" +{-imbalance}";
@@ -327,7 +332,7 @@ public class Match
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 0; file < 8; file++)
-                    rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
+                    rankStr += pieceStrings[board.GetPiece((file, rank))] + " ";
                 
                 if (imbalance > 0 && rank == 0)
                     rankStr += $" +{imbalance}";
@@ -339,7 +344,7 @@ public class Match
 
     private void Print(int perspective)
     {
-        PrintBoard(board, perspective, board.GetImbalance());
+        PrintBoard(board, perspective, PieceStrings, board.GetImbalance());
     }
 
     private void Print(int perspective, string[] pieceStrings)
@@ -551,7 +556,7 @@ public class Match
         " "
     ];
 
-    private static readonly string[] IHateWindows =
+    public static readonly string[] IHateWindows =
     [
         "P",
         "R",

@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    private static int Minimax(Board board, int depth, int alpha, int beta)
+    public static int Minimax(Board board, int depth, int alpha, int beta)
     {
         if (board.IsDraw())
             return 0;

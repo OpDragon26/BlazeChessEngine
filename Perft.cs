@@ -194,6 +194,19 @@ public static class Perft
         Console.WriteLine($"Nodes Searched: {total}");
     }
 
+    public static void BreakdownEval(Board board, int depth)
+    {
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
+        Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
+
+        foreach (Move move in moves)
+        {
+            Board moveBoard = new Board(board);
+            moveBoard.MakeMove(move);
+            Console.WriteLine($"{move.GetUCI()}: {Search.Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue)}");
+        }
+    }
+
     public static void BreakdownWithExamine(Board board, int depth, int[] examination)
     {
         foreach (int examine in examination)

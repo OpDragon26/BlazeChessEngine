@@ -132,11 +132,11 @@ public static class Evaluation
                 if ((BitboardUtils.GetSquare(file, rank) & relevantPawns) != 0)
                 {
                     // material and weight at the square
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier + Weights.Pieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] + Weights.Pieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
                     
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier + Weights.EndgamePieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier - Weights.EndgamePieces[Pieces.WhitePawn, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] + Weights.EndgamePieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] - Weights.EndgamePieces[Pieces.WhitePawn, file, 7-rank]);
                     
                     // protected
                     eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & Bitboards.WhitePawnCaptureMasks[file, rank]);
@@ -257,11 +257,11 @@ public static class Evaluation
                 if ((combination & BitboardUtils.GetSquare(file, rank)) != 0)
                 {
                     // material and weight multiplier
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.Pieces[Pieces.WhiteRook, file, rank];
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.Pieces[Pieces.WhiteRook, file, 7-rank];
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) + Weights.Pieces[Pieces.WhiteRook, file, rank];
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) - Weights.Pieces[Pieces.WhiteRook, file, 7-rank];
                     
-                    eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier) + Weights.EndgamePieces[Pieces.WhiteRook, file, rank];
-                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier) - Weights.EndgamePieces[Pieces.WhiteRook, file, 7-rank];
+                    eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) + Weights.EndgamePieces[Pieces.WhiteRook, file, rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) - Weights.EndgamePieces[Pieces.WhiteRook, file, 7-rank];
                     
                     // open files
                     fileChecks.Add(new(BitboardUtils.GetFile(file)));
@@ -302,11 +302,11 @@ public static class Evaluation
                 {
                     coords.Add((file,rank));
                     
-                    eval.wEval += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier) + Weights.Pieces[wPiece, file, rank];
-                    eval.bEval += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier) - Weights.Pieces[wPiece, file, 7-rank];
+                    eval.wEval += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) + Weights.Pieces[wPiece, file, rank];
+                    eval.bEval += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) - Weights.Pieces[wPiece, file, 7-rank];
                     
-                    eval.wEvalEndgame += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier) + Weights.EndgamePieces[wPiece, file, rank];
-                    eval.bEvalEndgame += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier) - Weights.EndgamePieces[wPiece, file, 7-rank];
+                    eval.wEvalEndgame += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) + Weights.EndgamePieces[wPiece, file, rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) - Weights.EndgamePieces[wPiece, file, 7-rank];
                 }
             }
         }
