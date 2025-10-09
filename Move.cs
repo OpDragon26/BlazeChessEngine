@@ -9,7 +9,6 @@ public class Move
     public readonly int Priority;
     public readonly byte CastlingBan;
     public readonly bool Pawn;
-    public readonly bool PermaChange;
     public readonly bool Capture;
     
     /*
@@ -44,7 +43,6 @@ public class Move
         if (destination == (0, 7) || source == (0, 7)) CastlingBan &= 0b1110; // if a move is made from or to a8, remove black's long castle rights
         if (source == (4, 0)) CastlingBan = 0b0011; // if the origin of the move is the white king's starting position, remove white's castling rights
         if (source == (4, 7)) CastlingBan = 0b1100; // if the origin of the move is the black king's starting position, remove black's castling rights
-        PermaChange = CastlingBan != 0b1111 || pawn || capture;
     }
 
     public override bool Equals(object? obj)

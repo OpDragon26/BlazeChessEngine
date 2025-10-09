@@ -762,7 +762,7 @@ public static class Search
 
         for (int i = moves.Length - 1; i >= 0; i--)
         {
-            Board moveBoard = new(board, MoveList[i].PermaChange);
+            Board moveBoard = new(board);
             moveBoard.MakeMove(MoveList[i]);
             // if the king of the moving side is in check after the move, the move is illegal
             if (Attacked(moveBoard.KingPositions[1-moveBoard.side], moveBoard, moveBoard.side))

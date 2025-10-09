@@ -310,7 +310,7 @@ public class Board
         enPassant = (8, 8);
         byte saveCastling = castling;
         castling &= move.CastlingBan;
-        if (saveCastling != castling || move.PermaChange)
+        if (saveCastling != castling || move.Pawn || move.Capture)
             repeat.Clear();
         
         if (considerRepetition) hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
