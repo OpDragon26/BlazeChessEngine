@@ -3,10 +3,10 @@ namespace Blaze;
 public static class Weights
 {
     // files and ranks are reversed, files go from a to h on the y-axis
-    public const float MaterialMultiplier = 1.4f;
+    public const float MaterialMultiplier = 1.5f;
     public const int CastlingBonus = 30;
     public const int NoCastlingPenalty = -15;
-    public const float MobilityMultiplier = 1.5f;
+    public const float MobilityMultiplier = 1f;
     public const int ProtectedPawnBonus = 2;
     public const int IsolatedPawnPenalty = -2;
     public const int OpenFileAdvantage = 20;
@@ -139,7 +139,7 @@ public static class Weights
         }
     };
 
-    public static readonly float[] PiecewiseMaterialWeights = [0.6f, 1.2f, 1.35f, 1.35f, 1f, 1f];
+    public static readonly float[] PiecewiseMaterialWeights = [0.6f, 1.4f, 1.5f, 1.4f, 1.5f, 1.5f];
 
     public static readonly int[] WhitePassedPawnBonuses = [0,10,11,20,50,700,100,0];
     public static readonly int[] BlackPassedPawnBonuses = [0,-100,-70,-50,-20,-11,-10,0];

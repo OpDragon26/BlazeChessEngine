@@ -4,9 +4,9 @@ Bitboards.Init();
 //Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
-//new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
-
+/*
 Board test = new Board("r1bq1rk1/pp3ppp/2n1pn2/2bp4/1P6/2PBPN2/P2N1PPP/R1BQ1RK1 b - - 0 9");
 Search.SearchResult result = Search.BestMove(test, 6, false, 0);
 Perft.BreakdownEval(test, 6);
@@ -14,7 +14,7 @@ Console.WriteLine(result.move.Notate(test));
 Console.WriteLine(result.eval);
 test.MakeMove(result.move);
 Match.PrintBoard(test, 0, Match.IHateWindows);
-
+*/
 
 //Perft.TestGameSpeed(15, 6, false);
 //Perft.Run(5, "start");

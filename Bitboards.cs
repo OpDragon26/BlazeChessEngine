@@ -190,7 +190,7 @@ public static class Bitboards
         Timer t = new Timer();
         t.Start();
         
-        Console.WriteLine("Initializing magic bitboards. This should take approximately 10-20 seconds");
+        Console.WriteLine("Initializing magic bitboards. This should take approximately 20 seconds");
         
         // Create the masks for every square on the board
         for (int rank = 0; rank < 8; rank++)
@@ -254,7 +254,7 @@ public static class Bitboards
                 
                 // knight masks
                 KnightMasks[file, rank] = BitboardUtils.GetMask((file, rank), BitboardUtils.KnightPattern);
-                MagicLookupConsts.KnightMobilityLookup[file, rank] = (int)(ulong.PopCount(KnightMasks[file, rank]) * Weights.MobilityMultiplier);
+                MagicLookupConsts.KnightMobilityLookup[file, rank] = (int)(ulong.PopCount(KnightMasks[file, rank]) * Weights.MobilityMultiplier) * 3;
                 KnightCombinations[file, rank] = BitboardUtils.Combinations(KnightMasks[file, rank]);
                 
                 // king masks
