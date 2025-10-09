@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    public static int Minimax(Board board, int depth, int alpha, int beta, bool permaChange = false)
+    public static int Minimax(Board board, int depth, int alpha, int beta)
     {
         if (board.IsDraw())
             return 0;
@@ -79,10 +79,10 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
-                moveBoard = new(board, permaChange);
-                bool permC = moveBoard.MakeMove(move);
+                moveBoard = new(board);
+                moveBoard.MakeMove(move);
                 
-                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta, permC));
+                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 alpha = Math.Max(alpha, eval);
                 if (eval >= beta) break; // beta cutoff
             }
@@ -106,10 +106,10 @@ public static class Search
             
             foreach (Move move in moves)
             {
-                moveBoard = new(board, permaChange);
-                bool permC = moveBoard.MakeMove(move);
+                moveBoard = new(board);
+                moveBoard.MakeMove(move);
                 
-                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta, permC));
+                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
                 beta = Math.Min(beta, eval);
                 if (eval <= alpha) break; // alpha cutoff
             }
