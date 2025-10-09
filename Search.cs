@@ -24,7 +24,7 @@ public static class Search
         
         Parallel.For(0, moves.Length, i =>
         {
-            Board moveBoard = new(board, moves[i].PermaChange);
+            Board moveBoard = new(board);
             moveBoard.MakeMove(moves[i]);
             evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
         });
@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    public static int Minimax(Board board, int depth, int alpha, int beta)
+    public static int Minimax(Board board, int depth, int alpha, int beta, bool permaChange = false)
     {
         if (board.IsDraw())
             return 0;
@@ -79,10 +79,10 @@ public static class Search
             // for each child
             foreach (Move move in moves)
             {
-                moveBoard = new(board, move.PermaChange);
-                moveBoard.MakeMove(move);
+                moveBoard = new(board, permaChange);
+                bool permC = moveBoard.MakeMove(move);
                 
-                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta, permC));
                 alpha = Math.Max(alpha, eval);
                 if (eval >= beta) break; // beta cutoff
             }
@@ -106,10 +106,10 @@ public static class Search
             
             foreach (Move move in moves)
             {
-                moveBoard = new(board, move.PermaChange);
-                moveBoard.MakeMove(move);
+                moveBoard = new(board, permaChange);
+                bool permC = moveBoard.MakeMove(move);
                 
-                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta, permC));
                 beta = Math.Min(beta, eval);
                 if (eval <= alpha) break; // alpha cutoff
             }
@@ -193,7 +193,7 @@ public static class Search
                 // take from eval if the pawns in front of the king are missing
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[0].file])
                     if ((BitboardUtils.GetFile(file) & board.bitboards[Pieces.WhitePawn]) == 0)
-                        eval -= 15;
+                        eval -= 30;
             }
 
             if ((Bitboards.KingSafetyAppliesBlack & BitboardUtils.GetSquare(board.KingPositions[1])) != 0)
@@ -204,7 +204,7 @@ public static class Search
             
                 foreach (int file in Bitboards.AdjacentFiles[board.KingPositions[1].file])
                     if ((BitboardUtils.GetFile(file) & board.bitboards[Pieces.BlackPawn]) == 0)
-                        eval += 15;
+                        eval += 30;
             }
         }
         else

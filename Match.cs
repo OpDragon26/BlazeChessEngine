@@ -37,6 +37,7 @@ public class Match
     private readonly int moves;
     private readonly bool dynamicDepth;
     private readonly bool printBoard;
+    private bool prevPermC = false;
 
     public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
     {
@@ -166,7 +167,7 @@ public class Match
                         Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
-                        board.MakeMove(botMove, true);
+                        prevPermC = board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board), move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
@@ -221,7 +222,7 @@ public class Match
                         Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
-                        board.MakeMove(botMove, true);
+                        prevPermC = board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board) , move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
@@ -431,7 +432,7 @@ public class Match
                 if (filtered.Contains(move))
                 {
                     LasMove = move.Notate(board);
-                    board.MakeMove(move, true);
+                    prevPermC = board.MakeMove(move);
                     game.Add(new PGNNode { board = new Board(board) , move = move , time = timer.Stop()});
                     if (!CheckOutcome())
                         return false;
@@ -473,7 +474,7 @@ public class Match
 
         LasMove = bestMove.Notate(board);
                         
-        board.MakeMove(bestMove, true);
+        prevPermC = board.MakeMove(bestMove);
         game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
         ply++;
     }
