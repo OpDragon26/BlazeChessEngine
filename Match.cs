@@ -37,6 +37,7 @@ public class Match
     private readonly int moves;
     private readonly bool dynamicDepth;
     private readonly bool printBoard;
+    private bool prevPermC = false;
 
     public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
     {
@@ -166,7 +167,7 @@ public class Match
                         Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
-                        board.MakeMove(botMove, true);
+                        prevPermC = board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board), move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
@@ -221,7 +222,7 @@ public class Match
                         Move botMove = result.move;
 
                         LasMove = botMove.Notate(board);
-                        board.MakeMove(botMove, true);
+                        prevPermC = board.MakeMove(botMove);
                         game.Add(new PGNNode { board = new Board(board) , move = botMove , time = result.time });
                         
                         // if the game ended, break the loop
@@ -299,6 +300,11 @@ public class Match
 
     public static void PrintBoard(Board board, int perspective, int imbalance = 0)
     {
+        PrintBoard(board, perspective, PieceStrings, imbalance);
+    }
+    
+    public static void PrintBoard(Board board, int perspective, string[] pieceStrings, int imbalance = 0)
+    {
         if (perspective == 1)
         {
             // black's perspective
@@ -309,7 +315,7 @@ public class Match
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 7; file >= 0; file--)
-                    rankStr += PieceStrings[board.GetPiece(file, rank)] + " ";
+                    rankStr += pieceStrings[board.GetPiece(file, rank)] + " ";
                 
                 if (imbalance < 0 && rank == 7) // black advantage
                     rankStr += $" +{-imbalance}";
@@ -327,7 +333,7 @@ public class Match
                 string rankStr = $"{rank + 1} ";
                 
                 for (int file = 0; file < 8; file++)
-                    rankStr += PieceStrings[board.GetPiece((file, rank))] + " ";
+                    rankStr += pieceStrings[board.GetPiece((file, rank))] + " ";
                 
                 if (imbalance > 0 && rank == 0)
                     rankStr += $" +{imbalance}";
@@ -339,7 +345,7 @@ public class Match
 
     private void Print(int perspective)
     {
-        PrintBoard(board, perspective, board.GetImbalance());
+        PrintBoard(board, perspective, PieceStrings, board.GetImbalance());
     }
 
     private void Print(int perspective, string[] pieceStrings)
@@ -426,7 +432,7 @@ public class Match
                 if (filtered.Contains(move))
                 {
                     LasMove = move.Notate(board);
-                    board.MakeMove(move, true);
+                    prevPermC = board.MakeMove(move);
                     game.Add(new PGNNode { board = new Board(board) , move = move , time = timer.Stop()});
                     if (!CheckOutcome())
                         return false;
@@ -468,7 +474,7 @@ public class Match
 
         LasMove = bestMove.Notate(board);
                         
-        board.MakeMove(bestMove, true);
+        prevPermC = board.MakeMove(bestMove);
         game.Add(new PGNNode { board = new Board(board) , move = bestMove , time = result.time });
         ply++;
     }
@@ -551,7 +557,7 @@ public class Match
         " "
     ];
 
-    private static readonly string[] IHateWindows =
+    public static readonly string[] IHateWindows =
     [
         "P",
         "R",

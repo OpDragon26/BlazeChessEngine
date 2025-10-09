@@ -21,28 +21,28 @@ public static class Evaluation
 
         }
 
-        public static int QueenRegular(int side, ulong queens, ulong blockers, ulong enemyPawns)
+        public static int QueenRegular(int side, ulong queens, ulong blockers)
         {
-            return MagicLookup.FirstQueenEvalLookup(queens).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.SecondQueenEvalLookup(queens).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.ThirdQueenEvalLookup(queens).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.FourthQueenEvalLookup(queens).GetFinal(blockers, side, enemyPawns);
+            return MagicLookup.FirstQueenEvalLookup(queens).GetFinal(blockers, side) +
+                   MagicLookup.SecondQueenEvalLookup(queens).GetFinal(blockers, side) +
+                   MagicLookup.ThirdQueenEvalLookup(queens).GetFinal(blockers, side) +
+                   MagicLookup.FourthQueenEvalLookup(queens).GetFinal(blockers, side);
         }
 
-        public static int KnightRegular(int side, ulong knights, ulong blockers, ulong enemyPawns)
+        public static int KnightRegular(int side, ulong knights, ulong blockers)
         {
-            return MagicLookup.FirstKnightEvalLookup(knights).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.SecondKnightEvalLookup(knights).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.ThirdKnightEvalLookup(knights).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.FourthKnightEvalLookup(knights).GetFinal(blockers, side, enemyPawns);
+            return MagicLookup.FirstKnightEvalLookup(knights).GetFinal(blockers, side) +
+                   MagicLookup.SecondKnightEvalLookup(knights).GetFinal(blockers, side) +
+                   MagicLookup.ThirdKnightEvalLookup(knights).GetFinal(blockers, side) +
+                   MagicLookup.FourthKnightEvalLookup(knights).GetFinal(blockers, side);
         }
 
-        public static int BishopRegular(int side, ulong bishops, ulong blockers, ulong enemyPawns)
+        public static int BishopRegular(int side, ulong bishops, ulong blockers)
         {
-            return MagicLookup.FirstBishopEvalLookup(bishops).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.SecondBishopEvalLookup(bishops).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.ThirdBishopEvalLookup(bishops).GetFinal(blockers, side, enemyPawns) +
-                   MagicLookup.FourthBishopEvalLookup(bishops).GetFinal(blockers, side, enemyPawns);
+            return MagicLookup.FirstBishopEvalLookup(bishops).GetFinal(blockers, side) +
+                   MagicLookup.SecondBishopEvalLookup(bishops).GetFinal(blockers, side) +
+                   MagicLookup.ThirdBishopEvalLookup(bishops).GetFinal(blockers, side) +
+                   MagicLookup.FourthBishopEvalLookup(bishops).GetFinal(blockers, side);
         }
         
         
@@ -132,15 +132,11 @@ public static class Evaluation
                 if ((BitboardUtils.GetSquare(file, rank) & relevantPawns) != 0)
                 {
                     // material and weight at the square
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier 
-                                        + Weights.WeightMultipliers[Pieces.WhitePawn] *  Weights.Pieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier 
-                                        - Weights.WeightMultipliers[Pieces.WhitePawn] *  Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] + Weights.Pieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] - Weights.Pieces[Pieces.WhitePawn, file, 7-rank]);
                     
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier
-                                        + Weights.WeightMultipliers[Pieces.WhitePawn] * Weights.EndgamePieces[Pieces.WhitePawn, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier
-                                        - Weights.WeightMultipliers[Pieces.WhitePawn] * Weights.EndgamePieces[Pieces.WhitePawn, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhitePawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] + Weights.EndgamePieces[Pieces.WhitePawn, file, rank]);
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackPawn] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhitePawn] - Weights.EndgamePieces[Pieces.WhitePawn, file, 7-rank]);
                     
                     // protected
                     eval.wEval += Weights.ProtectedPawnBonus * (int)ulong.PopCount(pawnCombination & Bitboards.WhitePawnCaptureMasks[file, rank]);
@@ -249,9 +245,7 @@ public static class Evaluation
 
         List<OpenFileCheck> fileChecks = new();
         List<(int file, int rank)> coords = new();
-        List<AttackMask> wAttack = new();
-        List<AttackMask> bAttack = new();
-        
+
         for (int rank = startRank; rank < startRank + 2; rank++)
         {
             if ((BitboardUtils.GetRank(rank) & combination) == 0)
@@ -263,84 +257,29 @@ public static class Evaluation
                 if ((combination & BitboardUtils.GetSquare(file, rank)) != 0)
                 {
                     // material and weight multiplier
-                    eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier
-                                        + Weights.WeightMultipliers[Pieces.WhiteRook] * Weights.Pieces[Pieces.WhiteRook, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier 
-                                        - Weights.WeightMultipliers[Pieces.WhiteRook] * Weights.Pieces[Pieces.WhiteRook, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) + Weights.Pieces[Pieces.WhiteRook, file, rank];
+                    eval.bEval += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) - Weights.Pieces[Pieces.WhiteRook, file, 7-rank];
                     
-                    eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier 
-                                               + Weights.WeightMultipliers[Pieces.WhiteRook] * Weights.EndgamePieces[Pieces.WhiteRook, file, rank]);
-                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier 
-                                               - Weights.WeightMultipliers[Pieces.WhiteRook] * Weights.EndgamePieces[Pieces.WhiteRook, file, 7-rank]);
+                    eval.wEvalEndgame += (int)(Pieces.Value[Pieces.WhiteRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) + Weights.EndgamePieces[Pieces.WhiteRook, file, rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[Pieces.BlackRook] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[Pieces.WhiteRook]) - Weights.EndgamePieces[Pieces.WhiteRook, file, 7-rank];
                     
                     // open files
                     fileChecks.Add(new(BitboardUtils.GetFile(file)));
                     coords.Add((file, rank));
-                    
-                    // attacked by enemy pawns
-                    wAttack.Add(new(Bitboards.WhitePawnCaptureMasks[file, rank], Weights.AttackedPenalty));
-                    bAttack.Add(new(Bitboards.BlackPawnCaptureMasks[file, rank], -Weights.AttackedPenalty));
                 }
             }
         }
         
         eval.fileChecks = fileChecks.ToArray();
         eval.coords = coords.ToArray();
-        eval.wAttacks = wAttack.ToArray();
-        eval.bAttacks = bAttack.ToArray();
         
         return eval;
     }
 
-    public abstract class StandardEvaluation
-    {
-        public int wEval;
-        public int bEval;
-        public int wEvalEndgame;
-        public int bEvalEndgame;
-        public AttackMask[] wAttacks = [];
-        public AttackMask[] bAttacks = [];
-        public (int file, int rank)[] coords = [];
-
-        public abstract int MobilityLookup(ulong blockers);
-        public abstract int GetFinal(ulong blockers, int side, ulong enemyPawns);
-        public abstract int GetFinalEndgame(ulong blockers, int side);
-
-        protected int WhiteEnemyAttackLookup(ulong enemy)
-        {
-            int attacked = 0;
-            foreach (AttackMask a in wAttacks)
-                if (a.Test(enemy))
-                    attacked += a.penalty;
-            return attacked;
-        }
-        
-        protected int BlackEnemyAttackLookup(ulong enemy)
-        {
-            int attacked = 0;
-            foreach (AttackMask a in bAttacks)
-                if (a.Test(enemy))
-                    attacked += a.penalty;
-            return attacked;
-        }
-    }
-
-    public readonly struct AttackMask(ulong mask, int penalty)
-    {
-        public readonly int penalty = penalty;
-
-        public bool Test(ulong enemy)
-        {
-            return (mask & enemy) != 0;
-        }
-    }
-    
     public static T GenerateStandardEval<T>(ulong combination, Slice slice, uint wPiece, uint bPiece) where T : StandardEvaluation, new()
     {
         T eval = new T();
         List<(int File, int rank)> coords = new();
-        List<AttackMask> wAttack = new();
-        List<AttackMask> bAttack = new();
         
         int startRank = slice switch
         {
@@ -363,20 +302,15 @@ public static class Evaluation
                 {
                     coords.Add((file,rank));
                     
-                    eval.wEval += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier + Weights.WeightMultipliers[wPiece] * Weights.Pieces[wPiece, file, rank]);
-                    eval.bEval += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier - Weights.WeightMultipliers[wPiece] * Weights.Pieces[wPiece, file, 7-rank]);
+                    eval.wEval += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) + Weights.Pieces[wPiece, file, rank];
+                    eval.bEval += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) - Weights.Pieces[wPiece, file, 7-rank];
                     
-                    eval.wEvalEndgame += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier + Weights.WeightMultipliers[wPiece] * Weights.EndgamePieces[wPiece, file, rank]);
-                    eval.bEvalEndgame += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier - Weights.WeightMultipliers[wPiece] * Weights.EndgamePieces[wPiece, file, 7-rank]);
-                    
-                    wAttack.Add(new(Bitboards.WhitePawnCaptureMasks[file, rank], Weights.AttackedPenalty));
-                    bAttack.Add(new(Bitboards.BlackPawnCaptureMasks[file, rank], -Weights.AttackedPenalty));
+                    eval.wEvalEndgame += (int)(Pieces.Value[wPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) + Weights.EndgamePieces[wPiece, file, rank];
+                    eval.bEvalEndgame += (int)(Pieces.Value[bPiece] * Weights.MaterialMultiplier * Weights.PiecewiseMaterialWeights[wPiece]) - Weights.EndgamePieces[wPiece, file, 7-rank];
                 }
             }
         }
 
-        eval.wAttacks = wAttack.ToArray();
-        eval.bAttacks = bAttack.ToArray();
         eval.coords = coords.ToArray();
         return eval;
     }
@@ -400,29 +334,42 @@ public static class Evaluation
             int final;
             if (side == 0)
             {
-                final = wEval + MobilityLookup(blockers) + WhiteEnemyAttackLookup(enemyPawns);
+                final = wEval;
                 foreach (OpenFileCheck f in fileChecks)
                     final += f.Test(enemyPawns, friendlyPawns);
             }
             else
             {
-                final = bEval - MobilityLookup(blockers) + BlackEnemyAttackLookup(enemyPawns);
+                final = bEval;
                 foreach (OpenFileCheck f in fileChecks)
                     final -= f.Test(enemyPawns, friendlyPawns);
             }
             
-            return final;
+            return final + MobilityLookup(blockers);
         }
 
         public override int GetFinalEndgame(ulong blockers, int side)
         {
-            return (side == 0 ? wEvalEndgame + MobilityLookup(blockers) : bEvalEndgame - MobilityLookup(blockers));
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
         }
 
-        public override int GetFinal(ulong blockers, int side, ulong enemyPawns)
+        public override int GetFinal(ulong blockers, int side)
         {
             throw new NotImplementedException();
         }
+    }
+
+    public abstract class StandardEvaluation
+    {
+        public int wEval;
+        public int bEval;
+        public int wEvalEndgame;
+        public int bEvalEndgame;
+        public (int file, int rank)[] coords = [];
+
+        public abstract int MobilityLookup(ulong blockers);
+        public abstract int GetFinal(ulong blockers, int side);
+        public abstract int GetFinalEndgame(ulong blockers, int side);
     }
 
     public class QueenEvaluation : StandardEvaluation
@@ -440,14 +387,14 @@ public static class Evaluation
             return mobility;
         }
 
-        public override int GetFinal(ulong blockers, int side, ulong enemyPawns)
+        public override int GetFinal(ulong blockers, int side)
         {
-            return side == 0 ? wEval + MobilityLookup(blockers) + WhiteEnemyAttackLookup(enemyPawns) : bEval - MobilityLookup(blockers) + BlackEnemyAttackLookup(enemyPawns);
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
         }
 
         public override int GetFinalEndgame(ulong blockers, int side)
         {
-            return (side == 0 ? wEvalEndgame + MobilityLookup(blockers) : bEvalEndgame - MobilityLookup(blockers));
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
         }
     }
     
@@ -463,14 +410,14 @@ public static class Evaluation
             return mobility;
         }
 
-        public override int GetFinal(ulong blockers, int side, ulong enemyPawns)
+        public override int GetFinal(ulong blockers, int side)
         {
-            return side == 0 ? wEval + MobilityLookup(blockers) + WhiteEnemyAttackLookup(enemyPawns) : bEval - MobilityLookup(blockers) + BlackEnemyAttackLookup(enemyPawns);
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
         }
 
         public override int GetFinalEndgame(ulong blockers, int side)
         {
-            return (side == 0 ? wEvalEndgame + MobilityLookup(blockers) : bEvalEndgame - MobilityLookup(blockers));
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
         }
     }
     
@@ -486,14 +433,14 @@ public static class Evaluation
             return mobility;
         }
 
-        public override int GetFinal(ulong blockers, int side, ulong enemyPawns)
+        public override int GetFinal(ulong blockers, int side)
         {
-            return side == 0 ? wEval + MobilityLookup(blockers) + WhiteEnemyAttackLookup(enemyPawns) : bEval - MobilityLookup(blockers) + BlackEnemyAttackLookup(enemyPawns);
+            return (side == 0 ? wEval : bEval) + MobilityLookup(blockers);
         }
 
         public override int GetFinalEndgame(ulong blockers, int side)
         {
-            return (side == 0 ? wEvalEndgame + MobilityLookup(blockers) : bEvalEndgame - MobilityLookup(blockers));
+            return (side == 0 ? wEvalEndgame : bEvalEndgame) + MobilityLookup(blockers);
         }
     }
     
@@ -504,7 +451,7 @@ public static class Evaluation
             throw new NotImplementedException();
         }
 
-        public override int GetFinal(ulong blockers, int side, ulong enemyPawns)
+        public override int GetFinal(ulong blockers, int side)
         {
             throw new NotImplementedException();
         }

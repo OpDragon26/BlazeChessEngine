@@ -77,7 +77,7 @@ public static class BitboardUtils
         return (moves.ToArray(), captures);
     }
     
-    public static Move[] GetBitboardMoves(ulong bitboard, (int file, int rank) pos, int priority, bool pawn = false)
+    public static Move[] GetBitboardMoves(ulong bitboard, (int file, int rank) pos, int priority, bool pawn = false, bool capture = false)
     {
         List<Move> moves = new List<Move>();
         
@@ -88,18 +88,18 @@ public static class BitboardUtils
                 if ((bitboard & BitboardUtils.GetSquare(file, rank)) != 0) // if the given square is on
                 {
                     if (!pawn)
-                        moves.Add(new Move(pos, (file,rank), priority: priority + Bitboards.PriorityWeights[file, rank]));
+                        moves.Add(new Move(pos, (file,rank), priority: priority + Bitboards.PriorityWeights[file, rank], capture: capture));
                     else if (pawn)
                     {
                         if (rank == 0 || rank == 7) // promotion
                         {
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteQueen, priority: priority + Bitboards.PriorityWeights[file, rank] + 50, pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteRook, priority: priority + Bitboards.PriorityWeights[file, rank] + 5, pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteBishop, priority: priority + Bitboards.PriorityWeights[file, rank], pawn: pawn));
-                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteKnight, priority: priority + Bitboards.PriorityWeights[file, rank], pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteQueen, priority: priority + Bitboards.PriorityWeights[file, rank] + 50, pawn: pawn, capture: capture));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteRook, priority: priority + Bitboards.PriorityWeights[file, rank] + 5, pawn: pawn, capture: capture));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteBishop, priority: priority + Bitboards.PriorityWeights[file, rank], pawn: pawn, capture: capture));
+                            moves.Add(new Move(pos, (file,rank), promotion: Pieces.WhiteKnight, priority: priority + Bitboards.PriorityWeights[file, rank], pawn: pawn, capture: capture));
                         }
                         else
-                            moves.Add(new Move(pos, (file,rank), priority: priority + Bitboards.PriorityWeights[file, rank] + 20, pawn: pawn));
+                            moves.Add(new Move(pos, (file,rank), priority: priority + Bitboards.PriorityWeights[file, rank] + 20, pawn: pawn, capture: capture));
 
                     }
                 }
@@ -197,26 +197,26 @@ public static class BitboardUtils
                 // check if the capture squares are occupied
                 if ((combination & BitboardUtils.GetSquare(pos.file + 1, 7)) != 0)
                 {
-                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteQueen, priority: 65, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteRook, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteBishop, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteKnight, priority: 2, pawn: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteQueen, priority: 65, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteRook, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteBishop, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 7), Pieces.WhiteKnight, priority: 2, pawn: true, capture: true));
                 }
                 if ((combination & BitboardUtils.GetSquare(pos.file - 1, 7)) != 0)
                 {
-                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteQueen, priority: 65, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteRook, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteBishop, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteKnight, priority: 2, pawn: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteQueen, priority: 65, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteRook, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteBishop, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 7), Pieces.WhiteKnight, priority: 2, pawn: true, capture: true));
                 }
             }
             else // not a promotion
             {
                 // check if the capture squares are occupied
                 if ((combination & BitboardUtils.GetSquare(pos.file + 1, pos.rank + 1)) != 0)
-                    moves.Add(new Move(pos, (pos.file + 1, pos.rank + 1), priority: 60, pawn: true));
+                    moves.Add(new Move(pos, (pos.file + 1, pos.rank + 1), priority: 60, pawn: true, capture: true));
                 if ((combination & BitboardUtils.GetSquare(pos.file - 1, pos.rank + 1)) != 0)
-                    moves.Add(new Move(pos, (pos.file - 1, pos.rank + 1), priority: 60, pawn: true));
+                    moves.Add(new Move(pos, (pos.file - 1, pos.rank + 1), priority: 60, pawn: true, capture: true));
             }
         }
         else
@@ -226,26 +226,26 @@ public static class BitboardUtils
                 // check if the capture squares are occupied
                 if ((combination & BitboardUtils.GetSquare(pos.file + 1, 0)) != 0)
                 {
-                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackQueen, priority: 65, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackRook, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackBishop, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackKnight, priority: 2, pawn: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackQueen, priority: 65, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackRook, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackBishop, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file + 1, 0), Pieces.BlackKnight, priority: 2, pawn: true, capture: true));
                 }
                 if ((combination & BitboardUtils.GetSquare(pos.file - 1, 0)) != 0)
                 {
-                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackQueen, priority: 65, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackRook, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackBishop, priority: 2, pawn: true));
-                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackKnight, priority: 2, pawn: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackQueen, priority: 65, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackRook, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackBishop, priority: 2, pawn: true, capture: true));
+                    moves.Add(new Move(pos, (pos.file - 1, 0), Pieces.BlackKnight, priority: 2, pawn: true, capture: true));
                 }
             }
             else // not a promotion
             {
                 // check if the capture squares are occupied
                 if ((combination & BitboardUtils.GetSquare(pos.file + 1, pos.rank - 1)) != 0)
-                    moves.Add(new Move(pos, (pos.file + 1, pos.rank - 1), priority: 60, pawn: true));
+                    moves.Add(new Move(pos, (pos.file + 1, pos.rank - 1), priority: 60, pawn: true, capture: true));
                 if ((combination & BitboardUtils.GetSquare(pos.file - 1, pos.rank - 1)) != 0)
-                    moves.Add(new Move(pos, (pos.file - 1, pos.rank - 1), priority: 60, pawn: true));
+                    moves.Add(new Move(pos, (pos.file - 1, pos.rank - 1), priority: 60, pawn: true, capture: true));
             }
         }
         

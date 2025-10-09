@@ -4,25 +4,19 @@ Bitboards.Init();
 //Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
+//new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
-/*
-Board board = new("r1bq1rk1/1p1p1ppp/p1n1pn2/2b5/N3P3/PP1B4/1BPQ1PPP/R3K1NR b KQ - 2 10");
 
-Perft.BreakdownEval(board, 5);
+Board test = new Board("r1bq1rk1/pp3ppp/2n1pn2/2bp4/1P6/2PBPN2/P2N1PPP/R1BQ1RK1 b - - 0 9");
+Search.SearchResult result = Search.BestMove(test, 6, false, 0);
+Perft.BreakdownEval(test, 6);
+Console.WriteLine(result.move.Notate(test));
+Console.WriteLine(result.eval);
+test.MakeMove(result.move);
+Match.PrintBoard(test, 0, Match.IHateWindows);
 
-Search.SearchResult s = Search.BestMove(board, 6, false, 0);
-Console.WriteLine(s.eval);
-board.MakeMove(s.move);
-Match.PrintBoard(board,0);
-*/
-
-new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
 
 //Perft.TestGameSpeed(15, 6, false);
-
-//Search.SearchBoard(new(Presets.StartingBoard));
-//new Match(new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"), Type.Analysis).Play();
-
 //Perft.Run(5, "start");
 
 //Console.WriteLine(Bitboards.GetValidCombinations(32, 8).Count());

@@ -514,7 +514,7 @@ public static class Bitboards
                 
                 for (int i = 0; i < RookCaptureCombinations[file, rank].Length; i++) // for each blocker
                 {
-                    MagicLookupConsts.RookCaptureLookup[file, rank][(RookCaptureCombinations[file, rank][i] * MagicLookupConsts.RookCapture[file, rank].magicNumber) >> MagicLookupConsts.RookCapture[file, rank].push] = BitboardUtils.GetBitboardMoves(RookCaptureCombinations[file, rank][i], (file, rank), 50);
+                    MagicLookupConsts.RookCaptureLookup[file, rank][(RookCaptureCombinations[file, rank][i] * MagicLookupConsts.RookCapture[file, rank].magicNumber) >> MagicLookupConsts.RookCapture[file, rank].push] = BitboardUtils.GetBitboardMoves(RookCaptureCombinations[file, rank][i], (file, rank), 50, capture: true);
                 }
                 
                 // bishop captures
@@ -523,7 +523,7 @@ public static class Bitboards
                 
                 for (int i = 0; i < BishopCaptureCombinations[file, rank].Length; i++) // for each blocker
                 {
-                    MagicLookupConsts.BishopCaptureLookup[file, rank][(BishopCaptureCombinations[file, rank][i] * MagicLookupConsts.BishopCapture[file, rank].magicNumber) >> MagicLookupConsts.BishopCapture[file, rank].push] = BitboardUtils.GetBitboardMoves(BishopCaptureCombinations[file, rank][i], (file, rank), 50);
+                    MagicLookupConsts.BishopCaptureLookup[file, rank][(BishopCaptureCombinations[file, rank][i] * MagicLookupConsts.BishopCapture[file, rank].magicNumber) >> MagicLookupConsts.BishopCapture[file, rank].push] = BitboardUtils.GetBitboardMoves(BishopCaptureCombinations[file, rank][i], (file, rank), 50, capture: true);
                 }
                 
                 MagicLookupConsts.RookBitboardNumbers[file, rank] = MagicNumbers.RookBitboardNumbers[file, rank];
@@ -555,7 +555,7 @@ public static class Bitboards
                 for (int i = 0; i < KnightCombinations[file, rank].Length; i++) // for each combination
                 {
                     MagicLookupConsts.KnightLookup[file, rank][(KnightCombinations[file, rank][i] * MagicLookupConsts.KnightMove[file, rank].magicNumber) >> MagicLookupConsts.KnightMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KnightCombinations[file, rank][i], (file, rank), 5);
-                    MagicLookupConsts.KnightCaptureLookup[file, rank][(KnightCombinations[file, rank][i] * MagicLookupConsts.KnightMove[file, rank].magicNumber) >> MagicLookupConsts.KnightMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KnightCombinations[file, rank][i], (file, rank), 50);
+                    MagicLookupConsts.KnightCaptureLookup[file, rank][(KnightCombinations[file, rank][i] * MagicLookupConsts.KnightMove[file, rank].magicNumber) >> MagicLookupConsts.KnightMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KnightCombinations[file, rank][i], (file, rank), 50, capture: true);
                 }
                 
                 // king moves
@@ -567,7 +567,7 @@ public static class Bitboards
                 for (int i = 0; i < KingCombinations[file, rank].Length; i++) // for each combination
                 {
                     MagicLookupConsts.KingLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookupConsts.KingMove[file, rank].magicNumber) >> MagicLookupConsts.KingMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 5);
-                    MagicLookupConsts.KingCaptureLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookupConsts.KingMove[file, rank].magicNumber) >> MagicLookupConsts.KingMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 3);
+                    MagicLookupConsts.KingCaptureLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookupConsts.KingMove[file, rank].magicNumber) >> MagicLookupConsts.KingMove[file, rank].push] = BitboardUtils.GetBitboardMoves(KingCombinations[file, rank][i], (file, rank), 3,  capture: true);
                     MagicLookupConsts.KingSafetyLookup[file, rank][(KingCombinations[file, rank][i] * MagicLookupConsts.KingMove[file, rank].magicNumber) >> MagicLookupConsts.KingMove[file, rank].push] = Weights.KingSafetyBonuses[UInt64.PopCount(KingCombinations[file, rank][i])];
                 }
                 
@@ -613,7 +613,7 @@ public static class Bitboards
                 {
                     MagicLookupConsts.BlockCaptureMoveLookup[file, rank][(BlockCaptures[file, rank][i] * MagicLookupConsts.BlockCaptureNumbers[file, rank].magicNumber) >> MagicLookupConsts.BlockCaptureNumbers[file, rank].push] = BitboardUtils.GetBitboardMoves(BlockCaptures[file, rank][i], (file, rank), 25)[0];
                     if (rank != 0 && rank != 7) 
-                        MagicLookupConsts.BlockCaptureMovePawnLookup[file, rank][(BlockCaptures[file, rank][i] * MagicLookupConsts.BlockCaptureNumbers[file, rank].magicNumber) >> MagicLookupConsts.BlockCaptureNumbers[file, rank].push] = BitboardUtils.GetBitboardMoves(BlockCaptures[file, rank][i], (file, rank), 25, pawn: true);
+                        MagicLookupConsts.BlockCaptureMovePawnLookup[file, rank][(BlockCaptures[file, rank][i] * MagicLookupConsts.BlockCaptureNumbers[file, rank].magicNumber) >> MagicLookupConsts.BlockCaptureNumbers[file, rank].push] = BitboardUtils.GetBitboardMoves(BlockCaptures[file, rank][i], (file, rank), 25, pawn: true,  capture: true);
                 }
                 
                 // block moves

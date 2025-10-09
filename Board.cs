@@ -258,11 +258,8 @@ public class Board
         }
     }
     
-    public void MakeMove(Move move, bool considerPermChange = false)
+    public bool MakeMove(Move move)
     {
-        if (considerPermChange && move.PermaChange)
-            repeat.Clear();
-        
         halfMoveClock++;
         if (side == 1 && considerRepetition)
             hashKey ^= Hasher.BlackToMove;
@@ -311,6 +308,7 @@ public class Board
         
         Clear(move.Source);
         enPassant = (8, 8);
+        byte saveCastling = castling;
         castling &= move.CastlingBan;
         
         if (considerRepetition) hashKey ^= Hasher.CastlingNumbers[castling]; // add the new castling rights number
@@ -409,6 +407,10 @@ public class Board
             Add(); // adds the hash of the board to the dictionary
 
         side = 1 - side;
+
+        if (move.PermaChange && !(move.Pawn || move.Capture)) // if the move only perma changes via castling
+            return saveCastling == castling;
+        return move.PermaChange;
     }
 
     public bool IsDraw()
