@@ -37,6 +37,7 @@ public class Match
     private readonly int moves;
     private readonly bool dynamicDepth;
     private readonly bool printBoard;
+    private readonly RefutationTable RT;
 
     public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
     {
@@ -53,6 +54,7 @@ public class Match
         this.moves = moves;
         this.dynamicDepth = dynamicDepth;
         this.printBoard = printBoard;
+        RT = new((int)Math.Pow(2, 20) + 7);
         
         Bitboards.Init();
         Hasher.Init();
@@ -108,7 +110,7 @@ public class Match
                     else
                     {
                         // make a random move on the board
-                        Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
+                        Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, RT,false), board);
                         Move move = filtered[random.Next(0, filtered.Length)];
 
                         LasMove = move.Notate(board);
@@ -150,7 +152,7 @@ public class Match
                             if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply, RT);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
@@ -205,7 +207,7 @@ public class Match
                             if (!WindowsMode || alwaysUseUnicode) Print(side); else Print(side, IHateWindows);
                         
                         // make the top choice of the engine on the board
-                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+                        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply, RT);
                         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
                         if (dynamicDepth)
@@ -422,7 +424,7 @@ public class Match
             // if the move is in the correct notation
             try
             {
-                Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, false), board);
+                Move[] filtered = Search.FilterChecks(Search.SearchBoard(board, RT, false), board);
                 Move move = Move.Parse(playerMoveString, board);
 
                 if (!debug) Console.Clear();
@@ -457,7 +459,7 @@ public class Match
     public void BotMove()
     {
         // make the top choice of the engine on the board
-        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply);
+        Search.SearchResult result = Search.BestMove(board, depth, inBook, ply, RT);
         Console.WriteLine($"Move made in {result.time}ms at depth {depth}");
 
         if (dynamicDepth)
