@@ -4,7 +4,9 @@ Bitboards.Init();
 //Book.Init(Books.Test);
 
 //Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
-new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+//new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+
+Perft.TestGameSpeed(10, 6, false);
 
 /*
 Board test = new Board("r1bq1rk1/pp3ppp/2n1pn2/2bp4/1P6/2PBPN2/P2N1PPP/R1BQ1RK1 b - - 0 9");
