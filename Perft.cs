@@ -203,7 +203,7 @@ public static class Perft
         {
             Board moveBoard = new Board(board);
             moveBoard.MakeMove(move);
-            Console.WriteLine($"{move.GetUCI()}: {Search.Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue)}");
+            Console.WriteLine($"{move.GetUCI()}: {Search.Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue, new TranspositionTable(short.MaxValue), 0)}");
         }
     }
 

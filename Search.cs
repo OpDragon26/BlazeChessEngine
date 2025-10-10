@@ -2,11 +2,11 @@ namespace Blaze;
 
 public static class Search
 {
-    public static SearchResult BestMove(Board board, int depth, bool useBook, int bookDepth)
+    public static SearchResult BestMove(Board board, int depth, bool useBook, int ply, TranspositionTable TT)
     {
         if (useBook)
         {
-            Output output = Book.Retrieve(board, bookDepth);
+            Output output = Book.Retrieve(board, ply);
             if (output.result == Result.Found)
             {
                 Console.WriteLine("Book move");
@@ -26,7 +26,7 @@ public static class Search
         {
             Board moveBoard = new(board);
             moveBoard.MakeMove(moves[i]);
-            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue);
+            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue, TT, ply);
         });
         
 
@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    public static int Minimax(Board board, int depth, int alpha, int beta)
+    public static int Minimax(Board board, int depth, int alpha, int beta, TranspositionTable TT, int ply)
     {
         if (board.IsDraw())
             return 0;
@@ -82,9 +82,27 @@ public static class Search
                 moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 
-                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta, TT, ply + 1));
                 alpha = Math.Max(alpha, eval);
-                if (eval >= beta) break; // beta cutoff
+                
+                if (TT.TryGet(moveBoard.hashKey, depth - 1, out HashEntry found))
+                {
+                    if (found.type == EntryType.LowerBound && found.eval >= beta)
+                    {
+                        break;
+                    }
+                    if (found.type == EntryType.Exact)
+                    {
+                        eval = found.eval;
+                        break;
+                    }
+                }
+                
+                if (eval >= beta) 
+                {
+                    TT.TrySet(board.hashKey, EntryType.LowerBound, depth, eval, ply);
+                    break; // beta cutoff
+                }
             }
             
             return eval;
@@ -109,9 +127,27 @@ public static class Search
                 moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 
-                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta));
+                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta, TT, ply + 1));
                 beta = Math.Min(beta, eval);
-                if (eval <= alpha) break; // alpha cutoff
+                
+                if (TT.TryGet(moveBoard.hashKey, depth - 1, out HashEntry found))
+                {
+                    if (found.type == EntryType.UpperBound && found.eval < alpha)
+                    {
+                        break;
+                    }
+                    if (found.type == EntryType.Exact)
+                    {
+                        eval = found.eval;
+                        break;
+                    }
+                }
+                
+                if (eval <= alpha) 
+                {
+                    TT.TrySet(board.hashKey, EntryType.UpperBound, depth, eval, ply);
+                    break; // alpha cutoff
+                }
             }
             
             return eval;

@@ -47,7 +47,7 @@ public class Board
     private int pawns = 16;
     private ValuePair values;
     private readonly Dictionary<int, int> repeat = new();
-    private int hashKey;
+    public int hashKey;
 
     public byte castled;
     // only the last two bits can be on
@@ -261,8 +261,7 @@ public class Board
     public void MakeMove(Move move)
     {
         halfMoveClock++;
-        if (side == 1 && considerRepetition)
-            hashKey ^= Hasher.BlackToMove;
+        hashKey ^= Hasher.BlackToMove;
         
         // update bitboards
         bitboards[GetPiece(move.Source)] ^= BitboardUtils.GetSquare(move.Source);
