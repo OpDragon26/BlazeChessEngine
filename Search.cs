@@ -77,7 +77,7 @@ public static class Search
             }
             
             // for each child
-            Move best = moves[0];
+            Move? best = null;
             
             foreach (Move move in moves)
             {
@@ -95,7 +95,8 @@ public static class Search
                 if (eval >= beta) break; // beta cutoff
             }
             
-            RT.Set(board.hashKey, best, 100);
+            if (best != null)
+                RT.Set(board.hashKey, best, 100);
             
             return eval;
         }
@@ -114,7 +115,8 @@ public static class Search
                 return 0;
             }
 
-            Move best = moves[0];
+            Move? best = null;
+            
             foreach (Move move in moves)
             {
                 moveBoard = new(board);
@@ -130,7 +132,8 @@ public static class Search
                 if (eval <= alpha) break; // alpha cutoff
             }
             
-            RT.Set(board.hashKey, best, 100);
+            if (best != null)
+                RT.Set(board.hashKey, best, 100);
             
             return eval;
         }
@@ -337,7 +340,8 @@ public static class Search
         priority += Pieces.Value[board.GetPiece(move.Destination) & Pieces.TypeMask];
 
         if (RT.TryGet(board.hashKey, out HashEntry result))
-            priority += result.bonus;
+            if (move.Equals(result.move))
+                priority += result.bonus;
         
         switch (board.GetPiece(move.Source))
         {
