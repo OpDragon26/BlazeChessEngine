@@ -156,7 +156,7 @@ public static class Parser
         foreach (PGNNode node in game)
         {
             Console.Clear();
-            Match.PrintBoard(node.board, perspective);
+            CLIMatch.PrintBoard(node.board, perspective);
             Thread.Sleep(pause * 100);
         }
     }

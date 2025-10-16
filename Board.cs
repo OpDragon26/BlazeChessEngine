@@ -153,9 +153,9 @@ public class Board
         {
             Console.WriteLine("Piecewise boards don't match");
             Console.WriteLine("this");
-            Match.PrintBoard(this, 0);
+            CLIMatch.PrintBoard(this, 0);
             Console.WriteLine("other");
-            Match.PrintBoard(other, 0);
+            CLIMatch.PrintBoard(other, 0);
             return false;
         }
         
@@ -184,11 +184,11 @@ public class Board
         {
             Console.WriteLine("Piece bitboards don't match");
             Console.WriteLine("this");
-            Match.PrintBitboard(AllPieces(), 0);
+            CLIMatch.PrintBitboard(AllPieces(), 0);
             Console.WriteLine("other");
-            Match.PrintBitboard(other.AllPieces(), 0);
+            CLIMatch.PrintBitboard(other.AllPieces(), 0);
             Console.WriteLine("difference");
-            Match.PrintBitboard(AllPieces() ^ other.AllPieces(), 1);
+            CLIMatch.PrintBitboard(AllPieces() ^ other.AllPieces(), 1);
             
             return false;
         }

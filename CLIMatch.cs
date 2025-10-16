@@ -17,7 +17,7 @@ public enum Side
     Black
 }
 
-public class Match
+public class CLIMatch
 {
     private static readonly  Random random = new();
 
@@ -38,7 +38,7 @@ public class Match
     private readonly bool dynamicDepth;
     private readonly bool printBoard;
 
-    public Match(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
+    public CLIMatch(Board board, Type type, Side side, int depth = 2, bool debug = false, int moves = 1000, bool alwaysUseUnicode = false, bool dynamicDepth = true, bool printBoard = true)
     {
         this.board = board;
         WindowsMode = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);

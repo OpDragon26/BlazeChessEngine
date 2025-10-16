@@ -287,7 +287,7 @@ public static class Perft
         List<PGNNode> allMoves = new();
         for (int i = 0; i < games; i++)
         {
-            allMoves.AddRange(new Match(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
+            allMoves.AddRange(new CLIMatch(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
             Console.WriteLine($"Game {i + 1}/{games}");
         }
 
@@ -327,7 +327,7 @@ public static class Perft
     private static void PrintMismatch(MismatchedMove[] moves, Board board)
     {
         Console.WriteLine("Board:");
-        Match.PrintBoard(board, 0);
+        CLIMatch.PrintBoard(board, 0);
         Console.WriteLine();
 
         foreach (MismatchedMove move in moves)
