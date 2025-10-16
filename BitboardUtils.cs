@@ -74,6 +74,7 @@ public static class BitboardUtils
             }
         }
         
+        moves.Sort((a, c) => c.Priority.CompareTo(a.Priority));
         return (moves.ToArray(), captures);
     }
     
@@ -106,6 +107,7 @@ public static class BitboardUtils
             }
         }
         
+        moves.Sort((a, c) => c.Priority.CompareTo(a.Priority));
         return moves.ToArray();
     }
     
@@ -183,6 +185,7 @@ public static class BitboardUtils
             }
         }
         
+        moves.Sort((a, c) => c.Priority.CompareTo(a.Priority));
         return moves.ToArray();
     }
 
