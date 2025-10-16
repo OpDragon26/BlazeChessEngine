@@ -425,7 +425,7 @@ public class Board
         if (IsDraw())
             return Outcome.Draw;
         
-        Move[] moves = Search.FilterChecks(Search.SearchBoard(this, new RefutationTable(3),false), this);
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(this), this);
         if (moves.Length == 0) // if there are no legal moves
             // if the king is attacked, the game ended in a checkmate, if it isn't the game is a draw by stalemate
             return Search.Attacked(KingPositions[side], this, 1-side) ? side == 0 ? Outcome.BlackWin : Outcome.WhiteWin : Outcome.Draw;

@@ -11,6 +11,7 @@ public static class Weights
     public const int IsolatedPawnPenalty = -2;
     public const int OpenFileAdvantage = 20;
     public const int SemiOpenFileAdvantage = 10;
+    public const int PriorityWeightMultiplier = 15;
     
     public static readonly int[,,] Pieces = new[,,]
     {

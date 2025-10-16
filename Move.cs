@@ -416,7 +416,7 @@ public class Move
     {
         int found = 0;
         (int File, int rank) last = (8,8);
-        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, new RefutationTable(5), false), board);
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, false), board);
         
         for (int rank = 7; rank >= 0; rank--)
         {
@@ -445,7 +445,7 @@ public class Move
     {
         int count = 0;
         List<(int file, int rank)> sources = new();
-        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, new RefutationTable(3), false), board);
+        Move[] moves = Search.FilterChecks(Search.SearchBoard(board, false), board);
 
         foreach (Move move in moves)
         {

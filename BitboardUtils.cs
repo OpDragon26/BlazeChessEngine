@@ -65,7 +65,7 @@ public static class BitboardUtils
                 if (!BitboardUtils.ValidSquare(target.file, target.rank)) // if the square is outside the bounds of the board
                     break;
                 if ((blockers & BitboardUtils.GetSquare(target)) == 0) // if the targeted square is empty
-                    moves.Add(new Move(pos, target, priority: 5 + Bitboards.PriorityWeights[target.file, target.rank]));
+                    moves.Add(new Move(pos, target, priority: 5 + Bitboards.PriorityWeights[target.file, target.rank] * Weights.PriorityWeightMultiplier));
                 else
                 {
                     captures |= BitboardUtils.GetSquare(target);

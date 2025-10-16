@@ -11,7 +11,7 @@ public static class Perft
 
         board.considerRepetition = false;
 
-        Move[] moves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
 
         if (depth == 1)
             return (ulong)moves.Length;
@@ -67,7 +67,7 @@ public static class Perft
 
             Move[] pseudolegal = Search.FilterChecks(Search.PseudolegalSearchBoard(board), board);
             results[depth] += (uint)pseudolegal.Length;
-            Move[] legal = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+            Move[] legal = Search.SearchBoard(board, false).ToArray();
 
             legalResult += legal.Length;
             pseudolegalResult += pseudolegal.Length;
@@ -91,11 +91,11 @@ public static class Perft
         {
             if (depth == 1)
             {
-                results[1] += (ulong)Search.SearchBoard(board, new RefutationTable(3), false).Length;
+                results[1] += (ulong)Search.SearchBoard(board, false).Length;
                 return;
             }
             
-            Span<Move> moves = Search.SearchBoard(board, new RefutationTable(3), false);
+            Span<Move> moves = Search.SearchBoard(board, false);
 
             foreach (Move move in moves)
             {
@@ -178,7 +178,7 @@ public static class Perft
 
     public static void Breakdown(Board board, int depth)
     {
-        Move[] moves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
         Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
         ulong total = 0;
 
@@ -196,14 +196,14 @@ public static class Perft
 
     public static void BreakdownEval(Board board, int depth)
     {
-        Move[] moves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+        Move[] moves = Search.SearchBoard(board, false).ToArray();
         Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
 
         foreach (Move move in moves)
         {
             Board moveBoard = new Board(board);
             moveBoard.MakeMove(move);
-            Console.WriteLine($"{move.GetUCI()}: {Search.Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue, new RefutationTable(3))}");
+            Console.WriteLine($"{move.GetUCI()}: {Search.Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue)}");
         }
     }
 
@@ -212,7 +212,7 @@ public static class Perft
         foreach (int examine in examination)
         {
             depth--;
-            Move[] initMoves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+            Move[] initMoves = Search.SearchBoard(board, false).ToArray();
             Array.Sort(initMoves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
             board.MakeMove(initMoves[examine]);
             Console.Write($"{initMoves[examine].GetUCI()}, ");
@@ -223,7 +223,7 @@ public static class Perft
             Console.WriteLine("Depth too low");
         if (depth == 1)
         {
-            Move[] moves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+            Move[] moves = Search.SearchBoard(board, false).ToArray();
             Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
             
             foreach (Move move in moves)
@@ -233,7 +233,7 @@ public static class Perft
         }
         else
         {
-            Move[] moves = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+            Move[] moves = Search.SearchBoard(board, false).ToArray();
             
             Array.Sort(moves, (a, b) => a.GetUCI().CompareTo(b.GetUCI()));
             ulong total = 0;
@@ -290,13 +290,14 @@ public static class Perft
             allMoves.AddRange(new Match(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
             Console.WriteLine($"Game {i + 1}/{games}");
         }
-        Console.WriteLine($"Average time per move: {allMoves.Average(node => node.time)}ms");
+
+        Console.WriteLine($"Average time per move: {allMoves.Where(node => node.time > 50).Average(node => node.time)}ms");
     }
     
     public static void AnalyzeBoard(Board board)
     {
         Move[] pseudolegal = Search.FilterChecks(Search.PseudolegalSearchBoard(board), board);
-        Move[] legal = Search.SearchBoard(board, new RefutationTable(3), false).ToArray();
+        Move[] legal = Search.SearchBoard(board, false).ToArray();
 
         if (pseudolegal.Length != legal.Length)
             PrintMismatch(CompareResults(pseudolegal,  legal), board);

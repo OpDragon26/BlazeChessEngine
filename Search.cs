@@ -2,7 +2,7 @@ namespace Blaze;
 
 public static class Search
 {
-    public static SearchResult BestMove(Board board, int depth, bool useBook, int bookDepth, RefutationTable RT)
+    public static SearchResult BestMove(Board board, int depth, bool useBook, int bookDepth)
     {
         if (useBook)
         {
@@ -17,7 +17,7 @@ public static class Search
         Timer timer = new Timer();
         timer.Start();
         
-        Move[] moves = SearchBoard(board, RT).ToArray();
+        Move[] moves = SearchBoard(board).ToArray();
         int[] evals = new int[moves.Length];
         if (moves.Length == 0) throw new Exception("No move found");
 
@@ -26,7 +26,7 @@ public static class Search
         {
             Board moveBoard = new(board);
             moveBoard.MakeMove(moves[i]);
-            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue, RT);
+            evals[i] = Minimax(moveBoard, depth - 1, int.MinValue, int.MaxValue, moves[i]);
         });
         
 
@@ -52,7 +52,7 @@ public static class Search
         public readonly long time = time;
     }
     
-    public static int Minimax(Board board, int depth, int alpha, int beta, RefutationTable RT)
+    public static int Minimax(Board board, int depth, int alpha, int beta, Move? previous = null)
     {
         if (board.IsDraw())
             return 0;
@@ -65,7 +65,7 @@ public static class Search
         {
             // white - maximizing player
             int eval = int.MinValue;
-            Span<Move> moves = SearchBoard(board, RT);
+            Span<Move> moves = SearchBoard(board);
             
             if (moves.Length == 0)
             {
@@ -77,26 +77,22 @@ public static class Search
             }
             
             // for each child
-            Move? best = null;
-            
             foreach (Move move in moves)
             {
                 moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 
-                int result = Minimax(moveBoard, depth - 1, alpha, beta, RT);
-                if (result > eval) // new best move
-                {
-                    eval = result;
-                    best = move;
-                }
-                
+                eval = Math.Max(eval, Minimax(moveBoard, depth - 1, alpha, beta, move));
                 alpha = Math.Max(alpha, eval);
-                if (eval >= beta) break; // beta cutoff
+                
+                if (eval >= beta) // beta cutoff
+                {
+                    RefutationTable.Set(board.hashKey, move, 100);
+                    Counter.Set(previous, move, depth * depth);
+                    History.Set(move, 0, depth * depth);
+                    break;
+                }
             }
-            
-            if (best != null)
-                RT.Set(board.hashKey, best, 100);
             
             return eval;
         }
@@ -104,7 +100,7 @@ public static class Search
         {
             // black - minimizing player
             int eval = int.MaxValue;
-            Span<Move> moves = SearchBoard(board, RT);
+            Span<Move> moves = SearchBoard(board);
 
             if (moves.Length == 0)
             {
@@ -114,26 +110,23 @@ public static class Search
                     return int.MaxValue - 100 + depth;
                 return 0;
             }
-
-            Move? best = null;
             
             foreach (Move move in moves)
             {
                 moveBoard = new(board);
                 moveBoard.MakeMove(move);
                 
-                int result = Minimax(moveBoard, depth - 1, alpha, beta, RT);
-                if (result < eval) // new best move
-                {
-                    eval = result;
-                    best = move;
-                }
+                eval = Math.Min(eval, Minimax(moveBoard, depth - 1, alpha, beta, move));
                 beta = Math.Min(beta, eval);
-                if (eval <= alpha) break; // alpha cutoff
+                
+                if (eval <= alpha) // alpha cutoff
+                {
+                    RefutationTable.Set(board.hashKey, move, 100);
+                    Counter.Set(previous, move, depth * depth);
+                    History.Set(move, 1, depth * depth);
+                    break;
+                }
             }
-            
-            if (best != null)
-                RT.Set(board.hashKey, best, 100);
             
             return eval;
         }
@@ -266,7 +259,7 @@ public static class Search
     }
     
     // returns pseudo legal moves: abides by the rules of piece movement, but does not account for checks
-    public static Span<Move> SearchBoard(Board board, RefutationTable RT, bool ordering = true)
+    public static Span<Move> SearchBoard(Board board, bool ordering = true, Move? previous = null)
     {
         Move[] moveArray = new Move[219]; // max moves possible from 1 position
         bool enPassant = board.enPassant.file != 8; // if there is an en passant square
@@ -323,7 +316,7 @@ public static class Search
             int[] keys = new int[moveSpan.Length];
             
             for (int i = 0; i < moveSpan.Length; i++)
-                keys[i] = Reevaluate(board, moveSpan[i], RT);
+                keys[i] = Reevaluate(board, moveSpan[i], previous);
 
             new Span<int>(keys).Sort(moveSpan, (x, y) => y.CompareTo(x));
             
@@ -333,15 +326,18 @@ public static class Search
         return new Span<Move>(moveArray, 0, index);
     }
 
-    private static int Reevaluate(Board board, Move move, RefutationTable RT)
+    private static int Reevaluate(Board board, Move move, Move? previous)
     {
         int priority = move.Priority;
         
         priority += Pieces.Value[board.GetPiece(move.Destination) & Pieces.TypeMask];
 
-        if (RT.TryGet(board.hashKey, out HashEntry result))
+        if (RefutationTable.TryGet(board.hashKey, out RefutationTable.HashEntry result))
             if (move.Equals(result.move))
                 priority += result.bonus;
+        
+        priority += History.Get(move, board.side);
+        priority += Counter.Get(previous, move); // if the move is a counter to the previous move made
         
         switch (board.GetPiece(move.Source))
         {
