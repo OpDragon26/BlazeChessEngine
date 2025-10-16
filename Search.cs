@@ -133,7 +133,7 @@ public static class Search
     }
 
     // returns the heuristic evaluation of the board
-    public static int StaticEvaluate(Board board)
+    private static int StaticEvaluate(Board board)
     {
         int eval = 0;
 

@@ -282,12 +282,14 @@ public static class Perft
         { "kiwipete", KiwipeteTest },
     };
     
-    public static void TestGameSpeed(int games, int depth, bool printGames = true)
+    public static void TestGameSpeed(int games, int depth)
     {
         List<PGNNode> allMoves = new();
         for (int i = 0; i < games; i++)
         {
-            allMoves.AddRange(new CLIMatch(new(Presets.StartingBoard), Type.Autoplay, Side.White, depth, true, dynamicDepth: false, printBoard: printGames).Play());
+            List<PGNNode> game = Match.RandomGame(depth);
+            Console.WriteLine(CLIMatch.GetPGN(game));
+            allMoves.AddRange(game);
             Console.WriteLine($"Game {i + 1}/{games}");
         }
 
@@ -327,7 +329,7 @@ public static class Perft
     private static void PrintMismatch(MismatchedMove[] moves, Board board)
     {
         Console.WriteLine("Board:");
-        CLIMatch.PrintBoard(board, 0);
+        CLIMatch.PrintBoard(board);
         Console.WriteLine();
 
         foreach (MismatchedMove move in moves)

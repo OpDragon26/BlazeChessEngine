@@ -219,9 +219,9 @@ public static class Parser
     }
 }
 
-public struct PGNNode(Board board, Move move)
+public struct PGNNode(Board board, Move move, long time = 0)
 {
     public Board board = board;
     public Move move = move;
-    public long time = 0;
+    public readonly long time = time;
 }

@@ -153,9 +153,9 @@ public class Board
         {
             Console.WriteLine("Piecewise boards don't match");
             Console.WriteLine("this");
-            CLIMatch.PrintBoard(this, 0);
+            CLIMatch.PrintBoard(this);
             Console.WriteLine("other");
-            CLIMatch.PrintBoard(other, 0);
+            CLIMatch.PrintBoard(other);
             return false;
         }
         

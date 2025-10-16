@@ -3,8 +3,8 @@
 Bitboards.Init();
 //Book.Init(Books.Test);
 
-//Match.PrintBitboard(0xf0f0f0f0f0f000, 0);
-// new Match(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, debug: false, dynamicDepth: true).Play();
+//CLIMatch.PrintBitboard(0xf0f0f0f0f0f000, 0);
+new CLIMatch(new Board(Presets.StartingBoard), Blaze.Type.Autoplay, Side.White, depth: 6, clear: true, debug: false, dynamicDepth: true).Play();
 
 /*
 Board test = new Board("r1bq1rk1/pp3ppp/2n1pn2/2bp4/1P6/2PBPN2/P2N1PPP/R1BQ1RK1 b - - 0 9");
@@ -16,7 +16,7 @@ test.MakeMove(result.move);
 Match.PrintBoard(test, 0, Match.IHateWindows);
 */
 
-Perft.TestGameSpeed(15, 6, false);
+//Perft.TestGameSpeed(15, 6);
 //Perft.Run(5, "start");
 
 //Console.WriteLine(Bitboards.GetValidCombinations(32, 8).Count());
