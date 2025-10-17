@@ -27,7 +27,7 @@ public class CLIMatch : Match
     private readonly int moveLimit;
     private readonly bool clear;
 
-    public CLIMatch(Board board, Type type, Side side, int depth = 2, bool debug = false, bool clear = true, int moveLimit = -1, bool dynamicDepth = true) : base(board, depth, dynamicDepth)
+    public CLIMatch(Board board, Type type, Side side, int depth = 2, bool debug = false, bool clear = true, int moveLimit = -1, bool dynamicDepth = true, bool useBook = true) : base(board, depth, dynamicDepth, useBook)
     {
         game = new();
     
