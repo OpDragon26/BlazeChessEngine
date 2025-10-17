@@ -699,7 +699,7 @@ public static class Search
 
         foreach (BitboardUtils.PinSearchResult result in rookPinSearch)
         {
-            if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteRook or Pieces.WhiteQueen) // is pinned
+            if ((BitboardUtils.GetSquare(result.pinningPos) & (board.GetBitboard(1-side, Pieces.WhiteQueen) | board.GetBitboard(1-side, Pieces.WhiteRook))) != 0) // is pinned
             {
                 pinStates.Add(result.pinnedPiece, result.path);
                 pinned |= result.pinnedPiece;
@@ -708,7 +708,7 @@ public static class Search
         
         foreach (BitboardUtils.PinSearchResult result in bishopPinSearch)
         {
-            if ((board.GetPiece(result.pinningPos) & Pieces.TypeMask) is Pieces.WhiteBishop or Pieces.WhiteQueen) // is pinned
+            if ((BitboardUtils.GetSquare(result.pinningPos) & (board.GetBitboard(1-side, Pieces.WhiteQueen) | board.GetBitboard(1-side, Pieces.WhiteBishop))) != 0) // is pinned
             {
                 pinStates.Add(result.pinnedPiece, result.path);
                 pinned |= result.pinnedPiece;
