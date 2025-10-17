@@ -483,7 +483,6 @@ public static class Bitboards
         // attack line lookup
         ulong[] attackLines = BitboardUtils.GetValidCombinations(64, 2).ToArray();
         MagicLookupArrays.AttackLineNumber = (8710915622236860111, 48, 65530); //MagicNumbers.GenerateRepeat(attackLines.Distinct().ToArray(), 1);
-        Console.WriteLine(MagicLookupArrays.AttackLineNumber);
         
         //Console.WriteLine("Generating Magic Numbers");
         
