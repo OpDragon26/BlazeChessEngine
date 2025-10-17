@@ -525,8 +525,13 @@ public class Board
     {
         return color == 0 ? WhitePieces() : BlackPieces();
     }
+
+    public ulong GetBitboard(int color, uint piece)
+    {
+        return bitboards[piece | ((uint)color << 3)];
+    }
     
-    private readonly uint PieceMask = 0xF; // covers the last 4 bits
+    private const uint PieceMask = 0xF; // covers the last 4 bits
     
     public uint GetPiece((int file, int rank) square) // overload that takes a tuple
     {

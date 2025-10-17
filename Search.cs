@@ -620,35 +620,15 @@ public static class Search
         return index;
     }
 
-    public static bool Attacked((int file, int rank) pos, Board board,int side) // attacker side
+    public static bool Attacked((int file, int rank) pos, Board board, int side) // attacker side
     {
-        ulong rookAttack = MagicLookup.RookLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
-        ulong bishopAttack = MagicLookup.BishopLookupCaptureBitboards(pos, board.AllPieces()) & board.GetBitboard(side);
-        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.GetBitboard(side);
+        ulong rookAttack = MagicLookup.RookLookupCaptureBitboards(pos, board.AllPieces()) & (board.GetBitboard(side, Pieces.WhiteRook) | board.GetBitboard(side, Pieces.WhiteQueen));
+        ulong bishopAttack = MagicLookup.BishopLookupCaptureBitboards(pos, board.AllPieces()) & (board.GetBitboard(side, Pieces.WhiteBishop) | board.GetBitboard(side, Pieces.WhiteQueen));
+        ulong knightAttacks = Bitboards.KnightMasks[pos.file, pos.rank] & board.GetBitboard(side, Pieces.WhiteKnight);
         ulong pawnAttacks = side == 0 ? Bitboards.BlackPawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.WhitePawn] : Bitboards.WhitePawnCaptureMasks[pos.file, pos.rank] & board.bitboards[Pieces.BlackPawn];
-        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.GetBitboard(side);
-        
-        if ((rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) == 0) // if no pieces could attack a certain square, there is no need to look further
-            return false;
-        
-        for (int rank = 0; rank < 8; rank++)
-        {
-            for (int file = 7; file >= 0; file--)
-            {
-                if ((BitboardUtils.GetSquare(file, rank) & rookAttack) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) is Pieces.WhiteRook or Pieces.WhiteQueen)
-                    return true;
-                if ((BitboardUtils.GetSquare(file, rank) & bishopAttack) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) is Pieces.WhiteBishop or Pieces.WhiteQueen)
-                    return true;
-                if ((BitboardUtils.GetSquare(file, rank) & knightAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhiteKnight)
-                    return true;
-                if ((BitboardUtils.GetSquare(file, rank) & pawnAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhitePawn)
-                    return true;
-                if ((BitboardUtils.GetSquare(file, rank) & kingAttacks) != 0 && (board.GetPiece(file, rank) & Pieces.TypeMask) == Pieces.WhiteKing)
-                    return true;
-            }
-        }
-        
-        return false;
+        ulong kingAttacks = Bitboards.KingMasks[pos.file, pos.rank] & board.GetBitboard(side, Pieces.WhiteKing);
+
+        return (rookAttack | bishopAttack | knightAttacks | pawnAttacks | kingAttacks) != 0;
     }
 
     private static (bool attacked, bool doubleAttack, ulong attackLines) GetAttackLines((int file, int rank) pos, Board board, int side) // side is attacker side
