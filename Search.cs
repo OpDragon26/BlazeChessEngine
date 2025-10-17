@@ -8,10 +8,7 @@ public static class Search
         {
             Output output = Book.Retrieve(board, bookDepth);
             if (output.result == Result.Found)
-            {
-                Console.WriteLine("Book move");
                 return new SearchResult(output.move, 1, true, 0);
-            }
         }
         
         Timer timer = new Timer();
