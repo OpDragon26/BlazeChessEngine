@@ -428,7 +428,7 @@ public static class Evaluation
             int mobility = 0;
 
             foreach ((int file, int rank) pos in coords)
-                mobility += Bitboards.MagicLookupConsts.KnightMobilityLookup[pos.file, pos.rank];
+                mobility += Bitboards.MagicLookupArrays.KnightMobilityLookup[pos.file, pos.rank];
             
             return mobility;
         }

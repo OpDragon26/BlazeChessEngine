@@ -656,6 +656,8 @@ public static class Search
             }
         }
 
+        // attackLines = MagicLookup.AttackLineLookup(pos, allAttackers);
+
         return (attackersFound > 0, attackersFound > 1, attackLines);
     }
 

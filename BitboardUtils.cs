@@ -319,7 +319,7 @@ public static class BitboardUtils
         return combinations;
     }
     
-    private static IEnumerable<ulong> GetValidCombinations(int max, int limit)
+    public static IEnumerable<ulong> GetValidCombinations(int max, int limit)
     {
         if (max < 0 || max > 64)
             throw new ArgumentOutOfRangeException(nameof(max), "max must be between 0 and 64 inclusive.");
@@ -399,6 +399,17 @@ public static class BitboardUtils
         }
         
         return moves;
+    }
+
+    public static ulong GetAttackLines((int file, int rank) pos, ulong squares)
+    {
+        ulong result = 0;
+        
+        for (int file = 0; file < 8; file++)
+        for (int rank = 0; rank < 8; rank++)
+            result |= Bitboards.PathLookup[pos.file, pos.rank, file, rank] & ~GetSquare(pos);
+        
+        return result;
     }
     
     public static ulong GetPinLine(ulong blockers, (int file, int rank) pos, ulong piece)
